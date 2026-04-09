@@ -1,0 +1,14 @@
+// Clear fake seeded transactions (not linked to real lab orders)
+$realOrderIds = App\Models\LabOrder::pluck('order_id')->toArray();
+$deleted = App\Models\LabTransaction::whereNotIn('order_id', $realOrderIds)->delete();
+echo "Deleted $deleted fake transactions\n";
+echo "Remaining LabTransactions: " . App\Models\LabTransaction::count() . "\n";
+echo "Real LabOrders: " . App\Models\LabOrder::count() . "\n";
+// Quick test of pricing
+$order = App\Models\LabOrder::first();
+$tests = App\Models\LabOrderTest::where('lab_order_id', $order->order_id)->get();
+echo "Tests for " . $order->order_id . ": " . $tests->count() . "\n";
+foreach ($tests as $t) {
+    $lt = App\Models\LabTest::where('test_name', $t->test_name)->first();
+    echo "  - " . $t->test_name . " => " . ($lt ? $lt->standard_price : "no match, using 500") . "\n";
+}

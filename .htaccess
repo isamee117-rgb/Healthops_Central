@@ -1,0 +1,15 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews
+    </IfModule>
+
+    RewriteEngine On
+
+    # Serve static assets from public/ directory
+    RewriteRule ^(css|js|fonts|images|uploads|build|favicon\.ico)(/.*)?$ public/$1$2 [L]
+
+    # Send all other non-file, non-directory requests to front controller
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
