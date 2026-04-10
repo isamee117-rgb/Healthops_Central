@@ -78,6 +78,8 @@ Route::post('/opd/bills/{billId}/corrections', [OpdController::class, 'saveCorre
 Route::get('/emergency/visits', [EmergencyController::class, 'visits']);
 Route::post('/emergency/visits', [EmergencyController::class, 'createVisitTransaction']);
 Route::get('/emergency/bills', [EmergencyController::class, 'bills']);
+Route::get('/emergency/payments/{billId}', [EmergencyController::class, 'payments']);
+Route::post('/emergency/payments', [EmergencyController::class, 'addPayment']);
 Route::get('/er/discharge/{visitId}', [EmergencyController::class, 'getErDischargeInfo']);
 Route::get('/er/discharge/{visitId}/clearance-dues', [EmergencyController::class, 'getErClearanceDues']);
 Route::post('/er/discharge/{visitId}/initiate', [EmergencyController::class, 'initiateErDischarge']);

@@ -5,6 +5,10 @@
             <i data-lucide="clipboard-list"></i>
             <span class="hide-mobile">Triage & Registration</span>
         </button>
+        <button class="module-tab" data-tab="er-billing" data-permission="emergency.triage.access">
+            <i data-lucide="credit-card"></i>
+            <span class="hide-mobile">Billing &amp; Payment</span>
+        </button>
         <button class="module-tab" data-tab="treatment" data-permission="emergency.treatment.access">
             <i data-lucide="stethoscope"></i>
             <span class="hide-mobile">Treatment & Orders</span>
@@ -898,6 +902,126 @@
             </div>
         </div>
     </div>
+
+    
+    <div class="tab-content" id="tab-er-billing" style="display:none">
+
+        
+        <div class="module-header">
+            <div>
+                <h1>Billing &amp; Payments</h1>
+                <p class="module-subtitle">Manage emergency billing, charges and payment collection</p>
+            </div>
+        </div>
+
+        
+        <div class="mini-stats" id="erBillingStats">
+            <div class="mini-stat-card">
+                <div class="mini-stat-inner">
+                    <div>
+                        <p class="mini-stat-label">Total Outstanding</p>
+                        <h3 class="mini-stat-value" style="color:#EF4444" id="erStatOutstanding">0</h3>
+                    </div>
+                    <div class="mini-stat-icon" style="background:rgba(239,68,68,0.1)"><i data-lucide="dollar-sign" style="color:#EF4444"></i></div>
+                </div>
+            </div>
+            <div class="mini-stat-card">
+                <div class="mini-stat-inner">
+                    <div>
+                        <p class="mini-stat-label">Collected Today</p>
+                        <h3 class="mini-stat-value" style="color:#10B981" id="erStatCollected">0</h3>
+                    </div>
+                    <div class="mini-stat-icon" style="background:rgba(16,185,129,0.1)"><i data-lucide="dollar-sign" style="color:#10B981"></i></div>
+                </div>
+            </div>
+            <div class="mini-stat-card">
+                <div class="mini-stat-inner">
+                    <div>
+                        <p class="mini-stat-label">Pending Bills</p>
+                        <h3 class="mini-stat-value" style="color:#F59E0B" id="erStatPending">0</h3>
+                    </div>
+                    <div class="mini-stat-icon" style="background:rgba(245,158,11,0.1)"><i data-lucide="clock" style="color:#F59E0B"></i></div>
+                </div>
+            </div>
+            <div class="mini-stat-card">
+                <div class="mini-stat-inner">
+                    <div>
+                        <p class="mini-stat-label">Total Patients</p>
+                        <h3 class="mini-stat-value" style="color:#3B82F6" id="erStatPatients">0</h3>
+                    </div>
+                    <div class="mini-stat-icon" style="background:rgba(59,130,246,0.1)"><i data-lucide="users" style="color:#3B82F6"></i></div>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="opd-toolbar">
+            <div class="opd-search-wrap">
+                <i data-lucide="search" class="opd-search-icon"></i>
+                <input type="text" class="opd-search-input" id="erBillSearch" placeholder="Search by MRN, Name, Bill ID...">
+            </div>
+            <div class="opd-toolbar-right">
+                <select class="form-select" id="erBillStatusFilter" style="width:140px;font-size:13px;height:36px">
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="partial">Partial</option>
+                    <option value="paid">Paid</option>
+                </select>
+                <div class="opd-export-wrap">
+                    <button class="opd-tool-btn" type="button" id="btnErBillExport" onclick="toggleErBillExportMenu(event)" title="Export" style="padding:0 10px">
+                        <i data-lucide="upload"></i>
+                        <i data-lucide="chevron-down" style="width:13px;height:13px;margin-left:2px"></i>
+                    </button>
+                    <div class="opd-export-menu" id="erBillExportMenu">
+                        <button onclick="exportERBilling('excel')"><i data-lucide="file-spreadsheet" style="width:14px;height:14px"></i> Export Excel</button>
+                        <button onclick="exportERBilling('pdf')"><i data-lucide="file-text" style="width:14px;height:14px"></i> Export PDF</button>
+                        <button onclick="exportERBilling('csv')"><i data-lucide="file" style="width:14px;height:14px"></i> Export CSV</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="data-table-wrapper">
+            <div style="overflow-x:auto">
+                <table class="data-table" id="erBillingTable">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Visit ID</th>
+                            <th>Bill ID</th>
+                            <th class="text-right">Total</th>
+                            <th class="text-right">Paid</th>
+                            <th class="text-right">Balance</th>
+                            <th>Status</th>
+                            <th class="text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="erBillingTableBody"></tbody>
+                </table>
+            </div>
+            <div class="opd-pagination" id="erBillPagination">
+                <div class="opd-pagination-left">
+                    <div class="opd-page-info" id="erBillTableInfo">Showing — of — results</div>
+                </div>
+                <div class="opd-page-btns">
+                    <button class="opd-page-btn" id="erBillPrevPage" disabled><i data-lucide="chevron-left"></i></button>
+                    <div class="opd-page-nums" id="erBillPageNums"></div>
+                    <button class="opd-page-btn" id="erBillNextPage"><i data-lucide="chevron-right"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="erBillingDetailSheet" style="width:820px;max-width:95vw">
+    <div class="offcanvas-header" style="border-bottom:1px solid var(--color-border);padding:16px 24px">
+        <h5 class="offcanvas-title" id="erBillingDetailTitle" style="font-size:18px;font-weight:700;color:var(--midnight-blue)">Billing &amp; Payment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body" id="erBillingDetailBody" style="background:var(--color-muted);padding:24px;overflow-y:auto"></div>
+    <div class="offcanvas-footer" id="erBillingDetailFooter" style="border-top:1px solid var(--color-border);padding:16px 24px"></div>
 </div>
 
 

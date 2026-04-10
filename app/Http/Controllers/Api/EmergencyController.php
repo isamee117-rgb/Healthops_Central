@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Patient;
 use App\Models\EmergencyVisit;
 use App\Models\EmergencyBill;
+use App\Models\EmergencyPayment;
 use App\Models\PharmacyTransaction;
 use App\Models\LabTransaction;
 use App\Traits\HmsHelpers;
@@ -109,6 +110,88 @@ class EmergencyController extends Controller
             return response()->json([
                 'visit' => $this->toCamel($visit),
                 'bill' => $this->toCamel($bill),
+            ], 201);
+        } catch (\Exception $e) {
+            return $this->safeError($e, 'Failed to create record');
+        }
+    }
+
+    // ── ER Payments ─────────────────────────────────────────────────────────
+
+    public function payments($billId)
+    {
+        $payments = EmergencyPayment::where('bill_id', $billId)->orderBy('created_at', 'desc')->get();
+        return response()->json($this->toCamelCollection($payments));
+    }
+
+    public function addPayment(Request $request)
+    {
+        try {
+            $request->validate([
+                'billId'      => 'required|string',
+                'visitId'     => 'required|string',
+                'mrn'         => 'required|string',
+                'amount'      => 'required|numeric|min:0.01',
+                'paymentMode' => 'required|string',
+            ]);
+
+            $bill = EmergencyBill::where('bill_id', $request->input('billId'))->first();
+            if (!$bill) {
+                return response()->json(['error' => 'Bill not found'], 404);
+            }
+
+            $currentPaid = (float) $bill->paid_amount;
+            $totalAmount = (float) $bill->total_amount;
+            $payAmount   = (float) $request->input('amount');
+
+            if (($currentPaid + $payAmount) > $totalAmount + 0.01) {
+                return response()->json(['error' => 'Payment exceeds outstanding balance'], 422);
+            }
+
+            $paymentId     = $this->nextId(EmergencyPayment::class, 'payment_id', 'ER-PAY-');
+            $receiptNumber = 'ER-RCT-' . str_pad(EmergencyPayment::count() + 1, 6, '0', STR_PAD_LEFT);
+
+            $payment = EmergencyPayment::create([
+                'payment_id'     => $paymentId,
+                'bill_id'        => $request->input('billId'),
+                'visit_id'       => $request->input('visitId'),
+                'mrn'            => $request->input('mrn'),
+                'amount'         => $payAmount,
+                'payment_mode'   => $request->input('paymentMode'),
+                'receipt_number' => $receiptNumber,
+                'reference'      => $request->input('reference', ''),
+                'received_by'    => $request->input('receivedBy', 'Admin / Sys'),
+                'notes'          => $request->input('notes', ''),
+            ]);
+
+            $newPaid = $currentPaid + $payAmount;
+            $status  = $newPaid >= $totalAmount ? 'Paid' : 'Partial';
+
+            $bill->update([
+                'paid_amount'    => $newPaid,
+                'payment_status' => $status,
+            ]);
+
+            EmergencyVisit::where('visit_id', $bill->visit_id)->update([
+                'payment_status' => $status,
+            ]);
+
+            $this->postToLedger([
+                'date'         => Carbon::now(),
+                'source'       => 'ER',
+                'mrn'          => $request->input('mrn'),
+                'visit_id'     => $request->input('visitId'),
+                'category'     => 'Payment Received',
+                'debit'        => 0,
+                'credit'       => $payAmount,
+                'reference_id' => $paymentId,
+            ]);
+
+            $this->logActivity($request->input('mrn'), "Payment {$paymentId} of {$payAmount} received", 'ER', "Bill: {$bill->bill_id} | Mode: {$request->input('paymentMode')}");
+
+            return response()->json([
+                'payment' => $this->toCamel($payment),
+                'bill'    => $this->toCamel($bill->fresh()),
             ], 201);
         } catch (\Exception $e) {
             return $this->safeError($e, 'Failed to create record');

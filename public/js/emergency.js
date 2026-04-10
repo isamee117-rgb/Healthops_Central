@@ -303,6 +303,7 @@ $(document).ready(function() {
         renderTreatmentTab();
         renderInvestigationsTab();
         renderDispositionTab();
+        renderERBillingTab();
         lucide.createIcons();
         startBoardTimer();
     }
@@ -323,16 +324,17 @@ $(document).ready(function() {
         $(this).addClass('active');
         $('.tab-content').hide();
         $('#tab-' + tab).show();
-        // Hide the ER dept header on Treatment, Investigations & Disposition tabs
-        if (tab === 'treatment' || tab === 'investigations' || tab === 'disposition') {
+        // Hide the ER dept header on Treatment, Investigations, Disposition & Billing tabs
+        if (tab === 'treatment' || tab === 'investigations' || tab === 'disposition' || tab === 'er-billing') {
             $('#erDeptHeader').hide();
         } else {
             $('#erDeptHeader').show();
         }
-        if (tab === 'treatment') { erOrdCurrentPage = 1; renderTreatmentTab(); }
-        if (tab === 'triage')         { erTriCurrentPage = 1; renderTriageTable(); }
-        if (tab === 'investigations') { erInvCurrentPage = 1; renderInvestigationsTab(); }
-        if (tab === 'disposition')    { erDispCurrentPage = 1; renderDispositionTab(); }
+        if (tab === 'treatment')    { erOrdCurrentPage = 1; renderTreatmentTab(); }
+        if (tab === 'triage')       { erTriCurrentPage = 1; renderTriageTable(); }
+        if (tab === 'investigations'){ erInvCurrentPage = 1; renderInvestigationsTab(); }
+        if (tab === 'disposition')  { erDispCurrentPage = 1; renderDispositionTab(); }
+        if (tab === 'er-billing')   { erBillCurrentPage = 1; renderERBillingTab(); }
         lucide.createIcons();
     });
 
@@ -1485,7 +1487,7 @@ $(document).ready(function() {
                 '<select class="form-select" id="erVisitDoctor"><option value="">-- Select ER Physician --</option>' +
                     (erDoctors.length > 0 ? erDoctors : doctors).map(function(d) {
                         var n = d.firstName + ' ' + d.lastName;
-                        return '<option value="' + esc(n) + '" data-doctor-id="' + d.id + '"' + (visitForm.doctorName === n ? ' selected' : '') + '>' + esc(n) + ' - ' + esc(d.specialization || '') + '</option>';
+                        return '<option value="' + esc(n) + '" data-doctor-id="' + esc(d.doctorId || d.id) + '"' + (visitForm.doctorName === n ? ' selected' : '') + '>' + esc(n) + ' - ' + esc(d.specialization || '') + '</option>';
                     }).join('') +
                 '</select></div>' +
                 (visitForm.doctorFee !== '0' ? '<div style="background:rgba(245,246,250,0.5);padding:12px;border-radius:8px;display:flex;align-items:center;justify-content:space-between;margin-top:12px"><span style="font-size:12px;color:var(--color-muted-foreground)">Doctor Fee (from config)</span><span style="font-size:14px;font-family:monospace;font-weight:600">' + hospitalInfo.currency + ' ' + Number(visitForm.doctorFee).toLocaleString() + '</span></div>' : '') +
@@ -4681,4 +4683,594 @@ $(document).ready(function() {
 
         if (window.lucide) lucide.createIcons();
     });
+
+    // ===== ER BILLING & PAYMENT TAB =====
+    var erBillCurrentPage    = 1;
+    var erBillPageSize       = 15;
+    var erBillingChargeFilter    = 'All';
+    var erBillingAddlChargeFilter = 'All';
+
+    function updateERBillingStats() {
+        var currency = hospitalInfo.currency || 'PKR';
+        var today    = new Date().toDateString();
+
+        var outstanding  = 0;
+        var collectedToday = 0;
+        var pendingCount = 0;
+        var patientSet   = {};
+
+        bills.forEach(function(b) {
+            var total   = Number(b.totalAmount || 0);
+            var paid    = Number(b.paidAmount  || 0);
+            var balance = Math.max(0, total - paid);
+            outstanding += balance;
+            if ((b.paymentStatus || '').toLowerCase() === 'pending' || (b.paymentStatus || '').toLowerCase() === 'partial') {
+                pendingCount++;
+            }
+            if (b.mrn) patientSet[b.mrn] = true;
+            // Collected today — approximate from paidAmount on bills updated today
+            var updatedAt = b.updatedAt ? new Date(b.updatedAt).toDateString() : null;
+            if (updatedAt === today && paid > 0) collectedToday += paid;
+        });
+
+        $('#erStatOutstanding').text(currency + ' ' + outstanding.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0}));
+        $('#erStatCollected').text(currency + ' ' + collectedToday.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0}));
+        $('#erStatPending').text(pendingCount);
+        $('#erStatPatients').text(Object.keys(patientSet).length);
+    }
+
+    window.toggleErBillExportMenu = function(e) {
+        e.stopPropagation();
+        $('#erBillExportMenu').toggleClass('show');
+    };
+    $(document).on('click', function() { $('#erBillExportMenu').removeClass('show'); });
+
+    window.exportERBilling = function(type) {
+        $('#erBillExportMenu').removeClass('show');
+        var rows = bills.map(function(b) {
+            return [b.mrn, b.patientName, b.visitId, b.billId, b.totalAmount, b.paidAmount, Math.max(0, (b.totalAmount||0)-(b.paidAmount||0)), b.paymentStatus];
+        });
+        var headers = ['MRN','Patient','Visit ID','Bill ID','Total','Paid','Balance','Status'];
+        if (type === 'csv') {
+            var csv = [headers.join(',')].concat(rows.map(function(r){ return r.join(','); })).join('\n');
+            var a = document.createElement('a');
+            a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+            a.download = 'er-billing.csv';
+            a.click();
+        } else if (type === 'excel' && window.XLSX) {
+            var wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([headers].concat(rows)), 'ER Billing');
+            XLSX.writeFile(wb, 'er-billing.xlsx');
+        } else if (type === 'pdf' && window.jspdf) {
+            HMS.toast('PDF export coming soon', 'info');
+        } else {
+            HMS.toast('Export library not loaded', 'warning');
+        }
+    };
+
+    function erBillStatusBadge(s) {
+        if (s === 'Paid')    return '<span style="background:#16A34A;color:#fff;font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px">Paid</span>';
+        if (s === 'Partial') return '<span style="background:#2563EB;color:#fff;font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px">Partial</span>';
+        return '<span style="background:#EAB308;color:#fff;font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px">Pending</span>';
+    }
+
+    function renderERBillingTab() {
+        updateERBillingStats();
+        var currency    = hospitalInfo.currency || 'PKR';
+        var search      = ($('#erBillSearch').val() || '').toLowerCase();
+        var statusF     = ($('#erBillStatusFilter').val() || 'all').toLowerCase();
+
+        var filtered = bills.filter(function(b) {
+            var matchSearch = !search ||
+                (b.patientName || '').toLowerCase().indexOf(search) > -1 ||
+                (b.billId || '').toLowerCase().indexOf(search) > -1 ||
+                (b.mrn || '').toLowerCase().indexOf(search) > -1;
+            var matchStatus = statusF === 'all' || (b.paymentStatus || '').toLowerCase() === statusF;
+            return matchSearch && matchStatus;
+        });
+
+        var total  = filtered.length;
+        var pages  = Math.max(1, Math.ceil(total / erBillPageSize));
+        erBillCurrentPage = Math.min(erBillCurrentPage, pages);
+        var start  = (erBillCurrentPage - 1) * erBillPageSize;
+        var paged  = filtered.slice(start, start + erBillPageSize);
+
+        var html = '';
+        if (paged.length === 0) {
+            html = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--color-muted-foreground)">No billing records found</td></tr>';
+        } else {
+            paged.forEach(function(b) {
+                var total    = Number(b.totalAmount  || 0);
+                var paid     = Number(b.paidAmount   || 0);
+                var balance  = Math.max(0, total - paid);
+                html += '<tr style="cursor:pointer" onclick="window.openERBillingDetail(\'' + esc(b.visitId) + '\')">' +
+                    '<td><div style="font-weight:600;font-size:13px">' + esc(b.patientName || '-') + '</div><div style="font-size:11px;font-family:monospace;color:var(--color-muted-foreground)">' + esc(b.mrn || '-') + '</div></td>' +
+                    '<td style="font-size:12px;font-family:monospace">' + esc(b.visitId || '-') + '</td>' +
+                    '<td style="font-size:12px;font-family:monospace">' + esc(b.billId || '-') + '</td>' +
+                    '<td style="text-align:right;font-family:monospace;font-weight:600">' + currency + ' ' + total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td>' +
+                    '<td style="text-align:right;font-family:monospace;color:#16A34A">' + currency + ' ' + paid.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td>' +
+                    '<td style="text-align:right;font-family:monospace;color:' + (balance > 0 ? '#DC2626' : '#16A34A') + ';font-weight:600">' + currency + ' ' + balance.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td>' +
+                    '<td>' + erBillStatusBadge(b.paymentStatus) + '</td>' +
+                    '<td style="text-align:right">' +
+                        (b.paymentStatus !== 'Paid' ? '<button class="btn-primary btn-sm" onclick="event.stopPropagation();window.openERBillingDetail(\'' + esc(b.visitId) + '\')" style="font-size:12px"><i data-lucide="credit-card" style="width:14px;height:14px"></i> Pay</button>' : '<span style="font-size:11px;color:var(--color-success)"><i data-lucide="check-circle-2" style="width:14px;height:14px"></i></span>') +
+                    '</td>' +
+                '</tr>';
+            });
+        }
+
+        $('#erBillingTableBody').html(html);
+
+        // Pagination info
+        var from = total === 0 ? 0 : start + 1;
+        var to   = Math.min(start + erBillPageSize, total);
+        $('#erBillTableInfo').text('Showing ' + from + '–' + to + ' of ' + total + ' results');
+
+        // Page buttons
+        var pageNums = '';
+        for (var p = 1; p <= pages; p++) {
+            pageNums += '<button class="opd-page-num' + (p === erBillCurrentPage ? ' active' : '') + '" data-p="' + p + '">' + p + '</button>';
+        }
+        $('#erBillPageNums').html(pageNums);
+        $('#erBillPrevPage').prop('disabled', erBillCurrentPage <= 1);
+        $('#erBillNextPage').prop('disabled', erBillCurrentPage >= pages);
+
+        lucide.createIcons();
+    }
+
+    $('#erBillSearch').on('input', function() { erBillCurrentPage = 1; renderERBillingTab(); });
+    $('#erBillStatusFilter').on('change', function() { erBillCurrentPage = 1; renderERBillingTab(); });
+    $(document).on('click', '#erBillPageNums .opd-page-num', function() {
+        erBillCurrentPage = parseInt($(this).data('p')); renderERBillingTab();
+    });
+    $(document).on('click', '#erBillPrevPage', function() {
+        if (!$(this).prop('disabled') && erBillCurrentPage > 1) { erBillCurrentPage--; renderERBillingTab(); }
+    });
+    $(document).on('click', '#erBillNextPage', function() {
+        if (!$(this).prop('disabled')) { erBillCurrentPage++; renderERBillingTab(); }
+    });
+
+    // ===== ER BILLING DETAIL SHEET =====
+    window.openERBillingDetail = function(visitId) {
+        var visit    = visits.find(function(v) { return v.visitId === visitId; });
+        if (!visit) return;
+        var bill     = bills.find(function(b) { return b.visitId === visitId; });
+        var currency = hospitalInfo.currency || 'PKR';
+        renderERBillingDetailContent(visit, bill, currency);
+    };
+
+    function renderERBillingDetailContent(visit, bill, currency) {
+        currency = currency || hospitalInfo.currency || 'PKR';
+        var totalAmt  = bill ? Number(bill.totalAmount || 0) : 0;
+        var paidAmt   = bill ? Number(bill.paidAmount  || 0) : 0;
+        var dueAmt    = Math.max(0, totalAmt - paidAmt);
+        var payStatus = bill ? (bill.paymentStatus || 'Pending') : 'Pending';
+        var visitDate = visit.consultationDate ? new Date(visit.consultationDate) : new Date();
+
+        var patient  = patients.find(function(p) { return p.mrn === visit.mrn; });
+        var patName  = patient ? patient.name : (visit.patientName || 'Unknown');
+        var initials = patName.split(' ').map(function(w){ return w[0] || ''; }).join('').toUpperCase().slice(0, 2);
+
+        // Build charge items from bill fields
+        var chargeItems = [];
+        if (bill) {
+            var doctorFee = Number(bill.doctorFee || 0);
+            var consultChg = Number(bill.consultationCharges || 0);
+            if (consultChg > 0) {
+                chargeItems.push({ chargeId: 'consultation', date: visitDate, description: 'Hospital / Consultation Charges', category: 'Consultation', qty: 1, amount: consultChg });
+            }
+            if (doctorFee > 0) {
+                chargeItems.push({ chargeId: 'doctor-fee', date: visitDate, description: 'Doctor Fee — ' + esc(visit.doctorName || ''), category: 'Doctor Fee', qty: 1, amount: doctorFee });
+            }
+            if (chargeItems.length === 0 && totalAmt > 0) {
+                chargeItems.push({ chargeId: 'total', date: visitDate, description: 'Emergency Visit Charges', category: 'Consultation', qty: 1, amount: totalAmt });
+            }
+        }
+
+        var categories = ['All'];
+        chargeItems.forEach(function(ci) { if (categories.indexOf(ci.category) === -1) categories.push(ci.category); });
+
+        // Patient header
+        var body = '<div style="background:var(--color-card);padding:20px 24px;border-radius:12px;border:1px solid var(--color-border);margin-bottom:20px;display:flex;align-items:center;gap:16px">' +
+            '<div class="avatar" style="width:48px;height:48px;background:var(--midnight-blue);color:#fff;font-size:18px;font-weight:700;border-radius:50%;display:flex;align-items:center;justify-content:center">' + initials + '</div>' +
+            '<div style="flex:1">' +
+                '<h4 style="margin:0;font-size:18px;font-weight:700">' + esc(patName) + '</h4>' +
+                '<div style="display:flex;gap:8px;margin-top:4px;align-items:center">' +
+                    '<span style="font-size:12px;background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;padding:2px 8px;border-radius:4px;font-family:monospace">' + esc(visit.visitId || '-') + '</span>' +
+                    (bill ? '<span style="font-size:12px;background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;padding:2px 8px;border-radius:4px;font-family:monospace">' + esc(bill.billId || '-') + '</span>' : '') +
+                    '<span style="font-size:12px;color:var(--color-muted-foreground)">' + esc(visit.department || 'Emergency') + '</span>' +
+                '</div>' +
+            '</div>' +
+            '<div style="text-align:right">' +
+                '<div style="font-size:11px;color:var(--color-muted-foreground)">Visit Date</div>' +
+                '<div style="font-size:13px;font-weight:600">' + visitDate.toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' }) + '</div>' +
+            '</div>' +
+        '</div>';
+
+        if (!bill) {
+            body += '<div style="background:var(--color-card);padding:40px 24px;border-radius:12px;border:1px solid var(--color-border);text-align:center">' +
+                '<i data-lucide="receipt" style="width:48px;height:48px;color:var(--color-muted-foreground);margin-bottom:12px"></i>' +
+                '<h4 style="margin:0 0 8px;font-size:16px;font-weight:600;color:var(--color-foreground)">No Billing Record</h4>' +
+                '<p style="margin:0;font-size:14px;color:var(--color-muted-foreground)">No bill has been generated for this visit yet.</p>' +
+            '</div>';
+            $('#erBillingDetailBody').html(body);
+            $('#erBillingDetailFooter').html('<div style="display:flex;justify-content:space-between;align-items:center;width:100%"><button class="btn-outline" data-bs-dismiss="offcanvas">Close</button><div></div></div>');
+            $('#erBillingDetailTitle').text('Billing & Payment');
+            lucide.createIcons();
+            new bootstrap.Offcanvas(document.getElementById('erBillingDetailSheet')).show();
+            return;
+        }
+
+        // 3 stat cards
+        body += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px">' +
+            '<div style="background:var(--color-card);padding:16px 20px;border-radius:10px;border:1px solid var(--color-border);text-align:center">' +
+                '<div style="font-size:12px;color:var(--color-muted-foreground);margin-bottom:4px">Total</div>' +
+                '<div style="font-size:20px;font-weight:700;color:var(--midnight-blue);font-family:\'Roobert\',sans-serif">' + currency + ' ' + totalAmt.toLocaleString() + '</div>' +
+            '</div>' +
+            '<div style="background:var(--color-card);padding:16px 20px;border-radius:10px;border:1px solid var(--color-border);text-align:center">' +
+                '<div style="font-size:12px;color:var(--color-muted-foreground);margin-bottom:4px">Paid</div>' +
+                '<div style="font-size:20px;font-weight:700;color:var(--color-success);font-family:\'Roobert\',sans-serif">' + currency + ' ' + paidAmt.toLocaleString() + '</div>' +
+            '</div>' +
+            '<div style="background:var(--color-card);padding:16px 20px;border-radius:10px;border:1px solid var(--color-border);text-align:center">' +
+                '<div style="font-size:12px;color:var(--color-muted-foreground);margin-bottom:4px">Due</div>' +
+                '<div style="font-size:20px;font-weight:700;color:' + (dueAmt > 0 ? 'var(--color-destructive)' : 'var(--color-success)') + ';font-family:\'Roobert\',sans-serif">' + currency + ' ' + dueAmt.toLocaleString() + '</div>' +
+            '</div>' +
+        '</div>';
+
+        // Detailed Charges section with category filter pills
+        body += '<div style="background:var(--color-card);padding:20px 24px;border-radius:12px;border:1px solid var(--color-border);margin-bottom:20px">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">' +
+                '<h4 style="margin:0;font-size:15px;font-weight:700">Detailed Charges</h4>' +
+                '<div style="display:flex;gap:6px;align-items:center" id="erChargeFilterPills">' +
+                    categories.map(function(cat) {
+                        var isActive = erBillingChargeFilter === cat;
+                        return '<button class="er-charge-filter-pill" data-filter="' + cat + '" style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid ' + (isActive ? 'var(--midnight-blue)' : 'var(--color-border)') + ';background:' + (isActive ? 'var(--midnight-blue)' : '#fff') + ';color:' + (isActive ? '#fff' : 'var(--color-muted-foreground)') + ';cursor:pointer">' + cat + '</button>';
+                    }).join('') +
+                '</div>' +
+            '</div>' +
+            '<table style="width:100%;border-collapse:collapse">' +
+                '<thead><tr style="border-bottom:2px solid var(--color-border)">' +
+                    '<th style="text-align:left;padding:8px 4px;font-size:12px;font-weight:600;color:var(--color-destructive)">Date</th>' +
+                    '<th style="text-align:left;padding:8px 4px;font-size:12px;font-weight:600;color:var(--color-destructive)">Description</th>' +
+                    '<th style="text-align:center;padding:8px 4px;font-size:12px;font-weight:600;color:var(--color-destructive)">Qty</th>' +
+                    '<th style="text-align:right;padding:8px 4px;font-size:12px;font-weight:600;color:var(--color-destructive)">Amount</th>' +
+                '</tr></thead>' +
+                '<tbody id="erChargeItemsBody">';
+
+        var filteredCharges = erBillingChargeFilter === 'All' ? chargeItems : chargeItems.filter(function(ci) { return ci.category === erBillingChargeFilter; });
+        var subtotal = 0;
+        if (filteredCharges.length === 0) {
+            body += '<tr><td colspan="4" style="padding:16px 4px;text-align:center;color:var(--color-muted-foreground);font-size:13px">No charges found</td></tr>';
+        } else {
+            filteredCharges.forEach(function(ci) {
+                subtotal += ci.amount * ci.qty;
+                body += '<tr style="border-bottom:1px solid var(--color-border)">' +
+                    '<td style="padding:12px 4px;font-size:13px;color:var(--color-muted-foreground)">' + ci.date.toLocaleDateString('en-PK', { day: 'numeric', month: 'short' }) + ', ' + ci.date.toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit', hour12: true }) + '</td>' +
+                    '<td style="padding:12px 4px;font-size:13px;font-weight:500">' + ci.description + ' <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;background:#F1F5F9;color:#475569;border:1px solid #E2E8F0;margin-left:6px">' + ci.category + '</span></td>' +
+                    '<td style="padding:12px 4px;font-size:13px;text-align:center">' + ci.qty + '</td>' +
+                    '<td style="padding:12px 4px;font-size:13px;font-weight:600;text-align:right;font-family:monospace">' + currency + ' ' + (ci.amount * ci.qty).toLocaleString() + '</td>' +
+                '</tr>';
+            });
+        }
+
+        body += '</tbody>' +
+            '<tfoot><tr>' +
+                '<td colspan="3" style="padding:12px 4px;text-align:right;font-size:14px;font-weight:600">Subtotal</td>' +
+                '<td style="padding:12px 4px;text-align:right;font-size:16px;font-weight:700;font-family:monospace;color:var(--midnight-blue)">' + currency + ' ' + subtotal.toLocaleString() + '</td>' +
+            '</tr></tfoot>' +
+        '</table></div>';
+
+        // Payment Transactions section
+        body += '<div style="background:var(--color-card);padding:20px 24px;border-radius:12px;border:1px solid var(--color-border);margin-bottom:20px">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">' +
+                '<h4 style="margin:0;font-size:15px;font-weight:700">Payment Transactions</h4>' +
+                (dueAmt > 0 || payStatus === 'Partial' ? '<button class="btn-primary btn-sm" id="btnERAddPayment" style="font-size:12px"><i data-lucide="plus" style="width:14px;height:14px"></i> Add Payment</button>' : '') +
+            '</div>' +
+            '<table style="width:100%;border-collapse:collapse">' +
+                '<thead><tr style="border-bottom:2px solid var(--color-border)">' +
+                    '<th style="text-align:left;padding:8px 4px;font-size:12px;font-weight:600;color:var(--color-destructive)">Date</th>' +
+                    '<th style="text-align:left;padding:8px 4px;font-size:12px;font-weight:600;color:var(--color-destructive)">Description</th>' +
+                    '<th style="text-align:right;padding:8px 4px;font-size:12px;font-weight:600;color:var(--color-destructive)">Amount</th>' +
+                    '<th style="text-align:center;padding:8px 4px;font-size:12px;font-weight:600;color:var(--color-destructive)">Mode</th>' +
+                    '<th style="text-align:left;padding:8px 4px;font-size:12px;font-weight:600;color:var(--color-destructive)">Receipt #</th>' +
+                '</tr></thead>' +
+                '<tbody><tr id="erPaymentsTbodyPlaceholder"><td colspan="5" style="padding:16px 4px;text-align:center;color:var(--color-muted-foreground);font-size:13px"><span class="spinner-border spinner-border-sm"></span> Loading...</td></tr></tbody>' +
+            '</table>' +
+        '</div>';
+
+        // Additional Charges section (ER — view only, no add)
+        var addlItems = []; // ER bills don't have additionalCharges yet
+        var addlCategories = ['All'];
+
+        body += '<div style="background:var(--color-card);padding:20px 24px;border-radius:12px;border:1px solid var(--color-border)">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">' +
+                '<h4 style="margin:0;font-size:15px;font-weight:700">Additional Charges</h4>' +
+                '<div style="display:flex;gap:6px;align-items:center">' +
+                    addlCategories.map(function(cat) {
+                        var isActive = erBillingAddlChargeFilter === cat;
+                        return '<button class="er-addl-charge-filter-pill" data-filter="' + cat + '" style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid ' + (isActive ? 'var(--midnight-blue)' : 'var(--color-border)') + ';background:' + (isActive ? 'var(--midnight-blue)' : '#fff') + ';color:' + (isActive ? '#fff' : 'var(--color-muted-foreground)') + ';cursor:pointer">' + cat + '</button>';
+                    }).join('') +
+                '</div>' +
+            '</div>' +
+            '<table style="width:100%;border-collapse:collapse">' +
+                '<thead><tr style="border-bottom:2px solid var(--color-border)">' +
+                    '<th style="text-align:left;padding:8px 4px;font-size:12px;font-weight:600;color:var(--color-destructive)">Date</th>' +
+                    '<th style="text-align:left;padding:8px 4px;font-size:12px;font-weight:600;color:var(--color-destructive)">Description</th>' +
+                    '<th style="text-align:center;padding:8px 4px;font-size:12px;font-weight:600;color:var(--color-destructive)">Qty</th>' +
+                    '<th style="text-align:right;padding:8px 4px;font-size:12px;font-weight:600;color:var(--color-destructive)">Amount</th>' +
+                '</tr></thead>' +
+                '<tbody><tr><td colspan="4" style="padding:16px 4px;text-align:center;color:var(--color-muted-foreground);font-size:13px">No additional charges added yet</td></tr></tbody>' +
+            '</table>' +
+        '</div>';
+
+        // Footer
+        var footer = '<div style="display:flex;justify-content:space-between;align-items:center;width:100%">' +
+            '<button class="btn-outline" data-bs-dismiss="offcanvas">Close</button>' +
+            '<div style="display:flex;gap:8px">' +
+                '<button class="btn-primary" id="btnERGenerateBill" style="font-size:13px"><i data-lucide="file-text" style="width:14px;height:14px"></i> Generate Bill</button>' +
+            '</div>' +
+        '</div>';
+
+        $('#erBillingDetailBody').html(body);
+        $('#erBillingDetailFooter').html(footer);
+        $('#erBillingDetailTitle').text('Billing & Payment — ' + patName);
+        lucide.createIcons();
+        new bootstrap.Offcanvas(document.getElementById('erBillingDetailSheet')).show();
+
+        // Load payments async
+        $.get('/api/emergency/payments/' + encodeURIComponent(bill.billId), function(payments) {
+            var $placeholder = $('#erPaymentsTbodyPlaceholder');
+            if (!$placeholder.length) return;
+            var $tbody = $placeholder.closest('tbody');
+            $placeholder.remove();
+            if (!payments || payments.length === 0) {
+                $tbody.append('<tr><td colspan="5" style="padding:16px 4px;text-align:center;color:var(--color-muted-foreground);font-size:13px">No payments recorded</td></tr>');
+            } else {
+                var payTotal = 0;
+                payments.forEach(function(p) {
+                    var pDate  = new Date(p.createdAt || p.created_at || Date.now());
+                    var mode   = p.paymentMode || 'Cash';
+                    var pAmt   = Number(p.amount || 0);
+                    payTotal  += pAmt;
+                    var modeBg    = mode === 'Cash' ? '#DCFCE7' : mode === 'Card' ? '#DBEAFE' : '#FEF3C7';
+                    var modeColor = mode === 'Cash' ? '#166534' : mode === 'Card' ? '#1E40AF' : '#92400E';
+                    $tbody.append('<tr style="border-bottom:1px solid var(--color-border)">' +
+                        '<td style="padding:10px 4px;font-size:13px;color:var(--color-muted-foreground)">' + pDate.toLocaleDateString('en-PK', { day: 'numeric', month: 'short' }) + ', ' + pDate.toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit', hour12: true }) + '</td>' +
+                        '<td style="padding:10px 4px;font-size:13px;font-weight:500">' + esc(p.notes || 'Payment') + '</td>' +
+                        '<td style="padding:10px 4px;font-size:13px;font-weight:600;text-align:right;color:var(--color-success);font-family:monospace">' + currency + ' ' + pAmt.toLocaleString() + '</td>' +
+                        '<td style="padding:10px 4px;text-align:center"><span style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:500;background:' + modeBg + ';color:' + modeColor + '">' + esc(mode) + '</span></td>' +
+                        '<td style="padding:10px 4px;font-size:13px;font-family:monospace;color:var(--color-muted-foreground)">' + esc(p.receiptNumber || '-') + '</td>' +
+                    '</tr>');
+                });
+                $tbody.closest('table').append(
+                    '<tfoot><tr style="border-top:2px solid var(--color-border)">' +
+                        '<td colspan="2" style="padding:12px 4px;text-align:right;font-size:14px;font-weight:600">Net Paid</td>' +
+                        '<td style="padding:12px 4px;text-align:right;font-size:16px;font-weight:700;font-family:monospace;color:var(--color-success)">' + currency + ' ' + payTotal.toLocaleString() + '</td>' +
+                        '<td colspan="2"></td>' +
+                    '</tr></tfoot>'
+                );
+            }
+        }).fail(function() {
+            $('#erPaymentsTbodyPlaceholder').html('<td colspan="5" style="padding:16px 4px;text-align:center;color:var(--color-muted-foreground);font-size:13px">No payments recorded</td>');
+        });
+
+        // Charge filter pills
+        $(document).off('click', '.er-charge-filter-pill').on('click', '.er-charge-filter-pill', function() {
+            erBillingChargeFilter = $(this).data('filter');
+            renderERBillingDetailContent(visit, bill, currency);
+        });
+
+        // Add Payment button
+        $('#btnERAddPayment').off('click').on('click', function() {
+            renderERAddPaymentView(visit, bill, chargeItems);
+        });
+
+        // Generate Bill button
+        $('#btnERGenerateBill').off('click').on('click', function() {
+            HMS.toast('Bill generation coming soon', 'info');
+        });
+    }
+
+    function renderERAddPaymentView(visit, bill, chargeItems) {
+        var currency  = hospitalInfo.currency || 'PKR';
+        var totalAmt  = Number(bill.totalAmount || 0);
+        var paidAmt   = Number(bill.paidAmount  || 0);
+        var dueAmt    = Math.max(0, totalAmt - paidAmt);
+        var patName   = (patients.find(function(p){ return p.mrn === visit.mrn; }) || {}).name || visit.patientName || 'Unknown';
+        var initials  = patName.split(' ').map(function(w){ return w[0] || ''; }).join('').toUpperCase().slice(0, 2);
+
+        chargeItems = chargeItems || [];
+
+        // Show spinner while loading existing payments to find unpaid items
+        $('#erBillingDetailBody').html('<div style="padding:40px;text-align:center"><span class="spinner-border"></span><div style="margin-top:12px;font-size:13px;color:var(--color-muted-foreground)">Loading payment details...</div></div>');
+        $('#erBillingDetailFooter').html('');
+
+        $.get('/api/emergency/payments/' + encodeURIComponent(bill.billId), function(existingPayments) {
+            // Determine which charge IDs have already been paid
+            var paidChargeIds = [];
+            (existingPayments || []).forEach(function(p) {
+                if (p.chargeIds && p.chargeIds.length) {
+                    p.chargeIds.forEach(function(cid) { paidChargeIds.push(String(cid)); });
+                }
+            });
+            var unpaidItems = chargeItems.filter(function(ci) {
+                return paidChargeIds.indexOf(String(ci.chargeId)) === -1;
+            });
+            buildERPaymentForm(visit, bill, unpaidItems, dueAmt, initials, patName, currency);
+        }).fail(function() {
+            buildERPaymentForm(visit, bill, chargeItems, dueAmt, initials, patName, currency);
+        });
+    }
+
+    function buildERPaymentForm(visit, bill, unpaidItems, dueAmt, initials, patName, currency) {
+        // Patient header
+        var body = '<div style="background:var(--color-card);padding:20px 24px;border-radius:12px;border:1px solid var(--color-border);margin-bottom:20px;display:flex;align-items:center;gap:16px">' +
+            '<div class="avatar" style="width:48px;height:48px;background:var(--midnight-blue);color:#fff;font-size:18px;font-weight:700;border-radius:50%;display:flex;align-items:center;justify-content:center">' + initials + '</div>' +
+            '<div style="flex:1">' +
+                '<h4 style="margin:0;font-size:18px;font-weight:700">' + esc(patName) + '</h4>' +
+                '<div style="display:flex;gap:8px;margin-top:4px;align-items:center">' +
+                    '<span style="font-size:12px;background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;padding:2px 8px;border-radius:4px;font-family:monospace">' + esc(visit.visitId) + '</span>' +
+                    '<span style="font-size:12px;background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;padding:2px 8px;border-radius:4px;font-family:monospace">' + esc(bill.billId) + '</span>' +
+                '</div>' +
+            '</div>' +
+            '<div style="text-align:right">' +
+                '<div style="font-size:11px;color:var(--color-muted-foreground)">Outstanding</div>' +
+                '<div style="font-size:18px;font-weight:700;color:var(--color-destructive);font-family:monospace">' + currency + ' ' + dueAmt.toLocaleString() + '</div>' +
+            '</div>' +
+        '</div>';
+
+        if (unpaidItems.length === 0) {
+            body += '<div style="background:var(--color-card);padding:40px 24px;border-radius:12px;border:1px solid var(--color-border);text-align:center">' +
+                '<i data-lucide="check-circle" style="width:48px;height:48px;color:var(--color-success);margin-bottom:12px"></i>' +
+                '<h4 style="margin:0 0 8px;font-size:16px;font-weight:600">All Charges Paid</h4>' +
+                '<p style="margin:0;font-size:14px;color:var(--color-muted-foreground)">All individual charges have been paid.</p>' +
+            '</div>';
+        } else {
+            // Select Charges to Pay
+            body += '<div style="background:var(--color-card);padding:20px 24px;border-radius:12px;border:1px solid var(--color-border);margin-bottom:20px">' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">' +
+                    '<h4 style="margin:0;font-size:15px;font-weight:700"><i data-lucide="list-checks" style="width:16px;height:16px;display:inline;vertical-align:-3px;margin-right:6px"></i> Select Charges to Pay</h4>' +
+                    '<button class="btn-outline btn-sm" id="btnERSelectAllCharges" style="font-size:12px"><i data-lucide="check-square" style="width:14px;height:14px"></i> Select All</button>' +
+                '</div>' +
+                '<table style="width:100%;border-collapse:collapse">' +
+                    '<thead><tr style="border-bottom:2px solid var(--color-border)">' +
+                        '<th style="width:40px;padding:8px 4px;text-align:center"><input type="checkbox" id="erChkAllCharges" style="width:16px;height:16px;accent-color:var(--aqua-mint)"></th>' +
+                        '<th style="text-align:left;padding:8px 4px;font-size:12px;font-weight:600;color:var(--color-muted-foreground)">Description</th>' +
+                        '<th style="text-align:center;padding:8px 4px;font-size:12px;font-weight:600;color:var(--color-muted-foreground)">Category</th>' +
+                        '<th style="text-align:right;padding:8px 4px;font-size:12px;font-weight:600;color:var(--color-muted-foreground)">Amount</th>' +
+                    '</tr></thead>' +
+                    '<tbody>';
+
+            unpaidItems.forEach(function(ci, idx) {
+                var chargeKey = ci.chargeId || ('item-' + idx);
+                body += '<tr style="border-bottom:1px solid var(--color-border)">' +
+                    '<td style="padding:10px 4px;text-align:center"><input type="checkbox" class="er-pay-charge-chk" data-idx="' + idx + '" data-key="' + esc(String(chargeKey)) + '" data-amount="' + ci.amount + '" style="width:16px;height:16px;accent-color:var(--aqua-mint)"></td>' +
+                    '<td style="padding:10px 4px;font-size:13px;font-weight:500">' + ci.description + '</td>' +
+                    '<td style="padding:10px 4px;text-align:center"><span style="font-size:11px;padding:2px 8px;border-radius:4px;background:#F3F4F6;color:#374151">' + esc(ci.category) + '</span></td>' +
+                    '<td style="padding:10px 4px;text-align:right;font-family:monospace;font-size:13px;font-weight:600">' + currency + ' ' + ci.amount.toLocaleString() + '</td>' +
+                '</tr>';
+            });
+
+            body += '</tbody>' +
+                '<tfoot><tr style="border-top:2px solid var(--color-border)">' +
+                    '<td colspan="3" style="padding:12px 4px;text-align:right;font-size:14px;font-weight:700">Selected Total</td>' +
+                    '<td style="padding:12px 4px;text-align:right;font-size:16px;font-weight:700;font-family:monospace;color:var(--midnight-blue)" id="erPaySelectedTotal">' + currency + ' 0</td>' +
+                '</tr></tfoot>' +
+            '</table></div>';
+
+            // Payment Details form
+            body += '<div style="background:var(--color-card);padding:20px 24px;border-radius:12px;border:1px solid var(--color-border)">' +
+                '<h4 style="margin:0 0 16px;font-size:15px;font-weight:700"><i data-lucide="credit-card" style="width:16px;height:16px;display:inline;vertical-align:-3px;margin-right:6px"></i> Payment Details</h4>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">' +
+                    '<div class="form-group">' +
+                        '<label style="font-size:12px;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Payment Method *</label>' +
+                        '<select id="erPayMode" class="form-control" style="font-size:13px">' +
+                            '<option value="Cash">Cash</option>' +
+                            '<option value="Card">Card (Credit/Debit)</option>' +
+                            '<option value="UPI">UPI / Mobile Payment</option>' +
+                            '<option value="Bank Transfer">Bank Transfer</option>' +
+                            '<option value="Cheque">Cheque</option>' +
+                            '<option value="Insurance">Insurance</option>' +
+                        '</select>' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label style="font-size:12px;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Reference / Transaction ID</label>' +
+                        '<input type="text" id="erPayReference" class="form-control" placeholder="Optional reference" style="font-size:13px">' +
+                    '</div>' +
+                '</div>' +
+                '<div class="form-group" style="margin-top:12px">' +
+                    '<label style="font-size:12px;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Notes</label>' +
+                    '<textarea id="erPayNotes" class="form-control" rows="2" placeholder="Optional payment notes" style="font-size:13px;resize:none"></textarea>' +
+                '</div>' +
+            '</div>';
+        }
+
+        var footer = '<div style="display:flex;justify-content:space-between;align-items:center;width:100%">' +
+            '<button class="btn-outline" id="btnERPayBack" style="font-size:13px"><i data-lucide="arrow-left" style="width:14px;height:14px"></i> Back</button>' +
+            (unpaidItems.length > 0 ? '<button class="btn-primary" id="btnERPaySubmit" disabled style="font-size:13px;opacity:0.5"><i data-lucide="check" style="width:14px;height:14px"></i> Save Payment</button>' : '') +
+        '</div>';
+
+        $('#erBillingDetailBody').html(body);
+        $('#erBillingDetailTitle').text('Add Payment');
+        $('#erBillingDetailFooter').html(footer);
+        lucide.createIcons();
+
+        function updateERSelectedTotal() {
+            var total = 0;
+            var anyChecked = false;
+            $('.er-pay-charge-chk:checked').each(function() {
+                total += Number($(this).data('amount'));
+                anyChecked = true;
+            });
+            if (total > dueAmt) total = dueAmt;
+            $('#erPaySelectedTotal').text(currency + ' ' + total.toLocaleString());
+            if (anyChecked) {
+                $('#btnERPaySubmit').prop('disabled', false).css('opacity', '1');
+            } else {
+                $('#btnERPaySubmit').prop('disabled', true).css('opacity', '0.5');
+            }
+            var allChecked = $('.er-pay-charge-chk').length === $('.er-pay-charge-chk:checked').length;
+            $('#erChkAllCharges').prop('checked', allChecked);
+        }
+
+        $(document).off('change', '.er-pay-charge-chk').on('change', '.er-pay-charge-chk', updateERSelectedTotal);
+
+        $('#erChkAllCharges').off('change').on('change', function() {
+            var checked = $(this).is(':checked');
+            $('.er-pay-charge-chk').prop('checked', checked);
+            updateERSelectedTotal();
+        });
+
+        $('#btnERSelectAllCharges').off('click').on('click', function() {
+            var allChecked = $('.er-pay-charge-chk').length === $('.er-pay-charge-chk:checked').length;
+            $('.er-pay-charge-chk').prop('checked', !allChecked);
+            $('#erChkAllCharges').prop('checked', !allChecked);
+            updateERSelectedTotal();
+        });
+
+        $('#btnERPayBack').off('click').on('click', function() {
+            renderERBillingDetailContent(visit, bill, currency);
+        });
+
+        $('#btnERPaySubmit').off('click').on('click', function() {
+            var selectedAmount = 0;
+            $('.er-pay-charge-chk:checked').each(function() {
+                selectedAmount += Number($(this).data('amount'));
+            });
+            if (selectedAmount > dueAmt) selectedAmount = dueAmt;
+            if (selectedAmount <= 0) return;
+
+            var capturedMode  = $('#erPayMode').val() || 'Cash';
+            var capturedRef   = ($('#erPayReference').val() || '').trim();
+            var capturedNotes = ($('#erPayNotes').val() || '').trim();
+            var $btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Processing...');
+
+            $.ajax({
+                url: '/api/emergency/payments',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    billId:      bill.billId,
+                    visitId:     visit.visitId,
+                    mrn:         visit.mrn,
+                    amount:      selectedAmount,
+                    paymentMode: capturedMode,
+                    reference:   capturedRef,
+                    notes:       capturedNotes,
+                }),
+                success: function(res) {
+                    var updatedBill = res.bill || bill;
+                    var idx = bills.findIndex(function(b) { return b.billId === bill.billId; });
+                    if (idx > -1) bills[idx] = updatedBill;
+                    HMS.toast('Payment recorded successfully', 'success');
+                    renderERBillingDetailContent(visit, updatedBill, currency);
+                    renderERBillingTab();
+                },
+                error: function(xhr) {
+                    $btn.prop('disabled', false).html('<i data-lucide="check" style="width:14px;height:14px"></i> Save Payment');
+                    lucide.createIcons();
+                    HMS.ajaxError(xhr, 'Payment failed');
+                }
+            });
+        });
+    }
 });

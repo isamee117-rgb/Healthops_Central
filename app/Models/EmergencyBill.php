@@ -16,6 +16,7 @@ class EmergencyBill extends Model
         'consultation_charges',
         'doctor_fee',
         'total_amount',
+        'paid_amount',
         'payment_status',
         'history',
     ];
@@ -24,6 +25,7 @@ class EmergencyBill extends Model
         'consultation_charges' => 'decimal:2',
         'doctor_fee' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
         'history' => 'array',
     ];
 }
