@@ -60,11 +60,12 @@ class PermissionSeeder extends Seeder
             ['parent_module' => 'ipd', 'module' => 'ipd.discharge',       'label' => 'IPD Discharge',       'actions' => []],
 
             // ── Emergency (ER) – tab access only ──────────────────────────────
-            ['parent_module' => 'emergency', 'module' => 'emergency.triage',         'label' => 'ER Triage',         'actions' => []],
-            ['parent_module' => 'emergency', 'module' => 'emergency.board',          'label' => 'ER Board',          'actions' => []],
-            ['parent_module' => 'emergency', 'module' => 'emergency.treatment',      'label' => 'ER Treatment',      'actions' => []],
-            ['parent_module' => 'emergency', 'module' => 'emergency.investigations', 'label' => 'ER Investigations', 'actions' => []],
-            ['parent_module' => 'emergency', 'module' => 'emergency.disposition',    'label' => 'ER Disposition',    'actions' => []],
+            ['parent_module' => 'emergency', 'module' => 'emergency.triage',         'label' => 'ER Triage',            'actions' => []],
+            ['parent_module' => 'emergency', 'module' => 'emergency.board',          'label' => 'ER Board',             'actions' => []],
+            ['parent_module' => 'emergency', 'module' => 'emergency.treatment',      'label' => 'ER Treatment',         'actions' => []],
+            ['parent_module' => 'emergency', 'module' => 'emergency.investigations', 'label' => 'ER Investigations',    'actions' => []],
+            ['parent_module' => 'emergency', 'module' => 'emergency.disposition',    'label' => 'ER Disposition',       'actions' => []],
+            ['parent_module' => 'emergency', 'module' => 'emergency.billing',        'label' => 'ER Billing & Payment', 'actions' => []],
 
             // ── Operation Theater – tab access only ───────────────────────────
             ['parent_module' => 'ot', 'module' => 'ot.scheduling', 'label' => 'OT Scheduling', 'actions' => []],

@@ -7,7 +7,7 @@
             <i data-lucide="clipboard-list"></i>
             <span class="hide-mobile">Triage & Registration</span>
         </button>
-        <button class="module-tab" data-tab="er-billing" data-permission="emergency.triage.access">
+        <button class="module-tab" data-tab="er-billing" data-permission="emergency.billing.access">
             <i data-lucide="credit-card"></i>
             <span class="hide-mobile">Billing &amp; Payment</span>
         </button>
