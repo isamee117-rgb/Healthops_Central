@@ -76,7 +76,9 @@ class IpdController extends Controller
             }
 
             $chargeIds = $request->input('chargeIds', []);
-            $roomCharges = $this->calculateChargesFromMaster('IPD', $chargeIds);
+            $roomCharges = $request->filled('consultationCharges')
+                ? (float) $request->input('consultationCharges')
+                : $this->calculateChargesFromMaster('IPD', $chargeIds);
             $doctorFee = $request->input('doctorFee');
 
             $mandatoryIds = \App\Models\HospitalCharge::where('module', 'IPD')

@@ -14,6 +14,7 @@ class EmergencyBill extends Model
         'visit_id',
         'patient_name',
         'consultation_charges',
+        'charge_ids',
         'doctor_fee',
         'total_amount',
         'paid_amount',
@@ -23,6 +24,7 @@ class EmergencyBill extends Model
 
     protected $casts = [
         'consultation_charges' => 'decimal:2',
+        'charge_ids' => 'array',
         'doctor_fee' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'paid_amount' => 'decimal:2',

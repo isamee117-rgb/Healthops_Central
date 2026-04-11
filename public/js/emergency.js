@@ -348,9 +348,8 @@ $(document).ready(function() {
     }
 
     function _erTriRenderPagination(source) {
-        /* sort latest / most-recent first */
         var sorted = source.slice().sort(function(a, b) {
-            return new Date(b.consultationDate) - new Date(a.consultationDate);
+            return (b.consultationDate || '').localeCompare(a.consultationDate || '');
         });
         var total  = sorted.length;
         var pages  = Math.max(1, Math.ceil(total / erTriPerPageVal));
@@ -1225,9 +1224,27 @@ $(document).ready(function() {
         var totalAmt   = bill ? Number(bill.totalAmount  || 0) : 0;
         var paidAmt    = bill ? Number(bill.paidAmount   || 0) : 0;
         var doctorFee  = bill ? Number(bill.doctorFee    || 0) : 0;
-        var otherChg   = bill ? Number(bill.consultationCharges || bill.otherCharges || 0) : 0;
+        var storedConsult = bill ? Number(bill.consultationCharges || bill.otherCharges || 0) : 0;
         var billId     = bill ? (bill.billId || '-') : '-';
         var payStatus  = bill ? (bill.paymentStatus || '-') : '-';
+
+        /* resolve charge line items from masterCharges */
+        var chargeLineItems = [];
+        if (bill && bill.chargeIds && bill.chargeIds.length > 0) {
+            var _mItems = [];
+            bill.chargeIds.forEach(function(cid) {
+                var mc = masterCharges.find(function(m) { return String(m.id) === String(cid) || String(m.chargeId) === String(cid); });
+                if (mc) _mItems.push({ name: mc.name, amount: Number(mc.amount || 0) });
+            });
+            var _mSum = _mItems.reduce(function(s, c) { return s + c.amount; }, 0);
+            if (_mItems.length > 0 && storedConsult > 0 && Math.abs(_mSum - storedConsult) > 0.01) {
+                chargeLineItems.push({ name: _mItems.length === 1 ? _mItems[0].name : 'Hospital Charges', amount: storedConsult });
+            } else {
+                chargeLineItems = _mItems;
+            }
+        } else if (storedConsult > 0) {
+            chargeLineItems.push({ name: 'Hospital Charges', amount: storedConsult });
+        }
 
         var arrDate    = visit.consultationDate ? new Date(visit.consultationDate) : null;
         var arrDateStr = arrDate
@@ -1315,7 +1332,7 @@ $(document).ready(function() {
                             '<tr><td style="padding:8px 0;color:var(--color-muted-foreground)">Payment Status</td><td style="padding:8px 0;text-align:right">' + payBadge + '</td></tr>' +
                             '<tr><td colspan="2" style="padding:0"><hr style="margin:8px 0;border-color:var(--color-border)"></td></tr>' +
                             (doctorFee > 0 ? '<tr><td style="padding:8px 0;color:var(--color-muted-foreground)">Doctor Fee</td><td style="padding:8px 0;text-align:right;font-weight:500;font-family:monospace;color:var(--color-foreground)">' + currency + ' ' + doctorFee.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td></tr>' : '') +
-                            (otherChg  > 0 ? '<tr><td style="padding:8px 0;color:var(--color-muted-foreground)">Other Charges</td><td style="padding:8px 0;text-align:right;font-weight:500;font-family:monospace;color:var(--color-foreground)">' + currency + ' ' + otherChg.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td></tr>' : '') +
+                            chargeLineItems.map(function(ci) { return '<tr><td style="padding:8px 0;color:var(--color-muted-foreground)">' + esc(ci.name) + '</td><td style="padding:8px 0;text-align:right;font-weight:500;font-family:monospace;color:var(--color-foreground)">' + currency + ' ' + Number(ci.amount).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td></tr>'; }).join('') +
                             '<tr><td colspan="2" style="padding:0"><hr style="margin:8px 0;border-color:var(--color-border)"></td></tr>' +
                             '<tr><td style="padding:8px 0;font-weight:700;font-size:13px;text-transform:uppercase;color:var(--color-foreground)">Net Total</td><td style="padding:8px 0;text-align:right;font-weight:700;font-size:18px;font-family:monospace;color:var(--color-foreground)">' + currency + ' ' + totalAmt.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td></tr>' +
                         '</table>' +
@@ -1856,8 +1873,11 @@ $(document).ready(function() {
             '</div>' +
 
             /* footer */
-            '<div style="padding:0 24px 20px;display:flex;justify-content:flex-end">' +
-            '<button id="btnERRegCloseSuccess" style="height:40px;padding:0 28px;border:none;border-radius:8px;background:#060740;color:#7FFFD4;font-size:13.5px;font-weight:700;cursor:pointer">Close</button>' +
+            '<div style="padding:0 24px 20px;display:flex;gap:10px">' +
+            '<button id="btnERRegCloseSuccess" style="flex:1;height:44px;border:1px solid #DEE2E6;border-radius:10px;background:#fff;color:#6C757D;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">' +
+            '<i data-lucide="x" style="width:16px;height:16px"></i> Close</button>' +
+            '<button id="btnERPrintSlip" style="flex:2;height:44px;border:none;border-radius:10px;background:#060740;color:#7FFFD4;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">' +
+            '<i data-lucide="printer" style="width:17px;height:17px"></i> Print Slip</button>' +
             '</div>' +
 
             '</div></div></div>';
@@ -1867,8 +1887,294 @@ $(document).ready(function() {
         var modal = new bootstrap.Modal(document.getElementById('erRegSuccessModal'));
         modal.show();
         $('#btnERRegCloseSuccess').on('click', function() { modal.hide(); });
+        $('#btnERPrintSlip').on('click', function() { printERRegistrationSlip(info.visit, info.patient, info.bill); });
         document.getElementById('erRegSuccessModal').addEventListener('hidden.bs.modal', function() {
             $('#erRegSuccessModal').remove();
+        });
+    }
+
+    function printERRegistrationSlip(visit, patient, bill) {
+        var currency = (typeof hospitalInfo !== 'undefined' && hospitalInfo.currency) ? hospitalInfo.currency : 'PKR';
+
+        $.when(
+            $.get('/api/hospital-info/settings/letterhead'),
+            $.get('/api/hospital-info/settings/footer'),
+            $.get('/api/hospital-info/settings/basic'),
+            $.get('/api/hospital-info/settings/doc_format_er_registration')
+        ).done(function(lhRes, ftRes, prRes, fmtRes) {
+            var savedFormat = (fmtRes[0].settings && fmtRes[0].settings['doc_format_er_registration']) || 'a4';
+            if (savedFormat === 'thermal') {
+                _printERThermal(visit, patient, bill, currency);
+                return;
+            }
+            var lh = lhRes[0].settings || {};
+            var ft = ftRes[0].settings || {};
+            var pr = prRes[0].settings || {};
+
+            var color    = lh.lh_primary_color || '#003366';
+            var hospName = (lh.lh_show_name !== '0') ? (pr.basic_name || '') : '';
+            var tagline  = (lh.lh_show_tagline === '1') ? (pr.basic_tagline || '') : '';
+            var logoPath = (lh.lh_show_logo !== '0') ? (pr.logo || pr.basic_logo || '') : '';
+            var logoSizeMap = { small: '44px', medium: '64px', large: '88px' };
+            var logoSize = logoSizeMap[lh.lh_logo_size] || '64px';
+
+            var addrParts = (lh.lh_show_address === '1')
+                ? [pr.address_street, pr.address_city, pr.address_state, pr.address_country].filter(Boolean) : [];
+
+            var svgPhone = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
+            var svgMail  = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>';
+            var svgGlobe = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20A14.5 14.5 0 0 0 12 2"/><path d="M2 12h20"/></svg>';
+            var contactParts = [];
+            if (lh.lh_show_phone   === '1' && pr.contact_phone)   contactParts.push(svgPhone + e(pr.contact_phone));
+            if (lh.lh_show_email   === '1' && pr.contact_email)   contactParts.push(svgMail  + e(pr.contact_email));
+            if (lh.lh_show_website === '1' && pr.contact_website) contactParts.push(svgGlobe + e(pr.contact_website));
+
+            function e(v) { return (v || '').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+            function fmt(n) { return currency + '\u00a0' + Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+            function infoCell(label, val, borderRight, rowBg) {
+                return '<td style="padding:7px 12px;background:' + (rowBg||'#fff') + ';' + (borderRight ? 'border-right:1px solid #e8edf2;' : '') + '">'
+                     + '<div style="font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:3px">' + e(label) + '</div>'
+                     + '<div style="font-size:10px;font-weight:600;color:#0f172a;line-height:1.2">' + e(val) + '</div>'
+                     + '</td>';
+            }
+
+            var patientName = patient ? (patient.name || (visit && visit.patientName)) : (visit && visit.patientName || '-');
+            var mrn         = visit ? (visit.mrn    || '-') : '-';
+            var visitId     = visit ? (visit.visitId || '-') : '-';
+            var billId      = bill  ? (bill.billId   || '-') : '-';
+            var doctorName  = visit ? (visit.doctorName  || '-') : '-';
+            var department  = visit ? (visit.department  || '-') : '-';
+            var visitType   = visit ? (visit.visitType   || 'ER Visit') : 'ER Visit';
+            var esi         = visit ? (visit.esi         || '-') : '-';
+            var phone       = patient ? (patient.phone   || '-') : '-';
+            var cnic        = patient ? (patient.cnic    || '-') : '-';
+            var age         = patient ? (patient.age     || '-') : '-';
+            var gender      = patient ? (patient.gender  || '-') : '-';
+
+            var doctorFee      = bill ? Number(bill.doctorFee || 0) : 0;
+            var storedConsult  = bill ? Number(bill.consultationCharges || 0) : 0;
+            var chargeLineItems = [];
+            if (bill && bill.chargeIds && bill.chargeIds.length > 0) {
+                var masterItems = [];
+                bill.chargeIds.forEach(function(cid) {
+                    var mc = masterCharges.find(function(m) { return String(m.id) === String(cid) || String(m.chargeId) === String(cid); });
+                    if (mc) masterItems.push({ name: mc.name, amount: Number(mc.amount || 0) });
+                });
+                var masterSum = masterItems.reduce(function(s, c) { return s + c.amount; }, 0);
+                if (storedConsult > 0 && Math.abs(masterSum - storedConsult) > 0.01) {
+                    chargeLineItems.push({ name: masterItems.length === 1 ? masterItems[0].name : 'Hospital Charges', amount: storedConsult });
+                } else {
+                    chargeLineItems = masterItems;
+                }
+            } else if (storedConsult > 0) {
+                chargeLineItems.push({ name: 'Hospital Charges', amount: storedConsult });
+            }
+            var netTotal = bill ? Number(bill.totalAmount || 0) : (doctorFee + chargeLineItems.reduce(function(s,c){return s+c.amount;},0));
+
+            var footerLines = [ft.footer_line1, ft.footer_line2, ft.footer_line3].filter(Boolean);
+            var metaParts = [];
+            if (ft.footer_show_page_number === '1') metaParts.push('Page 1 of 1');
+            if (ft.footer_show_date === '1') { var _now = new Date(); metaParts.push('Printed: ' + _now.toLocaleDateString('en-GB') + ', ' + _now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})); }
+            if (ft.footer_show_disclaimer === '1') metaParts.push('Confidential \u2014 For medical use only');
+
+            var logoHtml = '';
+            if (lh.lh_show_logo !== '0') {
+                logoHtml = '<div style="width:' + logoSize + ';height:' + logoSize + ';background:linear-gradient(135deg,#f1f5f9,#e2e8f0);border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #e2e8f0;flex-shrink:0">'
+                         + (logoPath ? '<img src="' + logoPath + '" style="max-width:100%;max-height:100%;object-fit:contain">' : '<span style="font-size:9px;color:#94a3b8">Logo</span>')
+                         + '</div>';
+            }
+
+            var chargeRows = '';
+            var sno = 1;
+            if (doctorFee > 0) {
+                chargeRows += '<tr style="background:#fff;border-top:1px solid #f1f5f9">'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#64748b">' + sno + '</td>'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#334155;font-weight:500">Doctor Fee \u2014 ' + e(doctorName) + '</td>'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#64748b;text-align:right">1</td>'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#64748b;text-align:right">' + fmt(doctorFee) + '</td>'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#64748b;text-align:right">\u2014</td>'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#1e293b;font-weight:600;text-align:right">' + fmt(doctorFee) + '</td>'
+                    + '</tr>';
+                sno++;
+            }
+            chargeLineItems.forEach(function(ci) {
+                var bg = sno % 2 === 0 ? '#f8fafc' : '#fff';
+                chargeRows += '<tr style="background:' + bg + ';border-top:1px solid #f1f5f9">'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#64748b">' + sno + '</td>'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#334155;font-weight:500">' + e(ci.name) + '</td>'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#64748b;text-align:right">1</td>'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#64748b;text-align:right">' + fmt(ci.amount) + '</td>'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#64748b;text-align:right">\u2014</td>'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#1e293b;font-weight:600;text-align:right">' + fmt(ci.amount) + '</td>'
+                    + '</tr>';
+                sno++;
+            });
+            if (!chargeRows) chargeRows = '<tr><td colspan="6" style="padding:14px 10px;font-size:10px;color:#94a3b8;text-align:center">No charges recorded</td></tr>';
+
+            var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+                + '<title>ER Registration Slip \u2014 ' + e(patientName) + '</title>'
+                + '<style>* { margin:0; padding:0; box-sizing:border-box; } body { font-family:"SF Pro Text","Segoe UI",Arial,sans-serif; background:#fff; color:#1e293b; } @page { size:A4; margin:12mm 12mm 10mm 12mm; } @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } } table { border-collapse:collapse; width:100%; }</style>'
+                + '</head><body>'
+                + '<div style="max-width:740px;margin:0 auto;background:#fff">'
+                + '<div style="height:4px;background:' + color + '"></div>'
+                + '<div style="padding:24px 32px 16px">'
+                + '<div style="display:flex;align-items:flex-start;gap:20px">'
+                + logoHtml
+                + '<div style="flex:1;min-width:0">'
+                + (hospName ? '<div style="font-size:17px;font-weight:800;color:#1e293b;letter-spacing:-0.3px;line-height:1.1">' + e(hospName) + '</div>' : '')
+                + (tagline  ? '<div style="font-size:11px;color:#64748b;margin-top:4px;font-style:italic">' + e(tagline) + '</div>' : '')
+                + (addrParts.length ? '<div style="font-size:10px;color:#475569;margin-top:5px">' + e(addrParts.join(', ')) + '</div>' : '')
+                + (contactParts.length ? '<div style="font-size:10px;color:#475569;margin-top:4px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">' + contactParts.map(function(p){return '<span style="display:inline-flex;align-items:center;gap:2px">'+p+'</span>';}).join('') + '</div>' : '')
+                + '</div></div>'
+                + '<div style="margin-top:16px;height:1.5px;background:linear-gradient(to right,' + color + ',rgba(0,0,0,0.05));border-radius:2px"></div>'
+                + '</div>'
+                + '<div style="padding:9px 32px;background:' + color + ';display:flex;align-items:center;justify-content:space-between">'
+                + '<span style="color:#fff;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase">EMERGENCY REGISTRATION SLIP</span>'
+                + '<span style="background:rgba(255,255,255,0.15);color:#fff;font-size:9px;font-weight:600;padding:2px 9px;border-radius:20px;letter-spacing:0.5px">ORIGINAL</span>'
+                + '</div>'
+                + '<div style="padding:16px 32px">'
+                + '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,0.06)">'
+                + '<div style="height:3px;background:' + color + '"></div>'
+                + '<table style="table-layout:fixed">'
+                + '<tr style="border-bottom:1px solid #e8edf2">'
+                + infoCell('PATIENT NAME', patientName, true,  '#fff')
+                + infoCell('MRN',          mrn,         true,  '#fff')
+                + infoCell('VISIT ID',     visitId,     true,  '#fff')
+                + infoCell('BILL ID',      billId,      false, '#fff')
+                + '</tr>'
+                + '<tr style="border-bottom:1px solid #e8edf2">'
+                + infoCell('DOCTOR',       doctorName,  true,  '#f8fafc')
+                + infoCell('DEPARTMENT',   department,  true,  '#f8fafc')
+                + infoCell('VISIT TYPE',   visitType,   true,  '#f8fafc')
+                + infoCell('ESI LEVEL',    esi,         false, '#f8fafc')
+                + '</tr>'
+                + '<tr>'
+                + infoCell('PHONE NO.',    phone,  true,  '#fff')
+                + infoCell('CNIC',         cnic,   true,  '#fff')
+                + infoCell('AGE',          (age !== '-' ? age + ' Years' : '-'), true, '#fff')
+                + infoCell('GENDER',       gender, false, '#fff')
+                + '</tr>'
+                + '</table>'
+                + '</div>'
+                + '<div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:16px">'
+                + '<table style="table-layout:fixed">'
+                + '<thead><tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0">'
+                + '<th style="padding:8px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;width:36px">#</th>'
+                + '<th style="padding:8px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b">Description</th>'
+                + '<th style="padding:8px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;text-align:right;width:50px">Qty</th>'
+                + '<th style="padding:8px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;text-align:right;width:110px">Unit Price</th>'
+                + '<th style="padding:8px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;text-align:right;width:80px">Disc.</th>'
+                + '<th style="padding:8px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;text-align:right;width:110px">Total</th>'
+                + '</tr></thead><tbody>' + chargeRows + '</tbody>'
+                + '<tfoot><tr style="background:#f8fafc;border-top:2px solid #e2e8f0">'
+                + '<td colspan="5" style="padding:10px 10px;font-size:11px;font-weight:700;text-align:right;color:#1e293b">GRAND TOTAL</td>'
+                + '<td style="padding:10px 10px;font-size:13px;font-weight:800;text-align:right;color:' + color + ';font-family:monospace">' + fmt(netTotal) + '</td>'
+                + '</tr></tfoot>'
+                + '</table></div>'
+                + (footerLines.length || metaParts.length ? '<div style="border-top:1px solid #e2e8f0;padding-top:12px;display:flex;justify-content:space-between;align-items:flex-end">'
+                    + (footerLines.length ? '<div>' + footerLines.map(function(l){return '<div style="font-size:9px;color:#64748b;line-height:1.6">' + e(l) + '</div>';}).join('') + '</div>' : '<div></div>')
+                    + (metaParts.length  ? '<div style="text-align:right">' + metaParts.map(function(p){return '<div style="font-size:8px;color:#94a3b8">' + p + '</div>';}).join('') + '</div>' : '')
+                    + '</div>' : '')
+                + '</div>'
+                + '<div style="height:4px;background:' + color + ';margin-top:8px"></div>'
+                + '<div class="no-print" style="text-align:center;margin:20px 0">'
+                + '<button onclick="window.print()" style="padding:10px 32px;font-size:14px;background:' + color + ';color:#fff;border:none;border-radius:8px;cursor:pointer">&#128438; Print Slip</button>'
+                + '</div>'
+                + '</div></body></html>';
+
+            var win = window.open('', '_blank');
+            if (win) { win.document.write(html); win.document.close(); win.focus(); setTimeout(function(){win.print();}, 600); }
+        });
+    }
+
+    function _printERThermal(visit, patient, bill, currency) {
+        $.when(
+            $.get('/api/hospital-info/settings/letterhead'),
+            $.get('/api/hospital-info/settings/basic')
+        ).done(function(lhRes, prRes) {
+            var lh = lhRes[0].settings || {};
+            var pr = prRes[0].settings || {};
+            var hospName = pr.basic_name  || '';
+            var phone    = pr.contact_phone || '';
+
+            function e(v) { return (v || '').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+            function fmt(n) { return currency + ' ' + Number(n).toLocaleString(); }
+            function chargeRow(desc, qty, disc, net, total) {
+                return '<tr>'
+                     + '<td style="padding:2px 4px">' + e(desc) + '</td>'
+                     + '<td style="text-align:center;padding:2px 4px">' + qty + '</td>'
+                     + '<td style="text-align:right;padding:2px 4px">' + disc + '</td>'
+                     + '<td style="text-align:right;padding:2px 4px">' + net + '</td>'
+                     + '<td style="text-align:right;padding:2px 4px">' + total + '</td>'
+                     + '</tr>';
+            }
+
+            var patientName = patient ? (patient.name || (visit && visit.patientName)) : (visit && visit.patientName || '-');
+            var mrn         = visit ? (visit.mrn || '-') : '-';
+            var visitId     = visit ? (visit.visitId || '-') : '-';
+            var billId      = bill  ? (bill.billId || '-') : '-';
+            var doctorName  = visit ? (visit.doctorName || '-') : '-';
+            var department  = visit ? (visit.department || '-') : '-';
+            var esi         = visit ? (visit.esi || '-') : '-';
+            var doctorFee   = bill  ? Number(bill.doctorFee || 0) : 0;
+            var storedConsult = bill ? Number(bill.consultationCharges || 0) : 0;
+            var netTotal    = bill  ? Number(bill.totalAmount || 0) : 0;
+            var patPhone    = patient ? (patient.phone || '-') : '-';
+
+            var chargeLineItems = [];
+            if (bill && bill.chargeIds && bill.chargeIds.length > 0) {
+                var masterItems2 = [];
+                bill.chargeIds.forEach(function(cid) {
+                    var mc = masterCharges.find(function(m) { return String(m.id) === String(cid) || String(m.chargeId) === String(cid); });
+                    if (mc) masterItems2.push({ name: mc.name, amount: Number(mc.amount || 0) });
+                });
+                var masterSum2 = masterItems2.reduce(function(s,c){return s+c.amount;},0);
+                if (storedConsult > 0 && Math.abs(masterSum2 - storedConsult) > 0.01) {
+                    chargeLineItems.push({ name: masterItems2.length === 1 ? masterItems2[0].name : 'Hospital Charges', amount: storedConsult });
+                } else { chargeLineItems = masterItems2; }
+            } else if (storedConsult > 0) {
+                chargeLineItems.push({ name: 'Hospital Charges', amount: storedConsult });
+            }
+
+            var thStyle = 'style="font-weight:700;padding:2px 4px;border-bottom:1px dashed #999"';
+            var rows = '<tr><th ' + thStyle + ' align="left">Description</th><th ' + thStyle + ' align="center">Qty</th><th ' + thStyle + ' align="right">Disc</th><th ' + thStyle + ' align="right">Net</th><th ' + thStyle + ' align="right">Total</th></tr>';
+            if (doctorFee > 0) rows += chargeRow('Doctor Fee — ' + doctorName, 1, '0', fmt(doctorFee), fmt(doctorFee));
+            chargeLineItems.forEach(function(ci) { rows += chargeRow(ci.name, 1, '0', fmt(ci.amount), fmt(ci.amount)); });
+            if (!doctorFee && !chargeLineItems.length) rows += '<tr><td colspan="5" style="padding:4px;color:#999;text-align:center">No charges</td></tr>';
+
+            var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ER Slip</title>'
+                + '<style>* { margin:0; padding:0; box-sizing:border-box; } body { font-family:monospace; font-size:12px; color:#111; background:#fff; width:80mm; margin:0 auto; } @page { size:80mm auto; margin:4mm; } table { width:100%; border-collapse:collapse; } .divider { border-top:1px dashed #999; margin:6px 0; } .center { text-align:center; } .no-print { text-align:center; margin:12px 0; } .no-print button { padding:6px 20px;font-size:12px;background:#060740;color:#fff;border:none;border-radius:6px;cursor:pointer } @media print { .no-print { display:none } }</style>'
+                + '</head><body>'
+                + '<div class="center" style="padding:8px 0 4px">'
+                + '<div style="font-size:14px;font-weight:700">' + e(hospName) + '</div>'
+                + (phone ? '<div style="font-size:10px;color:#555">Tel: ' + e(phone) + '</div>' : '')
+                + '</div>'
+                + '<div class="divider"></div>'
+                + '<div class="center" style="font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 0">EMERGENCY REGISTRATION SLIP</div>'
+                + '<div class="divider"></div>'
+                + '<table><tbody>'
+                + '<tr><td style="color:#555;padding:2px 4px;white-space:nowrap">Patient</td><td style="font-weight:600;padding:2px 4px;text-align:right">' + e(patientName) + '</td></tr>'
+                + '<tr><td style="color:#555;padding:2px 4px">MRN</td><td style="font-weight:600;padding:2px 4px;text-align:right">' + e(mrn) + '</td></tr>'
+                + '<tr><td style="color:#555;padding:2px 4px">Visit ID</td><td style="font-weight:600;padding:2px 4px;text-align:right">' + e(visitId) + '</td></tr>'
+                + '<tr><td style="color:#555;padding:2px 4px">Bill ID</td><td style="font-weight:600;padding:2px 4px;text-align:right">' + e(billId) + '</td></tr>'
+                + '<tr><td style="color:#555;padding:2px 4px">Doctor</td><td style="font-weight:600;padding:2px 4px;text-align:right">' + e(doctorName) + '</td></tr>'
+                + '<tr><td style="color:#555;padding:2px 4px">Department</td><td style="font-weight:600;padding:2px 4px;text-align:right">' + e(department) + '</td></tr>'
+                + '<tr><td style="color:#555;padding:2px 4px">ESI Level</td><td style="font-weight:600;padding:2px 4px;text-align:right">' + e(esi) + '</td></tr>'
+                + '<tr><td style="color:#555;padding:2px 4px">Phone</td><td style="font-weight:600;padding:2px 4px;text-align:right">' + e(patPhone) + '</td></tr>'
+                + '</tbody></table>'
+                + '<div class="divider"></div>'
+                + '<table><tbody>' + rows + '</tbody></table>'
+                + '<div class="divider"></div>'
+                + '<table><tbody>'
+                + '<tr><td style="font-weight:700;padding:2px 4px">TOTAL</td><td style="font-weight:700;padding:2px 4px;text-align:right">' + fmt(netTotal) + '</td></tr>'
+                + '</tbody></table>'
+                + '<div class="divider"></div>'
+                + '<div class="center" style="font-size:10px;color:#555;padding:4px 0">Thank you for choosing our services</div>'
+                + '<div class="no-print"><button onclick="window.print()">&#128438; Print Slip</button></div>'
+                + '</body></html>';
+
+            var win = window.open('', '_blank');
+            if (win) { win.document.write(html); win.document.close(); win.focus(); setTimeout(function(){win.print();}, 400); }
         });
     }
 
@@ -2096,6 +2402,7 @@ $(document).ready(function() {
                             department: visitForm.department,
                             visitType: visitForm.visitType,
                             chargeIds: chargeIds,
+                            consultationCharges: calcERChargesTotal(),
                             doctorFee: Number(visitForm.doctorFee),
                             esi: visitForm.esi,
                             modeOfArrival: visitForm.modeOfArrival,
@@ -2103,19 +2410,23 @@ $(document).ready(function() {
                             mechanismOfInjury: visitForm.mechanismOfInjury,
                             isMLC: visitForm.isMLC
                         }),
-                        success: function() {
+                        success: function(res) {
                             try { var cs = bootstrap.Offcanvas.getInstance(document.getElementById('erChargesSheet')); if (cs) cs.hide(); } catch(e) {}
                             try { var rs = bootstrap.Offcanvas.getInstance(document.getElementById('erRegistrationSheet')); if (rs) rs.hide(); } catch(e) {}
                             var snapshotName  = getSelectedPatientName();
                             var snapshotMRN   = selectedPatientMRN || '(new)';
                             var snapshotTotal = calcERGrandTotal();
+                            var snapshotPatient = patients.find(function(p){ return p.mrn === snapshotMRN; }) || null;
                             resetRegistration();
                             setTimeout(function() { loadAllData(); }, 300);
                             showERRegisterSuccessModal({
                                 patientName: snapshotName,
                                 mrn:         snapshotMRN,
                                 grandTotal:  snapshotTotal,
-                                currency:    hospitalInfo.currency
+                                currency:    hospitalInfo.currency,
+                                visit:       res && res.visit ? res.visit : null,
+                                bill:        res && res.bill  ? res.bill  : null,
+                                patient:     snapshotPatient
                             });
                         },
                         error: function(xhr) {
@@ -3842,7 +4153,7 @@ $(document).ready(function() {
             var chargeLineItems = [];
             if (bill && bill.chargeIds && bill.chargeIds.length > 0) {
                 bill.chargeIds.forEach(function(cid) {
-                    var mc = (typeof masterCharges !== 'undefined') && masterCharges.find(function(m){ return String(m.chargeId||m.id)===String(cid); });
+                    var mc = (typeof masterCharges !== 'undefined') && masterCharges.find(function(m){ return String(m.id)===String(cid) || String(m.chargeId)===String(cid); });
                     if (mc) chargeLineItems.push({ name: mc.name, amount: Number(mc.amount||0) });
                 });
             } else if (otherChg > 0) {
@@ -3986,7 +4297,7 @@ $(document).ready(function() {
             var chargeLineItems = [];
             if (bill && bill.chargeIds && bill.chargeIds.length > 0) {
                 bill.chargeIds.forEach(function(cid) {
-                    var mc = (typeof masterCharges !== 'undefined') && masterCharges.find(function(m){ return String(m.chargeId||m.id)===String(cid); });
+                    var mc = (typeof masterCharges !== 'undefined') && masterCharges.find(function(m){ return String(m.id)===String(cid) || String(m.chargeId)===String(cid); });
                     if (mc) chargeLineItems.push({ name: mc.name, amount: Number(mc.amount||0) });
                 });
             } else if (otherChg > 0) {

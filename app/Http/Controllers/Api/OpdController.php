@@ -115,7 +115,9 @@ class OpdController extends Controller
 
                 // ── Charges ───────────────────────────────────────────────────────
                 $chargeIds = $request->input('chargeIds', []);
-                $consultationCharges = $this->calculateChargesFromMaster('OPD', $chargeIds);
+                $consultationCharges = $request->filled('consultationCharges')
+                    ? (float) $request->input('consultationCharges')
+                    : $this->calculateChargesFromMaster('OPD', $chargeIds);
                 $doctorFee = $request->input('doctorFee');
 
                 $mandatoryIds = \App\Models\HospitalCharge::where('module', 'OPD')

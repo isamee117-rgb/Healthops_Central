@@ -19,7 +19,7 @@ class EmergencyController extends Controller
 
     public function visits()
     {
-        return response()->json($this->toCamelCollection(EmergencyVisit::all()));
+        return response()->json($this->toCamelCollection(EmergencyVisit::orderBy('consultation_date', 'desc')->get()));
     }
 
     public function bills()
@@ -45,7 +45,9 @@ class EmergencyController extends Controller
             }
 
             $chargeIds = $request->input('chargeIds', []);
-            $consultationCharges = $this->calculateChargesFromMaster('ER', $chargeIds);
+            $consultationCharges = $request->has('consultationCharges')
+                ? (float) $request->input('consultationCharges')
+                : $this->calculateChargesFromMaster('ER', $chargeIds);
             $doctorFee = $request->input('doctorFee');
             $esi = $request->input('esi');
 
@@ -88,6 +90,7 @@ class EmergencyController extends Controller
                 'visit_id' => $visitId,
                 'patient_name' => $patient->name,
                 'consultation_charges' => $consultationCharges,
+                'charge_ids' => $chargeIds,
                 'doctor_fee' => $doctorFee,
                 'total_amount' => $totalAmount,
                 'payment_status' => 'Pending',

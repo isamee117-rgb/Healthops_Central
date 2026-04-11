@@ -458,15 +458,36 @@ $(document).ready(function() {
                             '<i data-lucide="wallet" style="width:18px;height:18px;color:var(--midnight-blue)"></i>' +
                             '<span style="font-size:14px;font-weight:700;text-transform:uppercase;color:var(--midnight-blue);letter-spacing:0.5px">Financial Details</span>' +
                         '</div>' +
-                        '<table style="width:100%;font-size:13px;border-collapse:collapse">' +
-                            '<tr><td style="padding:8px 0;color:var(--color-muted-foreground)">Invoice Ref</td><td style="padding:8px 0;text-align:right;font-weight:600;font-family:monospace;color:var(--color-foreground)">' + esc(billId) + '</td></tr>' +
-                            '<tr><td style="padding:8px 0;color:var(--color-muted-foreground)">Payment Status</td><td style="padding:8px 0;text-align:right">' + payBadge + '</td></tr>' +
-                            '<tr><td colspan="2" style="padding:0"><hr style="margin:8px 0;border-color:var(--color-border)"></td></tr>' +
-                            (roomCharges > 0 ? '<tr><td style="padding:8px 0;color:var(--color-muted-foreground)">Room Charges</td><td style="padding:8px 0;text-align:right;font-weight:500;font-family:monospace;color:var(--color-foreground)">' + currency + ' ' + roomCharges.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td></tr>' : '') +
-                            (otherCharges > 0 ? '<tr><td style="padding:8px 0;color:var(--color-muted-foreground)">Other Charges</td><td style="padding:8px 0;text-align:right;font-weight:500;font-family:monospace;color:var(--color-foreground)">' + currency + ' ' + otherCharges.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td></tr>' : '') +
-                            '<tr><td colspan="2" style="padding:0"><hr style="margin:8px 0;border-color:var(--color-border)"></td></tr>' +
-                            '<tr><td style="padding:8px 0;font-weight:700;font-size:13px;text-transform:uppercase;color:var(--color-foreground)">Net Total</td><td style="padding:8px 0;text-align:right;font-weight:700;font-size:18px;font-family:monospace;color:var(--color-foreground)">' + currency + ' ' + totalAmount.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td></tr>' +
-                        '</table>' +
+                        (function() {
+                            var _td = function(label, val) { return '<tr><td style="padding:8px 0;color:var(--color-muted-foreground)">' + label + '</td><td style="padding:8px 0;text-align:right;font-weight:500;font-family:monospace;color:var(--color-foreground)">' + currency + ' ' + Number(val).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td></tr>'; };
+                            var _rows = '';
+                            if (bill && Number(bill.doctorFee) > 0) _rows += _td('Doctor Fee', bill.doctorFee);
+                            if (bill && roomCharges > 0) {
+                                var _cids = bill.chargeIds && bill.chargeIds.length ? bill.chargeIds : [];
+                                var _mItems = [];
+                                _cids.forEach(function(cid) {
+                                    var mc = masterCharges.find(function(m) { return String(m.id) === String(cid) || String(m.chargeId) === String(cid); });
+                                    if (mc) _mItems.push({ name: mc.name, amount: Number(mc.amount) });
+                                });
+                                var _mSum = _mItems.reduce(function(s, m) { return s + m.amount; }, 0);
+                                if (_mItems.length > 0 && Math.abs(_mSum - roomCharges) < 0.01) {
+                                    _mItems.forEach(function(m) { _rows += _td(esc(m.name), m.amount); });
+                                } else if (_mItems.length === 1) {
+                                    _rows += _td(esc(_mItems[0].name), roomCharges);
+                                } else {
+                                    _rows += _td('Hospital Charges', roomCharges);
+                                }
+                            }
+                            if (otherCharges > 0) _rows += _td('Other Charges', otherCharges);
+                            return '<table style="width:100%;font-size:13px;border-collapse:collapse">'
+                                + '<tr><td style="padding:8px 0;color:var(--color-muted-foreground)">Invoice Ref</td><td style="padding:8px 0;text-align:right;font-weight:600;font-family:monospace;color:var(--color-foreground)">' + esc(billId) + '</td></tr>'
+                                + '<tr><td style="padding:8px 0;color:var(--color-muted-foreground)">Payment Status</td><td style="padding:8px 0;text-align:right">' + payBadge + '</td></tr>'
+                                + '<tr><td colspan="2" style="padding:0"><hr style="margin:8px 0;border-color:var(--color-border)"></td></tr>'
+                                + _rows
+                                + '<tr><td colspan="2" style="padding:0"><hr style="margin:8px 0;border-color:var(--color-border)"></td></tr>'
+                                + '<tr><td style="padding:8px 0;font-weight:700;font-size:13px;text-transform:uppercase;color:var(--color-foreground)">Net Total</td><td style="padding:8px 0;text-align:right;font-weight:700;font-size:18px;font-family:monospace;color:var(--color-foreground)">' + currency + ' ' + totalAmount.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td></tr>'
+                                + '</table>';
+                        })() +
                     '</div>' +
                 '</div>';
 
@@ -942,8 +963,9 @@ $(document).ready(function() {
             var docId = doctor.doctorId || doctor.id;
             $.get('/api/config/doctor-fees/lookup', { doctorId: docId, serviceType: 'IPD' }).done(function(config) {
                 admissionForm.doctorFee = config && config.fee ? config.fee.toString() : '0';
+                delete admissionForm.doctorFeeOverrideAmount;
                 renderRegistrationSheet();
-            }).fail(function() { admissionForm.doctorFee = '0'; renderRegistrationSheet(); });
+            }).fail(function() { admissionForm.doctorFee = '0'; delete admissionForm.doctorFeeOverrideAmount; renderRegistrationSheet(); });
         }
     });
 
@@ -1000,6 +1022,7 @@ $(document).ready(function() {
 
     function buildChargesGrid() {
         chargesGrid = [];
+        delete admissionForm.doctorFeeOverrideAmount;
         var sr = 1;
         var activeCharges = getActiveIpdChargesForGrid();
         activeCharges.filter(function(c) { return c.isMandatory; }).forEach(function(c) {
@@ -1011,6 +1034,7 @@ $(document).ready(function() {
     }
 
     function calcRowAmount(row) {
+        if (row.overrideAmount !== undefined) return Number(row.overrideAmount);
         var subtotal = row.unitPrice * row.qty;
         return Math.max(0, subtotal - Number(row.discount || 0));
     }
@@ -1020,6 +1044,7 @@ $(document).ready(function() {
     }
 
     function calcDoctorFeeTotal() {
+        if (admissionForm.doctorFeeOverrideAmount !== undefined) return Number(admissionForm.doctorFeeOverrideAmount);
         var fee = Number(admissionForm.doctorFee) || 0;
         var disc = Number(admissionForm.doctorFeeDiscount) || 0;
         return Math.max(0, fee - disc);
@@ -1040,7 +1065,7 @@ $(document).ready(function() {
                     '<div style="font-size:11px;color:var(--color-muted-foreground);font-family:monospace">@ ' + hospitalInfo.currency + ' ' + Number(row.unitPrice).toLocaleString() + ' each</div></td>' +
                 '<td style="width:80px;vertical-align:middle"><input type="number" class="form-control form-control-sm charge-qty" data-idx="' + idx + '" value="' + row.qty + '" min="1" style="text-align:center;font-family:monospace"></td>' +
                 '<td style="width:100px;vertical-align:middle"><input type="number" class="form-control form-control-sm charge-discount" data-idx="' + idx + '" value="' + row.discount + '" min="0" step="0.01" style="text-align:right;font-family:monospace"></td>' +
-                '<td style="text-align:right;vertical-align:middle;font-weight:600;font-family:monospace;width:120px">' + hospitalInfo.currency + ' ' + amt.toLocaleString() + '</td>' +
+                '<td style="width:120px;vertical-align:middle"><input type="number" class="form-control form-control-sm charge-amount" data-idx="' + idx + '" value="' + amt.toFixed(2) + '" min="0" step="0.01" style="text-align:right;font-family:monospace;font-weight:600"></td>' +
                 '<td style="text-align:center;vertical-align:middle;width:40px">' + deleteBtn + '</td>' +
                 '</tr>';
         });
@@ -1099,7 +1124,7 @@ $(document).ready(function() {
             '<div style="font-size:11px;color:var(--color-muted-foreground)">' + esc(admissionForm.doctorName || 'Doctor') + ' — IPD</div></td>' +
             '<td style="width:80px;vertical-align:middle"><input type="number" class="form-control form-control-sm" value="1" disabled style="text-align:center;font-family:monospace;background:#f1f1f1"></td>' +
             '<td style="width:100px;vertical-align:middle"><input type="number" class="form-control form-control-sm" id="doctorFeeDiscount" value="' + doctorDisc + '" min="0" step="0.01" style="text-align:right;font-family:monospace"></td>' +
-            '<td style="text-align:right;vertical-align:middle;font-weight:600;font-family:monospace;width:120px" id="doctorFeeAmount">' + hospitalInfo.currency + ' ' + doctorNet.toLocaleString() + '</td>' +
+            '<td style="width:120px;vertical-align:middle"><input type="number" class="form-control form-control-sm" id="doctorFeeAmountInput" value="' + doctorNet.toFixed(2) + '" min="0" step="0.01" style="text-align:right;font-family:monospace;font-weight:600"></td>' +
             '<td style="width:40px"></td>' +
             '</tr></tbody></table></div>';
 
@@ -1143,6 +1168,7 @@ $(document).ready(function() {
             var val = parseInt($(this).val()) || 1;
             if (val < 1) val = 1;
             chargesGrid[idx].qty = val;
+            delete chargesGrid[idx].overrideAmount;
             refreshChargesGrid();
         });
 
@@ -1151,15 +1177,34 @@ $(document).ready(function() {
             var val = parseFloat($(this).val()) || 0;
             if (val < 0) val = 0;
             chargesGrid[idx].discount = val;
+            delete chargesGrid[idx].overrideAmount;
             refreshChargesGrid();
+        });
+
+        $(document).off('input.chargesAmount').on('input.chargesAmount', '.charge-amount', function() {
+            var idx = $(this).data('idx');
+            var val = parseFloat($(this).val());
+            if (isNaN(val) || val < 0) val = 0;
+            chargesGrid[idx].overrideAmount = val;
+            var total = calcGrandTotal();
+            $('#chargeTotalDisplay').text(hospitalInfo.currency + ' ' + total.toLocaleString());
         });
 
         $(document).off('input.doctorDiscount').on('input.doctorDiscount', '#doctorFeeDiscount', function() {
             var val = parseFloat($(this).val()) || 0;
             if (val < 0) val = 0;
             admissionForm.doctorFeeDiscount = val;
+            delete admissionForm.doctorFeeOverrideAmount;
             var net = calcDoctorFeeTotal();
-            $('#doctorFeeAmount').text(hospitalInfo.currency + ' ' + net.toLocaleString());
+            $('#doctorFeeAmountInput').val(net.toFixed(2));
+            var total = calcGrandTotal();
+            $('#chargeTotalDisplay').text(hospitalInfo.currency + ' ' + total.toLocaleString());
+        });
+
+        $(document).off('input.doctorFeeAmt').on('input.doctorFeeAmt', '#doctorFeeAmountInput', function() {
+            var val = parseFloat($(this).val());
+            if (isNaN(val) || val < 0) val = 0;
+            admissionForm.doctorFeeOverrideAmount = val;
             var total = calcGrandTotal();
             $('#chargeTotalDisplay').text(hospitalInfo.currency + ' ' + total.toLocaleString());
         });
@@ -1232,14 +1277,14 @@ $(document).ready(function() {
         /* Build charges rows for preview */
         var chargesHtml = '';
         /* Doctor fee row */
-        var docFee = Number(admissionForm.doctorFee) || 0;
+        var docFee = calcDoctorFeeTotal();
         chargesHtml +=
             '<div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid #f1f5f9">' +
             '<span style="color:#475569">Doctor Fee — ' + esc(admissionForm.doctorName || '-') + '</span>' +
             '<span style="font-weight:600">' + currency + ' ' + docFee.toLocaleString() + '</span></div>';
         chargesGrid.forEach(function(row) {
             if (row.type !== 'charge') return;
-            var amt = (row.qty * row.unitPrice) - (row.discount || 0);
+            var amt = row.overrideAmount !== undefined ? Number(row.overrideAmount) : Math.max(0, (row.qty * row.unitPrice) - (row.discount || 0));
             chargesHtml +=
                 '<div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid #f1f5f9">' +
                 '<span style="color:#475569">' + esc(row.name) + ' &times; ' + row.qty + '</span>' +
@@ -1329,7 +1374,7 @@ $(document).ready(function() {
             url: '/api/ipd/admissions', method: 'POST', contentType: 'application/json',
             data: JSON.stringify({
                 mrn: mrn, doctorName: admissionForm.doctorName, department: admissionForm.department,
-                doctorFee: Number(admissionForm.doctorFee), chargeIds: chargeIds,
+                doctorFee: calcDoctorFeeTotal(), consultationCharges: calcChargesTotal(), chargeIds: chargeIds,
                 admissionSource: admissionSource, admissionType: admissionForm.admissionType,
                 initialDiagnosis: admissionForm.initialDiagnosis, estimatedStay: admissionForm.estimatedStay,
                 ward: admissionForm.ward, floorRoom: admissionForm.floorRoom, bed: admissionForm.bed, bedId: admissionForm.bedId
@@ -1337,9 +1382,10 @@ $(document).ready(function() {
             success: function(res) {
                 try { var cs = bootstrap.Offcanvas.getInstance(document.getElementById('chargesSheet')); if (cs) cs.hide(); } catch(e) {}
                 try { var rs = bootstrap.Offcanvas.getInstance(document.getElementById('registrationSheet')); if (rs) rs.hide(); } catch(e) {}
+                var capturedTotal = calcGrandTotal();
                 resetRegistration();
                 setTimeout(function() { loadAllData(); }, 300);
-                _showIpdAdmitSuccess(patName, mrn, res, resolvedPatient);
+                _showIpdAdmitSuccess(patName, mrn, res, resolvedPatient, capturedTotal);
             },
             error: function(xhr) {
                 HMS.ajaxError(xhr, 'Failed to admit patient');
@@ -1347,10 +1393,10 @@ $(document).ready(function() {
         });
     }
 
-    function _showIpdAdmitSuccess(patName, mrn, res, patient) {
+    function _showIpdAdmitSuccess(patName, mrn, res, patient, capturedTotal) {
         var admId    = (res && res.admissionId) ? res.admissionId : '';
         var currency = (hospitalInfo && hospitalInfo.currency) ? hospitalInfo.currency : 'PKR';
-        var total    = calcGrandTotal();
+        var total    = capturedTotal !== undefined ? capturedTotal : (res && res.bill ? Number(res.bill.totalAmount || 0) : 0);
 
         $('#ipdAdmitSuccessModal').remove();
         var modal =
@@ -1553,15 +1599,26 @@ $(document).ready(function() {
             } else if (Number(bill.doctorFee) > 0) {
                 chargeItems.push({ chargeId: 'doctor-fee', date: admDate, description: 'Consultant Doctor Fee — ' + esc(admission ? admission.doctorName : ''), category: 'Doctor Fee', qty: 1, amount: Number(bill.doctorFee), corrected: false, removed: false });
             }
+            var storedRoomCharges = Number(bill.roomCharges || 0);
             if (bill.chargeIds && bill.chargeIds.length > 0) {
+                var ipdMasterItems = [];
                 bill.chargeIds.forEach(function(cid) {
-                    var mc = masterCharges.find(function(m) { return String(m.chargeId || m.id) === String(cid); });
-                    if (mc) {
-                        chargeItems.push({ chargeId: String(mc.chargeId || mc.id), date: admDate, description: esc(mc.name), category: mc.category || 'Hospital Charges', qty: 1, amount: Number(mc.amount), corrected: false, removed: false });
-                    }
+                    var mc = masterCharges.find(function(m) { return String(m.id) === String(cid) || String(m.chargeId) === String(cid); });
+                    if (mc) ipdMasterItems.push({ chargeId: String(mc.chargeId || mc.id), name: esc(mc.name), category: mc.category || 'Hospital Charges', amount: Number(mc.amount) });
                 });
-            } else if (Number(bill.roomCharges) > 0) {
-                chargeItems.push({ chargeId: 'room', date: admDate, description: 'Room Charges', category: 'Room Charges', qty: 1, amount: Number(bill.roomCharges), corrected: false, removed: false });
+                var ipdMasterSum = ipdMasterItems.reduce(function(s, c) { return s + c.amount; }, 0);
+                if (storedRoomCharges > 0 && Math.abs(ipdMasterSum - storedRoomCharges) > 0.01) {
+                    var ipdDispName = ipdMasterItems.length === 1 ? ipdMasterItems[0].name : 'Hospital Charges';
+                    var ipdDispCat  = ipdMasterItems.length === 1 ? ipdMasterItems[0].category : 'Hospital Charges';
+                    var ipdDispId   = ipdMasterItems.length === 1 ? ipdMasterItems[0].chargeId : 'room';
+                    chargeItems.push({ chargeId: ipdDispId, date: admDate, description: ipdDispName, category: ipdDispCat, qty: 1, amount: storedRoomCharges, corrected: false, removed: false });
+                } else {
+                    ipdMasterItems.forEach(function(m) {
+                        chargeItems.push({ chargeId: m.chargeId, date: admDate, description: m.name, category: m.category, qty: 1, amount: m.amount, corrected: false, removed: false });
+                    });
+                }
+            } else if (storedRoomCharges > 0) {
+                chargeItems.push({ chargeId: 'room', date: admDate, description: 'Room Charges', category: 'Room Charges', qty: 1, amount: storedRoomCharges, corrected: false, removed: false });
             }
             correctedFields.forEach(function(f) {
                 if (f.indexOf('Removed') < 0) return;
@@ -1572,7 +1629,7 @@ $(document).ready(function() {
                     var removedCid = chargeMatch[1].replace(' (Removed)', '');
                     var alreadyShown = chargeItems.some(function(ci) { return ci.chargeId === removedCid; });
                     if (!alreadyShown) {
-                        var mc = masterCharges.find(function(m) { return String(m.chargeId || m.id) === removedCid; });
+                        var mc = masterCharges.find(function(m) { return String(m.id) === removedCid || String(m.chargeId) === removedCid; });
                         var desc = mc ? esc(mc.name) : 'Charge ' + removedCid;
                         var cat = mc ? (mc.category || 'Hospital Charges') : 'Hospital Charges';
                         chargeItems.push({ chargeId: removedCid, date: admDate, description: desc, category: cat, qty: 1, amount: 0, corrected: true, removed: true });
@@ -1835,7 +1892,7 @@ $(document).ready(function() {
                                     desc = match.description;
                                     lineAmt = match.amount;
                                 } else {
-                                    var mcLookup = masterCharges.find(function(m) { return String(m.chargeId || m.id) === String(cid); });
+                                    var mcLookup = masterCharges.find(function(m) { return String(m.id) === String(cid) || String(m.chargeId) === String(cid); });
                                     desc = mcLookup ? esc(mcLookup.name) : (cid === 'doctor-fee' ? 'Consultant Doctor Fee' : 'Charge #' + esc(String(cid)));
                                     lineAmt = 0;
                                 }
@@ -2296,17 +2353,29 @@ $(document).ready(function() {
                 var alreadyRemoved = correctedFields.some(function(f) { return f.indexOf('doctorFee') >= 0 && f.indexOf('Removed') >= 0; });
                 allCharges.push({ type: 'doctor_fee', field: 'doctorFee', chargeId: null, description: 'Consultant Doctor Fee — ' + esc(admission ? admission.doctorName : ''), category: 'Doctor Fee', amount: Number(bill.doctorFee), removed: alreadyRemoved });
             }
+            var corrStoredRoom = Number(bill.roomCharges || 0);
             if (bill.chargeIds && bill.chargeIds.length > 0) {
+                var corrMasterItems = [];
                 bill.chargeIds.forEach(function(cid) {
-                    var mc = masterCharges.find(function(m) { return String(m.chargeId || m.id) === String(cid); });
-                    if (mc) {
-                        var alreadyRemoved = correctedFields.some(function(f) { return f.indexOf('charge_' + cid) >= 0 && f.indexOf('Removed') >= 0; });
-                        allCharges.push({ type: 'master_charge', field: 'charge_' + cid, chargeId: cid, description: esc(mc.name), category: mc.category || 'Hospital Charges', amount: Number(mc.amount), removed: alreadyRemoved });
-                    }
+                    var mc = masterCharges.find(function(m) { return String(m.id) === String(cid) || String(m.chargeId) === String(cid); });
+                    if (mc) corrMasterItems.push({ cid: cid, mc: mc });
                 });
-            } else if (Number(bill.roomCharges) > 0) {
+                var corrMasterSum = corrMasterItems.reduce(function(s, x) { return s + Number(x.mc.amount); }, 0);
+                if (corrStoredRoom > 0 && Math.abs(corrMasterSum - corrStoredRoom) > 0.01) {
+                    // Amounts were overridden — show as single entry using stored total
+                    var corrAlreadyRemoved = correctedFields.some(function(f) { return f.indexOf('roomCharges') >= 0 && f.indexOf('Removed') >= 0; });
+                    var corrDispName = corrMasterItems.length === 1 ? esc(corrMasterItems[0].mc.name) : 'Hospital Charges';
+                    var corrDispCat  = corrMasterItems.length === 1 ? (corrMasterItems[0].mc.category || 'Hospital Charges') : 'Hospital Charges';
+                    allCharges.push({ type: 'room', field: 'roomCharges', chargeId: null, description: corrDispName, category: corrDispCat, amount: corrStoredRoom, removed: corrAlreadyRemoved });
+                } else {
+                    corrMasterItems.forEach(function(x) {
+                        var alreadyRemoved = correctedFields.some(function(f) { return f.indexOf('charge_' + x.cid) >= 0 && f.indexOf('Removed') >= 0; });
+                        allCharges.push({ type: 'master_charge', field: 'charge_' + x.cid, chargeId: x.cid, description: esc(x.mc.name), category: x.mc.category || 'Hospital Charges', amount: Number(x.mc.amount), removed: alreadyRemoved });
+                    });
+                }
+            } else if (corrStoredRoom > 0) {
                 var alreadyRemoved = correctedFields.some(function(f) { return f.indexOf('roomCharges') >= 0 && f.indexOf('Removed') >= 0; });
-                allCharges.push({ type: 'room', field: 'roomCharges', chargeId: null, description: 'Room Charges', category: 'Room Charges', amount: Number(bill.roomCharges), removed: alreadyRemoved });
+                allCharges.push({ type: 'room', field: 'roomCharges', chargeId: null, description: 'Room Charges', category: 'Room Charges', amount: corrStoredRoom, removed: alreadyRemoved });
             }
         }
 
@@ -7419,15 +7488,28 @@ $(document).ready(function() {
             var regBy        = adm.registeredBy || adm.createdByName || adm.createdBy || '';
 
             // ── Charges ──
+            var doctorFeeAmt = bill ? Number(bill.doctorFee  || 0) : 0;
             var roomCharges  = bill ? Number(bill.roomCharges  || 0) : 0;
             var otherCharges = bill ? Number(bill.otherCharges || bill.additionalCharges || 0) : 0;
-            var netTotal     = bill ? Number(bill.totalAmount  || 0) : (roomCharges + otherCharges);
+            var netTotal     = bill ? Number(bill.totalAmount  || 0) : (doctorFeeAmt + roomCharges + otherCharges);
             var sno = 1;
             var chargeRows = '';
-            if (roomCharges > 0) {
+            if (doctorFeeAmt > 0) {
                 chargeRows += '<tr style="background:#fff;border-top:1px solid #f1f5f9">'
                     + '<td style="padding:8px 10px;font-size:10px;color:#64748b">' + sno + '</td>'
-                    + '<td style="padding:8px 10px;font-size:10px;color:#334155;font-weight:500">Room / Bed Charges</td>'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#334155;font-weight:500">Doctor / Consultant Fee</td>'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#64748b;text-align:right">1</td>'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#64748b;text-align:right">' + fmt(doctorFeeAmt) + '</td>'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#64748b;text-align:right">\u2014</td>'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#1e293b;font-weight:600;text-align:right">' + fmt(doctorFeeAmt) + '</td>'
+                    + '</tr>';
+                sno++;
+            }
+            if (roomCharges > 0) {
+                var bg2 = sno % 2 === 0 ? '#f8fafc' : '#fff';
+                chargeRows += '<tr style="background:' + bg2 + ';border-top:1px solid #f1f5f9">'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#64748b">' + sno + '</td>'
+                    + '<td style="padding:8px 10px;font-size:10px;color:#334155;font-weight:500">Hospital Charges</td>'
                     + '<td style="padding:8px 10px;font-size:10px;color:#64748b;text-align:right">1</td>'
                     + '<td style="padding:8px 10px;font-size:10px;color:#64748b;text-align:right">' + fmt(roomCharges) + '</td>'
                     + '<td style="padding:8px 10px;font-size:10px;color:#64748b;text-align:right">\u2014</td>'
@@ -7588,9 +7670,10 @@ $(document).ready(function() {
             var diagnosis    = adm.initialDiagnosis || '\u2014';
             var createdBy    = adm.registeredBy || adm.createdByName || adm.createdBy || (bill && (bill.createdByName || bill.createdBy)) || 'Staff';
 
+            var doctorFeeAmt2 = bill ? Number(bill.doctorFee  || 0) : 0;
             var roomCharges  = bill ? Number(bill.roomCharges  || 0) : 0;
             var otherCharges = bill ? Number(bill.otherCharges || bill.additionalCharges || 0) : 0;
-            var netTotal     = bill ? Number(bill.totalAmount  || 0) : (roomCharges + otherCharges);
+            var netTotal     = bill ? Number(bill.totalAmount  || 0) : (doctorFeeAmt2 + roomCharges + otherCharges);
 
             var thStyle = 'style="font-weight:700;padding:2px 4px;border-bottom:1px dashed #999"';
             var chargeRows = '<tr>'
@@ -7600,9 +7683,10 @@ $(document).ready(function() {
                 + '<th ' + thStyle + ' align="right">Net</th>'
                 + '<th ' + thStyle + ' align="right">Total</th>'
                 + '</tr>';
-            if (roomCharges  > 0) chargeRows += chargeRow('Room/Bed Charges', 1, '0', fmt(roomCharges),  fmt(roomCharges));
-            if (otherCharges > 0) chargeRows += chargeRow('Other Charges',     1, '0', fmt(otherCharges), fmt(otherCharges));
-            if (!roomCharges && !otherCharges) chargeRows += '<tr><td colspan="5" style="padding:4px;color:#999;text-align:center">No charges</td></tr>';
+            if (doctorFeeAmt2 > 0) chargeRows += chargeRow('Doctor / Consultant Fee', 1, '0', fmt(doctorFeeAmt2), fmt(doctorFeeAmt2));
+            if (roomCharges  > 0) chargeRows += chargeRow('Hospital Charges',         1, '0', fmt(roomCharges),   fmt(roomCharges));
+            if (otherCharges > 0) chargeRows += chargeRow('Other Charges',             1, '0', fmt(otherCharges),  fmt(otherCharges));
+            if (!doctorFeeAmt2 && !roomCharges && !otherCharges) chargeRows += '<tr><td colspan="5" style="padding:4px;color:#999;text-align:center">No charges</td></tr>';
 
             var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>IPD Slip</title>'
                 + '<style>* { margin:0; padding:0; box-sizing:border-box; } body { font-family:monospace; font-size:12px; color:#111; background:#fff; width:80mm; margin:0 auto; } @page { size:80mm auto; margin:4mm; } table { width:100%; border-collapse:collapse; } .divider { border-top:1px dashed #999; margin:6px 0; } .center { text-align:center; } .no-print { text-align:center; margin:12px 0; } .no-print button { padding:6px 20px;font-size:12px;background:#060740;color:#fff;border:none;border-radius:6px;cursor:pointer } @media print { .no-print { display:none } }</style>'
