@@ -96,13 +96,18 @@ class DoctorController extends Controller
                 'dutyDays' => 'duty_days', 'status',
             ];
 
+            $nullableFields = ['dob', 'joiningDate', 'relievingDate', 'dutyDays'];
             $updateData = [];
             foreach ($fields as $camel => $snake) {
                 if (is_int($camel)) {
                     $camel = $snake;
                 }
                 if ($request->has($camel)) {
-                    $updateData[$snake] = $request->input($camel);
+                    $value = $request->input($camel);
+                    if (!in_array($camel, $nullableFields) && $value === null) {
+                        $value = '';
+                    }
+                    $updateData[$snake] = $value;
                 }
             }
 
