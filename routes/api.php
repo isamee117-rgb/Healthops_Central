@@ -39,6 +39,10 @@ use App\Http\Controllers\Api\OpdNumberSeriesController;
 use App\Http\Controllers\Api\IpdNumberSeriesController;
 use App\Http\Controllers\Api\OpdVitalFieldController;
 use App\Http\Controllers\Api\OpdFormSectionController;
+use App\Http\Controllers\Api\FormGroupController;
+use App\Http\Controllers\Api\FormController;
+use App\Http\Controllers\Api\FormSectionController;
+use App\Http\Controllers\Api\FormComponentController;
 
 Route::middleware(['web', 'auth.hms'])->group(function () {
 
@@ -437,5 +441,30 @@ Route::put('/ipd-number-series/{seriesKey}', [IpdNumberSeriesController::class, 
 
 Route::get('/opd-vital-fields', [OpdVitalFieldController::class, 'index']);
 Route::put('/opd-vital-fields/{fieldKey}', [OpdVitalFieldController::class, 'update']);
+
+// ── Form Builder ──────────────────────────────────────────────────────────────
+Route::get('/form-groups',           [FormGroupController::class, 'index']);
+Route::post('/form-groups',          [FormGroupController::class, 'store']);
+Route::patch('/form-groups/reorder', [FormGroupController::class, 'reorder']); // MUST be before /{id}
+Route::patch('/form-groups/{id}',    [FormGroupController::class, 'update']);
+Route::delete('/form-groups/{id}',   [FormGroupController::class, 'destroy']);
+
+Route::get('/form-groups/{groupId}/forms',  [FormController::class, 'index']);
+Route::post('/form-groups/{groupId}/forms', [FormController::class, 'store']);
+Route::patch('/forms/reorder',              [FormController::class, 'reorder']); // MUST be before /{id}
+Route::patch('/forms/{id}',                 [FormController::class, 'update']);
+Route::delete('/forms/{id}',                [FormController::class, 'destroy']);
+Route::get('/forms/{id}/full',              [FormController::class, 'full']);
+
+Route::get('/forms/{formId}/sections',      [FormSectionController::class, 'index']);
+Route::post('/forms/{formId}/sections',     [FormSectionController::class, 'store']);
+Route::patch('/form-sections/reorder',      [FormSectionController::class, 'reorder']); // MUST be before /{id}
+Route::patch('/form-sections/{id}',         [FormSectionController::class, 'update']);
+Route::delete('/form-sections/{id}',        [FormSectionController::class, 'destroy']);
+
+Route::post('/form-sections/{sectionId}/components', [FormComponentController::class, 'store']);
+Route::patch('/form-components/reorder',             [FormComponentController::class, 'reorder']); // MUST be before /{id}
+Route::patch('/form-components/{id}',                [FormComponentController::class, 'update']);
+Route::delete('/form-components/{id}',               [FormComponentController::class, 'destroy']);
 
 }); // end Route::middleware(['web', 'auth.hms'])
