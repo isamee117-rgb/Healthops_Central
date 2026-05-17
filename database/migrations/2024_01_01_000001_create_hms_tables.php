@@ -47,7 +47,7 @@ return new class extends Migration
             $table->text('address')->nullable();
             $table->timestamp('first_visit_date')->nullable();
             $table->timestamp('last_visit_date')->nullable();
-            $table->json('allergies')->default('[]');
+            $table->json('allergies')->nullable();
             $table->timestamps();
         });
 
@@ -88,7 +88,7 @@ return new class extends Migration
             $table->date('relieving_date')->nullable();
             $table->string('duty_from')->nullable();
             $table->string('duty_to')->nullable();
-            $table->json('duty_days')->default('[]');
+            $table->json('duty_days')->nullable();
             $table->string('status')->default('ACTIVE');
             $table->timestamps();
         });
@@ -230,7 +230,7 @@ return new class extends Migration
             $table->decimal('doctor_fee', 12, 2)->default(0);
             $table->decimal('total_amount', 12, 2)->default(0);
             $table->string('payment_status')->default('Pending');
-            $table->json('history')->default('[]');
+            $table->json('history')->nullable();
             $table->foreign('mrn')->references('mrn')->on('patients');
             $table->timestamps();
         });
@@ -245,7 +245,7 @@ return new class extends Migration
             $table->decimal('doctor_fee', 12, 2)->default(0);
             $table->decimal('total_amount', 12, 2)->default(0);
             $table->string('payment_status')->default('Pending');
-            $table->json('history')->default('[]');
+            $table->json('history')->nullable();
             $table->foreign('mrn')->references('mrn')->on('patients');
             $table->timestamps();
         });
@@ -260,7 +260,7 @@ return new class extends Migration
             $table->decimal('doctor_fee', 12, 2)->default(0);
             $table->decimal('total_amount', 12, 2)->default(0);
             $table->string('payment_status')->default('Pending');
-            $table->json('history')->default('[]');
+            $table->json('history')->nullable();
             $table->foreign('mrn')->references('mrn')->on('patients');
             $table->timestamps();
         });
@@ -276,7 +276,7 @@ return new class extends Migration
             $table->decimal('anaesthetist_fee', 12, 2)->nullable();
             $table->decimal('total_amount', 12, 2)->default(0);
             $table->string('payment_status')->default('Pending');
-            $table->json('history')->default('[]');
+            $table->json('history')->nullable();
             $table->foreign('mrn')->references('mrn')->on('patients');
             $table->timestamps();
         });
@@ -327,12 +327,12 @@ return new class extends Migration
             $table->string('mrn');
             $table->string('doctor_name');
             $table->timestamp('consultation_date');
-            $table->json('symptoms')->default('[]');
+            $table->json('symptoms')->nullable();
             $table->text('clinical_findings')->nullable();
             $table->text('provisional_diagnosis')->nullable();
             $table->text('final_diagnosis')->nullable();
-            $table->json('prescriptions')->default('[]');
-            $table->json('investigation_orders')->default('[]');
+            $table->json('prescriptions')->nullable();
+            $table->json('investigation_orders')->nullable();
             $table->text('doctor_notes')->nullable();
             $table->string('outcome')->nullable()->default('In Progress');
             $table->text('outcome_notes')->nullable();
@@ -410,7 +410,7 @@ return new class extends Migration
             $table->string('patient_name');
             $table->string('department');
             $table->string('visit_id');
-            $table->json('items')->default('[]');
+            $table->json('items')->nullable();
             $table->decimal('total_amount', 12, 2)->default(0);
             $table->timestamp('posted_at');
             $table->string('posted_by');

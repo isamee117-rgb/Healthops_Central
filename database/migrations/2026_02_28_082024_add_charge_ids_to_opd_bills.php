@@ -13,7 +13,7 @@ return new class extends Migration
     {
         if (!Schema::hasColumn('opd_bills', 'charge_ids')) {
             Schema::table('opd_bills', function (Blueprint $table) {
-                $table->json('charge_ids')->default('[]')->after('history');
+                $table->json('charge_ids')->nullable()->after('history');
             });
         }
     }

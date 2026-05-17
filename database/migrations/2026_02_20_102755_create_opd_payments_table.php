@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('payment_mode')->default('Cash');
             $table->string('receipt_number')->nullable();
             $table->string('reference')->nullable();
-            $table->json('charge_ids')->default('[]');
+            $table->json('charge_ids')->nullable();
             $table->string('received_by')->default('Admin / Sys');
             $table->text('notes')->nullable();
             $table->timestamps();
