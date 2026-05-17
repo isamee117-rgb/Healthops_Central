@@ -5,7 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Form extends Model
 {
-    protected $fillable = ['form_group_id', 'name', 'description', 'is_active', 'sort_order'];
+    protected $fillable = ['form_group_id', 'name', 'description', 'instructions', 'declaration', 'is_active', 'sort_order'];
 
     protected function casts(): array
     {

@@ -897,7 +897,7 @@ $(document).ready(function() {
 
     function renderRegistrationSheet() {
         var titleMap = { 'phone-search': 'New Patient Registration', 'phone-results': 'Search Results', 'new-patient': 'New Patient Details', 'visit-details': 'Visit Details' };
-        $('#regSheetTitle').html('<i data-lucide="user-plus"></i> ' + titleMap[registrationStep]);
+        $('#regSheetTitle').text(titleMap[registrationStep]);
 
         var body = '';
         var footer = '';
@@ -2076,10 +2076,9 @@ $(document).ready(function() {
                 '</div>' +
             '</div>';
 
-        var footer = '<div style="display:flex;justify-content:space-between;align-items:center;width:100%">' +
+        var footer =
             '<button class="btn-outline" data-bs-dismiss="offcanvas">CLOSE</button>' +
-            '<button id="btnPrintRegSlip" class="btn-primary" style="display:flex;align-items:center;gap:6px"><i data-lucide="printer" style="width:16px;height:16px"></i> PRINT</button>' +
-        '</div>';
+            '<button id="btnPrintRegSlip" class="btn-primary" style="display:flex;align-items:center;gap:6px"><i data-lucide="printer" style="width:16px;height:16px"></i> PRINT</button>';
 
         $('#regDetailBody').html(body);
         $('#regDetailFooter').html(footer);
@@ -2445,10 +2444,7 @@ $(document).ready(function() {
                 '<p style="margin:0;font-size:14px;color:var(--color-muted-foreground)">No bill has been generated for this visit yet.</p>' +
             '</div>';
 
-            var footer = '<div style="display:flex;justify-content:space-between;align-items:center;width:100%">' +
-                '<button class="btn-outline" data-bs-dismiss="offcanvas">Close</button>' +
-                '<div></div>' +
-            '</div>';
+            var footer = '<button class="btn-outline" data-bs-dismiss="offcanvas">Close</button>';
 
             $('#billingDetailBody').html(body);
             $('#billingDetailFooter').html(footer);
@@ -2617,15 +2613,13 @@ $(document).ready(function() {
             '</table>' +
             '</div>';
 
-        var footer = '<div style="display:flex;justify-content:space-between;align-items:center;width:100%">' +
+        var footer =
             '<button class="btn-outline" data-bs-dismiss="offcanvas">Close</button>' +
             '<div style="display:flex;gap:8px">' +
                 '<button class="btn-outline" id="btnCorrectionLog" style="font-size:13px"><i data-lucide="history" style="width:14px;height:14px"></i> Correction Log</button>' +
                 '<button class="btn-outline" id="btnCorrection" style="font-size:13px;border-color:#ea580c;color:#ea580c"><i data-lucide="pencil-line" style="width:14px;height:14px"></i> Correction</button>' +
                 '<button class="btn-primary" id="btnGenerateBill" style="font-size:13px"><i data-lucide="file-text" style="width:14px;height:14px"></i> Generate Bill</button>' +
-                (bill && bill.paymentStatus === 'Pending' ? '<button class="btn-primary" id="btnMarkPaid" data-bill-id="' + esc(bill.billId) + '" style="font-size:13px"><i data-lucide="credit-card" style="width:14px;height:14px"></i> Mark as Paid</button>' : '') +
-            '</div>' +
-        '</div>';
+            '</div>';
 
         $('#billingDetailBody').html(body);
         $('#billingDetailFooter').html(footer);
@@ -2731,12 +2725,6 @@ $(document).ready(function() {
                 $('#paymentsTbodyPlaceholder').html('<td colspan="5" style="padding:16px 4px;text-align:center;color:var(--color-muted-foreground);font-size:13px">No payments recorded</td>');
             });
         }
-
-        $('#btnMarkPaid').off('click').on('click', function() {
-            var billId = $(this).data('bill-id');
-            window.opdMarkPaid(billId);
-            bootstrap.Offcanvas.getInstance(document.getElementById('billingDetailSheet')).hide();
-        });
 
         $('#btnGenerateBill').off('click').on('click', function() {
             printOpdRegistrationSlip(visit, patient, bill);
@@ -3008,10 +2996,9 @@ $(document).ready(function() {
             });
         }
 
-        var footer = '<div style="display:flex;justify-content:space-between;align-items:center;width:100%">' +
+        var footer =
             '<button class="btn-outline" id="btnBackFromAddlCharges" style="font-size:13px"><i data-lucide="arrow-left" style="width:14px;height:14px"></i> Back</button>' +
-            '<button class="btn-primary" id="btnSaveAddlCharges" style="font-size:13px"><i data-lucide="check" style="width:14px;height:14px"></i> Save Charges</button>' +
-        '</div>';
+            '<button class="btn-primary" id="btnSaveAddlCharges" style="font-size:13px"><i data-lucide="check" style="width:14px;height:14px"></i> Save Charges</button>';
 
         $('#billingDetailBody').html(renderAddChargesBody());
         $('#billingDetailFooter').html(footer);
@@ -3215,10 +3202,9 @@ $(document).ready(function() {
             '</div>';
         }
 
-        var footer = '<div style="display:flex;justify-content:space-between;align-items:center;width:100%">' +
+        var footer =
             '<button class="btn-outline" id="btnBackToBilling" style="font-size:13px"><i data-lucide="arrow-left" style="width:14px;height:14px"></i> Back</button>' +
-            (unpaidItems.length > 0 ? '<button class="btn-primary" id="btnSavePayment" disabled style="font-size:13px;opacity:0.5"><i data-lucide="check" style="width:14px;height:14px"></i> Save Payment</button>' : '') +
-        '</div>';
+            (unpaidItems.length > 0 ? '<button class="btn-primary" id="btnSavePayment" disabled style="font-size:13px;opacity:0.5"><i data-lucide="check" style="width:14px;height:14px"></i> Save Payment</button>' : '');
 
         $('#billingDetailBody').html(body);
         $('#billingDetailFooter').html(footer);
@@ -5220,10 +5206,9 @@ $(document).ready(function() {
             '<textarea class="form-control" id="correctionReason" rows="3" placeholder="Enter the reason for this correction (optional)" style="font-size:13px;resize:vertical"></textarea>' +
         '</div>';
 
-        var footer = '<div style="display:flex;justify-content:space-between;align-items:center;width:100%">' +
+        var footer =
             '<button class="btn-outline" id="btnCorrectionBack"><i data-lucide="arrow-left" style="width:14px;height:14px"></i> Back</button>' +
-            '<button class="btn-primary" id="btnSaveCorrection" style="font-size:13px;background:#ea580c;border-color:#ea580c" disabled><i data-lucide="check" style="width:14px;height:14px"></i> Save Corrections</button>' +
-        '</div>';
+            '<button class="btn-primary" id="btnSaveCorrection" style="font-size:13px;background:#ea580c;border-color:#ea580c" disabled><i data-lucide="check" style="width:14px;height:14px"></i> Save Corrections</button>';
 
         $('#billingDetailBody').html(body);
         $('#billingDetailFooter').html(footer);
@@ -5378,10 +5363,7 @@ $(document).ready(function() {
             '</div>' +
             '<div id="correctionLogContent" style="min-height:100px;display:flex;align-items:center;justify-content:center"><span class="spinner-border spinner-border-sm"></span>&nbsp; Loading correction history...</div>';
 
-        var footer = '<div style="display:flex;justify-content:space-between;align-items:center;width:100%">' +
-            '<button class="btn-outline" id="btnCorrectionLogBack"><i data-lucide="arrow-left" style="width:14px;height:14px"></i> Back</button>' +
-            '<div></div>' +
-        '</div>';
+        var footer = '<button class="btn-outline" id="btnCorrectionLogBack"><i data-lucide="arrow-left" style="width:14px;height:14px"></i> Back</button>';
 
         $('#billingDetailBody').html(body);
         $('#billingDetailFooter').html(footer);

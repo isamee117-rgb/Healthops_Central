@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 class PharmacyConfigController extends Controller
 {
     const CATEGORIES = ['rx_unit', 'rx_route', 'rx_frequency'];
+    const DEPT_ROUTING_DEPTS = ['IPD', 'ER'];
 
     const DEFAULTS = [
         'rx_unit' => [
@@ -65,6 +66,42 @@ class PharmacyConfigController extends Controller
                 }
             }
         }
+    }
+
+    private function seedDeptRouting(): void
+    {
+        foreach (self::DEPT_ROUTING_DEPTS as $dept) {
+            OpdConfigItem::firstOrCreate(
+                ['category' => 'dept_routing', 'name' => $dept],
+                ['is_active' => true, 'sort_order' => 0, 'value' => null]
+            );
+        }
+    }
+
+    // GET /api/pharmacy-config/department-routing
+    public function getDeptRouting()
+    {
+        $this->seedDeptRouting();
+        $items = OpdConfigItem::where('category', 'dept_routing')->get()->keyBy('name');
+        $result = [];
+        foreach (self::DEPT_ROUTING_DEPTS as $dept) {
+            $result[$dept] = isset($items[$dept]) ? (bool) $items[$dept]->is_active : true;
+        }
+        return response()->json($result);
+    }
+
+    // PUT /api/pharmacy-config/department-routing
+    public function updateDeptRouting(Request $request)
+    {
+        $this->seedDeptRouting();
+        foreach (self::DEPT_ROUTING_DEPTS as $dept) {
+            if ($request->has($dept)) {
+                OpdConfigItem::where('category', 'dept_routing')
+                    ->where('name', $dept)
+                    ->update(['is_active' => $request->boolean($dept)]);
+            }
+        }
+        return response()->json(['message' => 'Saved']);
     }
 
     private function formatItem(OpdConfigItem $item): array

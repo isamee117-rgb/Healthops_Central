@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MedicationOrder;
 use App\Models\Medicine;
 use App\Models\MedicineBatch;
+use App\Models\OpdConfigItem;
 use App\Traits\HmsHelpers;
 use App\Traits\PharmacyHelper;
 use Carbon\Carbon;
@@ -15,13 +16,26 @@ class MedicationOrderController extends Controller
 {
     use HmsHelpers, PharmacyHelper;
 
+    private function blockedDepartments(): array
+    {
+        return OpdConfigItem::where('category', 'dept_routing')
+            ->where('is_active', false)
+            ->pluck('name')
+            ->toArray();
+    }
+
     public function stats()
     {
+        $blocked = $this->blockedDepartments();
         $today = Carbon::today();
-        $pending = MedicationOrder::where('status', 'Pending')->count();
-        $inProgress = MedicationOrder::whereIn('status', ['Verified', 'Dispensing'])->count();
-        $ready = MedicationOrder::where('status', 'Ready')->count();
-        $completedToday = MedicationOrder::where('status', 'Completed')
+        $base = fn() => $blocked
+            ? MedicationOrder::whereNotIn('department', $blocked)
+            : MedicationOrder::query();
+
+        $pending        = $base()->where('status', 'Pending')->count();
+        $inProgress     = $base()->whereIn('status', ['Verified', 'Dispensing'])->count();
+        $ready          = $base()->where('status', 'Ready')->count();
+        $completedToday = $base()->where('status', 'Completed')
             ->whereDate('updated_at', $today)->count();
 
         return response()->json([
@@ -35,6 +49,11 @@ class MedicationOrderController extends Controller
     public function index(Request $request)
     {
         $query = MedicationOrder::query();
+
+        $blocked = $this->blockedDepartments();
+        if (!empty($blocked)) {
+            $query->whereNotIn('department', $blocked);
+        }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);

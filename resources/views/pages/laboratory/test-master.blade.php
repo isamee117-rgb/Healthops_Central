@@ -133,7 +133,7 @@
 <div class="offcanvas offcanvas-end" tabindex="-1" id="testDetailSheet" style="width:900px;border-left:1px solid var(--color-border)">
     <div class="offcanvas-header" style="padding:20px 24px;border-bottom:1px solid var(--color-border);background:var(--color-background)">
         <div>
-            <h5 class="offcanvas-title" id="detailTitle" style="font-size:18px;font-weight:700;margin:0;font-family:'Roobert',sans-serif"></h5>
+            <h5 class="offcanvas-title" id="detailTitle"></h5>
             <p id="detailSubtitle" style="font-size:12px;color:var(--color-muted-foreground);margin:4px 0 0"></p>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
@@ -147,7 +147,7 @@
 <div class="offcanvas offcanvas-end" tabindex="-1" id="addTestSheet" style="width:900px;border-left:1px solid var(--color-border)">
     <div class="offcanvas-header" style="padding:20px 24px;border-bottom:1px solid var(--color-border);background:var(--color-background)">
         <div>
-            <h5 class="offcanvas-title" id="addTestTitle" style="font-size:18px;font-weight:700;margin:0;font-family:'Roobert',sans-serif">Add New Test</h5>
+            <h5 class="offcanvas-title" id="addTestTitle">Add New Test</h5>
             <p style="font-size:12px;color:var(--color-muted-foreground);margin:4px 0 0">Register new laboratory test</p>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
@@ -356,7 +356,7 @@
 <div class="offcanvas offcanvas-end" tabindex="-1" id="addPackageSheet" style="width:800px;border-left:1px solid var(--color-border)">
     <div class="offcanvas-header" style="padding:20px 24px;border-bottom:1px solid var(--color-border);background:var(--color-background)">
         <div>
-            <h5 class="offcanvas-title" style="font-size:18px;font-weight:700;margin:0;font-family:'Roobert',sans-serif">Create Test Package</h5>
+            <h5 class="offcanvas-title">Create Test Package</h5>
             <p style="font-size:12px;color:var(--color-muted-foreground);margin:4px 0 0">Bundle multiple tests into a package</p>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>

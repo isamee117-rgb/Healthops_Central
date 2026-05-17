@@ -21,34 +21,34 @@ return new class extends Migration
         });
 
         if (DB::getDriverName() !== 'sqlite') {
-            DB::statement('ALTER TABLE opd_visits ALTER COLUMN visit_id TYPE VARCHAR(30) USING visit_id::VARCHAR(30)');
-            DB::statement('ALTER TABLE opd_bills ALTER COLUMN visit_id TYPE VARCHAR(30) USING visit_id::VARCHAR(30)');
-            DB::statement('ALTER TABLE opd_vitals ALTER COLUMN visit_id TYPE VARCHAR(30) USING visit_id::VARCHAR(30)');
-            DB::statement('ALTER TABLE opd_consultations ALTER COLUMN visit_id TYPE VARCHAR(30) USING visit_id::VARCHAR(30)');
-            DB::statement('ALTER TABLE emergency_visits ALTER COLUMN visit_id TYPE VARCHAR(30) USING visit_id::VARCHAR(30)');
-            DB::statement('ALTER TABLE emergency_bills ALTER COLUMN visit_id TYPE VARCHAR(30) USING visit_id::VARCHAR(30)');
-            DB::statement('ALTER TABLE ipd_admissions ALTER COLUMN admission_id TYPE VARCHAR(30) USING admission_id::VARCHAR(30)');
-            DB::statement('ALTER TABLE ipd_bills ALTER COLUMN admission_id TYPE VARCHAR(30) USING admission_id::VARCHAR(30)');
-            DB::statement('ALTER TABLE nursing_records ALTER COLUMN admission_id TYPE VARCHAR(30) USING admission_id::VARCHAR(30)');
-            DB::statement('ALTER TABLE clinical_orders ALTER COLUMN admission_id TYPE VARCHAR(30) USING admission_id::VARCHAR(30)');
-            DB::statement('ALTER TABLE progress_notes ALTER COLUMN admission_id TYPE VARCHAR(30) USING admission_id::VARCHAR(30)');
+            DB::statement('ALTER TABLE opd_visits MODIFY COLUMN visit_id VARCHAR(30)');
+            DB::statement('ALTER TABLE opd_bills MODIFY COLUMN visit_id VARCHAR(30)');
+            DB::statement('ALTER TABLE opd_vitals MODIFY COLUMN visit_id VARCHAR(30)');
+            DB::statement('ALTER TABLE opd_consultations MODIFY COLUMN visit_id VARCHAR(30)');
+            DB::statement('ALTER TABLE emergency_visits MODIFY COLUMN visit_id VARCHAR(30)');
+            DB::statement('ALTER TABLE emergency_bills MODIFY COLUMN visit_id VARCHAR(30)');
+            DB::statement('ALTER TABLE ipd_admissions MODIFY COLUMN admission_id VARCHAR(30)');
+            DB::statement('ALTER TABLE ipd_bills MODIFY COLUMN admission_id VARCHAR(30)');
+            DB::statement('ALTER TABLE nursing_records MODIFY COLUMN admission_id VARCHAR(30)');
+            DB::statement('ALTER TABLE clinical_orders MODIFY COLUMN admission_id VARCHAR(30)');
+            DB::statement('ALTER TABLE progress_notes MODIFY COLUMN admission_id VARCHAR(30)');
         }
     }
 
     public function down(): void
     {
         if (DB::getDriverName() !== 'sqlite') {
-            DB::statement('ALTER TABLE progress_notes ALTER COLUMN admission_id TYPE INTEGER USING admission_id::INTEGER');
-            DB::statement('ALTER TABLE clinical_orders ALTER COLUMN admission_id TYPE INTEGER USING admission_id::INTEGER');
-            DB::statement('ALTER TABLE nursing_records ALTER COLUMN admission_id TYPE INTEGER USING admission_id::INTEGER');
-            DB::statement('ALTER TABLE ipd_bills ALTER COLUMN admission_id TYPE INTEGER USING admission_id::INTEGER');
-            DB::statement('ALTER TABLE ipd_admissions ALTER COLUMN admission_id TYPE INTEGER USING admission_id::INTEGER');
-            DB::statement('ALTER TABLE emergency_bills ALTER COLUMN visit_id TYPE INTEGER USING visit_id::INTEGER');
-            DB::statement('ALTER TABLE emergency_visits ALTER COLUMN visit_id TYPE INTEGER USING visit_id::INTEGER');
-            DB::statement('ALTER TABLE opd_consultations ALTER COLUMN visit_id TYPE INTEGER USING visit_id::INTEGER');
-            DB::statement('ALTER TABLE opd_vitals ALTER COLUMN visit_id TYPE INTEGER USING visit_id::INTEGER');
-            DB::statement('ALTER TABLE opd_bills ALTER COLUMN visit_id TYPE INTEGER USING visit_id::INTEGER');
-            DB::statement('ALTER TABLE opd_visits ALTER COLUMN visit_id TYPE INTEGER USING visit_id::INTEGER');
+            DB::statement('ALTER TABLE progress_notes MODIFY COLUMN admission_id INT');
+            DB::statement('ALTER TABLE clinical_orders MODIFY COLUMN admission_id INT');
+            DB::statement('ALTER TABLE nursing_records MODIFY COLUMN admission_id INT');
+            DB::statement('ALTER TABLE ipd_bills MODIFY COLUMN admission_id INT');
+            DB::statement('ALTER TABLE ipd_admissions MODIFY COLUMN admission_id INT');
+            DB::statement('ALTER TABLE emergency_bills MODIFY COLUMN visit_id INT');
+            DB::statement('ALTER TABLE emergency_visits MODIFY COLUMN visit_id INT');
+            DB::statement('ALTER TABLE opd_consultations MODIFY COLUMN visit_id INT');
+            DB::statement('ALTER TABLE opd_vitals MODIFY COLUMN visit_id INT');
+            DB::statement('ALTER TABLE opd_bills MODIFY COLUMN visit_id INT');
+            DB::statement('ALTER TABLE opd_visits MODIFY COLUMN visit_id INT');
         }
 
         Schema::table('patients', function (Blueprint $table) {

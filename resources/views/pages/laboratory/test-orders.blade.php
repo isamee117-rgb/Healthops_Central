@@ -178,16 +178,16 @@
 </div>
 
 <div class="offcanvas offcanvas-end" tabindex="-1" id="orderDetailPanel" style="width:600px;border-left:1px solid var(--color-border)">
-    <div class="offcanvas-header" style="background:var(--midnight-blue);color:#fff;padding:16px 20px">
+    <div class="offcanvas-header" style="padding:16px 20px;border-bottom:1px solid var(--color-border)">
         <div style="flex:1">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
-                <h5 id="detailOrderId" class="offcanvas-title" style="font-size:18px;font-weight:700;margin:0;font-family:'Roobert',sans-serif"></h5>
+                <h5 id="detailOrderId" class="offcanvas-title"></h5>
                 <span id="detailPriorityBadge"></span>
                 <span id="detailStatusBadge"></span>
             </div>
-            <div id="detailTatInfo" style="font-size:12px;opacity:0.8"></div>
+            <div id="detailTatInfo" style="font-size:12px;color:var(--color-muted-foreground)"></div>
         </div>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" style="padding:0;overflow-y:auto" id="detailBody">
         <div style="padding:20px;text-align:center;color:var(--color-muted-foreground)">Loading...</div>

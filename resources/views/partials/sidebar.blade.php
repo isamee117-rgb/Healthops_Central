@@ -51,14 +51,6 @@
             </li>
             @endif
 
-            @if(auth()->user()->hasModuleAccess('ot'))
-            <li>
-                <a href="{{ url('/ot') }}" class="{{ request()->is('ot') ? 'active' : '' }}">
-                    <i data-lucide="activity"></i>
-                    <span class="nav-label">Operation Theater</span>
-                </a>
-            </li>
-            @endif
 
             @if(auth()->user()->canManageUsers())
             <li>
@@ -340,6 +332,12 @@
                         </a>
                     </li>
                 </ul>
+            </li>
+            <li class="{{ request()->is('form-builder') ? 'active' : '' }}">
+                <a href="{{ url('/form-builder') }}" class="{{ request()->is('form-builder') ? 'active' : '' }}">
+                    <i data-lucide="layout-template"></i>
+                    <span class="nav-label">Form Builder</span>
+                </a>
             </li>
         </ul>
         @endif

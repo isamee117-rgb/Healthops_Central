@@ -3,6 +3,59 @@ $(document).ready(function () {
 
     function esc(s) { return $('<span>').text(s || '').html(); }
 
+    // ── Department Routing ─────────────────────────────────────────────────────
+    var deptDefs = [
+        { key: 'IPD', label: 'Inpatient (IPD)',   icon: 'bed-single' },
+        { key: 'ER',  label: 'Emergency (ER)',     icon: 'ambulance' },
+    ];
+
+    function loadDeptRouting() {
+        $.get('/api/pharmacy-config/department-routing').done(function (data) {
+            renderDeptRouting(data);
+        }).fail(function () {
+            $('#deptRoutingBody').html('<div style="padding:16px;color:var(--color-muted-foreground);font-size:13px">Failed to load.</div>');
+        });
+    }
+
+    function renderDeptRouting(data) {
+        var html = deptDefs.map(function (d) {
+            var isOn = data[d.key] !== false;
+            return '<div class="dept-routing-row">' +
+                '<span class="dept-label"><i data-lucide="' + d.icon + '" style="width:15px;height:15px"></i> ' + d.label + '</span>' +
+                '<label class="dept-toggle-wrap">' +
+                '<input type="checkbox" data-dept="' + d.key + '"' + (isOn ? ' checked' : '') + '>' +
+                '<span class="toggle-slider"></span>' +
+                '</label>' +
+                '<span class="dept-status ' + (isOn ? 'on' : 'off') + '">' + (isOn ? 'Orders accepted' : 'Orders blocked') + '</span>' +
+                '</div>';
+        }).join('');
+        $('#deptRoutingBody').html(html);
+        lucide.createIcons();
+    }
+
+    $(document).on('change', '#deptRoutingBody input[data-dept]', function () {
+        var dept = $(this).data('dept');
+        var isOn = $(this).is(':checked');
+        var payload = {};
+        payload[dept] = isOn;
+        $.ajax({
+            url: '/api/pharmacy-config/department-routing',
+            method: 'PUT',
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            data: JSON.stringify(payload),
+            success: function () {
+                loadDeptRouting();
+                HMS.toast(dept + ' orders ' + (isOn ? 'enabled' : 'blocked'), isOn ? 'success' : 'warning');
+            },
+            error: function () {
+                HMS.toast('Failed to update', 'error');
+                loadDeptRouting();
+            },
+        });
+    });
+
+    // ── Prescription Dropdowns ─────────────────────────────────────────────────
     function loadAll() {
         $.get('/api/pharmacy-config').done(function (data) {
             configData = data || {};
@@ -163,4 +216,5 @@ $(document).ready(function () {
     });
 
     loadAll();
+    loadDeptRouting();
 });

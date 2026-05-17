@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('content')
 <div class="module-page">
@@ -11,25 +11,9 @@
             <i data-lucide="receipt"></i>
             <span class="hide-mobile">Billing & Payment</span>
         </button>
-        <button class="module-tab" data-tab="orders" data-permission="ipd.orders.access">
-            <i data-lucide="clipboard-list"></i>
-            <span class="hide-mobile">Clinical Orders</span>
-        </button>
-        <button class="module-tab" data-tab="mar" data-permission="ipd.mar.access">
-            <i data-lucide="pill"></i>
-            <span class="hide-mobile">Medication MAR</span>
-        </button>
-        <button class="module-tab" data-tab="investigations" data-permission="ipd.investigations.access">
-            <i data-lucide="flask-conical"></i>
-            <span class="hide-mobile">Investigations</span>
-        </button>
-        <button class="module-tab" data-tab="nursing" data-permission="ipd.nursing.access">
-            <i data-lucide="stethoscope"></i>
-            <span class="hide-mobile">Nursing Station</span>
-        </button>
-        <button class="module-tab" data-tab="discharge" data-permission="ipd.discharge.access">
-            <i data-lucide="log-out"></i>
-            <span class="hide-mobile">Discharge</span>
+        <button class="module-tab" data-tab="ipd-patient" data-permission="ipd.registration.access">
+            <i data-lucide="bed-double"></i>
+            <span class="hide-mobile">IPD Patient</span>
         </button>
     </nav>
 
@@ -48,38 +32,26 @@
         <div class="mini-stats" id="regStats">
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(0,51,102,0.1)"><i data-lucide="users" style="color:var(--midnight-blue)"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Active Patients</p>
-                        <h3 class="mini-stat-value" style="color:var(--midnight-blue)" id="statActiveCount">0</h3>
-                    </div>
+                    <p class="mini-stat-label">Active Patients</p>
+                    <h3 class="mini-stat-value" id="statActiveCount">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(239,68,68,0.1)"><i data-lucide="heart" style="color:#EF4444"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Total Admissions</p>
-                        <h3 class="mini-stat-value" style="color:#EF4444" id="statTotalAdm">0</h3>
-                    </div>
+                    <p class="mini-stat-label">Total Admissions</p>
+                    <h3 class="mini-stat-value" id="statTotalAdm">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(127,255,212,0.2)"><i data-lucide="bed-double" style="color:var(--midnight-blue)"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Available Beds</p>
-                        <h3 class="mini-stat-value" id="statAvailBeds">0</h3>
-                    </div>
+                    <p class="mini-stat-label">Available Beds</p>
+                    <h3 class="mini-stat-value" id="statAvailBeds">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(16,185,129,0.1)"><i data-lucide="calendar" style="color:#10B981"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Today's Admissions</p>
-                        <h3 class="mini-stat-value" id="statTodayAdm">0</h3>
-                    </div>
+                    <p class="mini-stat-label">Today's Admissions</p>
+                    <h3 class="mini-stat-value" id="statTodayAdm">0</h3>
                 </div>
             </div>
         </div>
@@ -339,38 +311,26 @@
         <div class="mini-stats">
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(0,51,102,0.1)"><i data-lucide="receipt" style="color:var(--midnight-blue)"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Total Billed</p>
-                        <h3 class="mini-stat-value" style="color:var(--midnight-blue)" id="statBillTotal">PKR 0</h3>
-                    </div>
+                    <p class="mini-stat-label">Total Billed</p>
+                    <h3 class="mini-stat-value" id="statBillTotal">PKR 0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(127,255,212,0.2)"><i data-lucide="dollar-sign" style="color:var(--midnight-blue)"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Collected Today</p>
-                        <h3 class="mini-stat-value" id="statBillCollected">PKR 0</h3>
-                    </div>
+                    <p class="mini-stat-label">Collected Today</p>
+                    <h3 class="mini-stat-value" id="statBillCollected">PKR 0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(239,68,68,0.1)"><i data-lucide="credit-card" style="color:#EF4444"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Outstanding</p>
-                        <h3 class="mini-stat-value" style="color:#EF4444" id="statBillOutstanding">PKR 0</h3>
-                    </div>
+                    <p class="mini-stat-label">Outstanding</p>
+                    <h3 class="mini-stat-value" id="statBillOutstanding">PKR 0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(16,185,129,0.1)"><i data-lucide="users" style="color:#10B981"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Cleared Patients</p>
-                        <h3 class="mini-stat-value" id="statBillCleared">0</h3>
-                    </div>
+                    <p class="mini-stat-label">Cleared Patients</p>
+                    <h3 class="mini-stat-value" id="statBillCleared">0</h3>
                 </div>
             </div>
         </div>
@@ -558,198 +518,141 @@
         </div>
     </div>
 
-    {{-- TAB 3: Clinical Orders --}}
-    <div class="tab-content" id="tab-orders" style="display:none">
+    {{-- TAB 2b: IPD Patient --}}
+    <div class="tab-content" id="tab-ipd-patient" style="display:none">
         <div class="module-header">
             <div>
-                <h1><i data-lucide="clipboard-list"></i> Clinical Orders</h1>
-                <p class="module-subtitle">Manage medications, investigations, and procedures</p>
-            </div>
-            <div class="module-header-actions">
-                <button class="btn-primary" id="btnNewOrder"><i data-lucide="plus"></i> Create New Order</button>
+                <h1><i data-lucide="bed-double"></i> IPD Patients</h1>
+                <p class="module-subtitle">View all admitted IPD patients</p>
             </div>
         </div>
 
-        <div class="mini-stats">
+        <div class="mini-stats" id="ipdPatStats">
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(245,158,11,0.1)"><i data-lucide="clock" style="color:#F59E0B"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Pending Orders</p>
-                        <h3 class="mini-stat-value" style="color:var(--midnight-blue)" id="statPendingOrders">7</h3>
-                    </div>
+                    <p class="mini-stat-label">Active Patients</p>
+                    <h3 class="mini-stat-value" id="ipdPatStatActive">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(127,255,212,0.2)"><i data-lucide="pill" style="color:var(--midnight-blue)"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Active Meds</p>
-                        <h3 class="mini-stat-value" id="statActiveMeds">15</h3>
-                    </div>
+                    <p class="mini-stat-label">Total Admissions</p>
+                    <h3 class="mini-stat-value" id="ipdPatStatTotal">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(59,130,246,0.1)"><i data-lucide="flask-conical" style="color:#3B82F6"></i></div>
-                    <div>
-                        <p class="mini-stat-label">New Reports</p>
-                        <h3 class="mini-stat-value" id="statNewReports">4</h3>
-                    </div>
+                    <p class="mini-stat-label">Available Beds</p>
+                    <h3 class="mini-stat-value" id="ipdPatStatBeds">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(239,68,68,0.1)"><i data-lucide="alert-triangle" style="color:#EF4444"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Critical Results</p>
-                        <h3 class="mini-stat-value" style="color:#EF4444" id="statCriticalResults">1</h3>
-                    </div>
+                    <p class="mini-stat-label">Today's Admissions</p>
+                    <h3 class="mini-stat-value" id="ipdPatStatToday">0</h3>
                 </div>
             </div>
         </div>
 
-        {{-- Toolbar ──────────────────────────────────────────────────────────── --}}
+        {{-- Toolbar --}}
         <div class="opd-toolbar">
             <div class="opd-search-wrap">
                 <i data-lucide="search" class="opd-search-icon"></i>
-                <input type="text" class="opd-search-input" id="ordersSearch" placeholder="Search by Admission ID, MRN, Patient Name...">
+                <input type="text" class="opd-search-input" id="ipdPatSearch" placeholder="Search by Admission ID, MRN, Patient Name...">
             </div>
             <div class="opd-toolbar-right">
-                <button class="opd-tool-btn opd-tool-btn--icon" type="button" id="btnIpdOrdFilter" onclick="toggleIpdOrdFilter()" title="Filter">
+                <button class="opd-tool-btn opd-tool-btn--icon" type="button" id="btnIpdPatFilter" onclick="toggleIpdPatFilter()" title="Filter">
                     <i data-lucide="filter"></i>
-                    <span class="opd-filter-badge" id="ipdOrdFilterBadge" style="display:none">0</span>
+                    <span class="opd-filter-badge" id="ipdPatFilterBadge" style="display:none">0</span>
                 </button>
                 <div class="opd-rows-wrap">
-                    <button class="opd-tool-btn opd-tool-btn--icon" type="button" onclick="toggleIpdOrdRowsMenu(event)" title="Rows per page">
+                    <button class="opd-tool-btn opd-tool-btn--icon" type="button" onclick="toggleIpdPatRowsMenu(event)" title="Rows per page">
                         <i data-lucide="layout-list"></i>
                     </button>
-                    <div class="opd-rows-menu" id="ipdOrdRowsMenu">
+                    <div class="opd-rows-menu" id="ipdPatRowsMenu">
                         <div class="opd-rows-head">Rows per page</div>
-                        <button onclick="setIpdOrdRowsPer(10)">10 rows</button>
-                        <button onclick="setIpdOrdRowsPer(20)">20 rows</button>
-                        <button onclick="setIpdOrdRowsPer(50)">50 rows</button>
-                        <button onclick="setIpdOrdRowsPer(100)">100 rows</button>
+                        <button onclick="setIpdPatRowsPer(10)">10 rows</button>
+                        <button onclick="setIpdPatRowsPer(20)">20 rows</button>
+                        <button onclick="setIpdPatRowsPer(50)">50 rows</button>
+                        <button onclick="setIpdPatRowsPer(100)">100 rows</button>
                     </div>
                 </div>
                 <div class="opd-col-vis-wrap">
-                    <button class="opd-tool-btn opd-tool-btn--icon" type="button" onclick="toggleIpdOrdColVis(event)" title="Column visibility">
+                    <button class="opd-tool-btn opd-tool-btn--icon" type="button" onclick="toggleIpdPatColVis(event)" title="Column visibility">
                         <i data-lucide="columns-3"></i>
                     </button>
-                    <div class="opd-col-vis-menu" id="ipdOrdColVisMenu">
+                    <div class="opd-col-vis-menu" id="ipdPatColVisMenu">
                         <div class="opd-col-vis-head">
                             <span>Column Visibility</span>
-                            <button class="opd-col-vis-selall" type="button" onclick="ipdOrdColVisSelectAll()">Select All</button>
+                            <button class="opd-col-vis-selall" type="button" onclick="ipdPatColVisSelectAll()">Select All</button>
                         </div>
-                        <div class="opd-col-vis-list" id="ipdOrdColVisList">
+                        <div class="opd-col-vis-list" id="ipdPatColVisList">
                             <label><input type="checkbox" data-col="0" checked> MRN</label>
                             <label><input type="checkbox" data-col="1" checked> Patient Name</label>
                             <label><input type="checkbox" data-col="2" checked> Visit ID</label>
                             <label><input type="checkbox" data-col="3" checked> Department</label>
                             <label><input type="checkbox" data-col="4" checked> Doctor</label>
-                            <label><input type="checkbox" data-col="5" checked> Ward / Bed</label>
-                            <label><input type="checkbox" data-col="6" checked> Initial Diagnosis</label>
-                            <label><input type="checkbox" data-col="7" checked> Pending Orders</label>
-                            <label><input type="checkbox" data-col="8" checked> Active Meds</label>
-                            <label><input type="checkbox" data-col="9" checked> Last Order</label>
-                            <label><input type="checkbox" data-col="10" checked> Status</label>
+                            <label><input type="checkbox" data-col="5" checked> Adm. Source</label>
+                            <label><input type="checkbox" data-col="6" checked> Gender</label>
+                            <label><input type="checkbox" data-col="7" checked> Ward / Bed</label>
+                            <label><input type="checkbox" data-col="8" checked> Initial Diagnosis</label>
+                            <label><input type="checkbox" data-col="9" checked> Status</label>
+                            <label><input type="checkbox" data-col="10" checked> Payment</label>
                             <label><input type="checkbox" data-col="11" checked> Date / Time</label>
                         </div>
                         <div class="opd-col-vis-foot">
-                            <button class="opd-col-vis-save" type="button" onclick="applyIpdOrdColVis()">Save</button>
+                            <button class="opd-col-vis-save" type="button" onclick="applyIpdPatColVis()">Save</button>
                         </div>
                     </div>
                 </div>
                 <div class="opd-export-wrap">
-                    <button class="opd-tool-btn" type="button" onclick="toggleIpdOrdExportMenu(event)" title="Export" style="padding:0 10px">
+                    <button class="opd-tool-btn" type="button" onclick="toggleIpdPatExportMenu(event)" title="Export" style="padding:0 10px">
                         <i data-lucide="upload"></i>
                         <i data-lucide="chevron-down" style="width:13px;height:13px;margin-left:2px"></i>
                     </button>
-                    <div class="opd-export-menu" id="ipdOrdExportMenu">
-                        <button onclick="exportIpdOrd('excel')"><i data-lucide="table-2"></i> Excel (.xls)</button>
-                        <button onclick="exportIpdOrd('csv')"><i data-lucide="file-spreadsheet"></i> CSV</button>
-                        <button onclick="exportIpdOrd('pdf')"><i data-lucide="file-text"></i> PDF</button>
-                        <button onclick="exportIpdOrd('print')"><i data-lucide="printer"></i> Print</button>
+                    <div class="opd-export-menu" id="ipdPatExportMenu">
+                        <button onclick="exportIpdPat('excel')"><i data-lucide="table-2"></i> Excel (.xls)</button>
+                        <button onclick="exportIpdPat('csv')"><i data-lucide="file-spreadsheet"></i> CSV</button>
+                        <button onclick="exportIpdPat('pdf')"><i data-lucide="file-text"></i> PDF</button>
+                        <button onclick="exportIpdPat('print')"><i data-lucide="printer"></i> Print</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- Filter Pane ───────────────────────────────────────────────────────── --}}
-        <div class="opd-filter-pane" id="ipdOrdFilterPane" style="display:none">
+        {{-- Filter Pane --}}
+        <div class="opd-filter-pane" id="ipdPatFilterPane" style="display:none">
             <div class="opd-filter-pane-head">
                 <div style="display:flex;align-items:center;gap:8px">
                     <i data-lucide="sliders-horizontal" style="width:16px;height:16px;color:#060740"></i>
                     <span style="font-weight:700;font-size:14px;color:var(--color-foreground)">Filters</span>
                 </div>
-                <button class="opd-filter-close" onclick="toggleIpdOrdFilter()" type="button">
+                <button class="opd-filter-close" onclick="toggleIpdPatFilter()" type="button">
                     <i data-lucide="x"></i>
                 </button>
             </div>
             <div class="opd-filter-pane-body">
                 <div class="opd-filter-field">
-                    <label class="opd-filter-label">MRN</label>
-                    <div class="opd-cs-wrap" id="ipdOrdCsMrn" data-target="ipdOrdMrnFilter" data-placeholder="Enter MRN">
-                        <div class="opd-cs-trigger"><span class="opd-cs-val opd-ph">Enter MRN</span><i data-lucide="chevron-down" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                        <div class="opd-cs-popup"><input type="text" class="opd-cs-search" placeholder="Search..."><div class="opd-cs-list"></div></div>
-                    </div>
-                    <input type="hidden" id="ipdOrdMrnFilter">
-                </div>
-                <div class="opd-filter-field">
-                    <label class="opd-filter-label">Patient Name</label>
-                    <div class="opd-cs-wrap" id="ipdOrdCsPatName" data-target="ipdOrdPatNameFilter" data-placeholder="Enter Patient Name">
-                        <div class="opd-cs-trigger"><span class="opd-cs-val opd-ph">Enter Patient Name</span><i data-lucide="chevron-down" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                        <div class="opd-cs-popup"><input type="text" class="opd-cs-search" placeholder="Search..."><div class="opd-cs-list"></div></div>
-                    </div>
-                    <input type="hidden" id="ipdOrdPatNameFilter">
-                </div>
-                <div class="opd-filter-field">
-                    <label class="opd-filter-label">Doctor</label>
-                    <div class="opd-cs-wrap" id="ipdOrdCsDoctor" data-target="ipdOrdDoctorFilter" data-placeholder="Any Doctor">
-                        <div class="opd-cs-trigger"><span class="opd-cs-val opd-ph">Any Doctor</span><i data-lucide="chevron-down" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                        <div class="opd-cs-popup"><input type="text" class="opd-cs-search" placeholder="Search..."><div class="opd-cs-list"></div></div>
-                    </div>
-                    <input type="hidden" id="ipdOrdDoctorFilter">
-                </div>
-                <div class="opd-filter-field">
-                    <label class="opd-filter-label">Department</label>
-                    <div class="opd-cs-wrap" id="ipdOrdCsDept" data-target="ipdOrdDeptFilter" data-placeholder="Any Department">
-                        <div class="opd-cs-trigger"><span class="opd-cs-val opd-ph">Any Department</span><i data-lucide="chevron-down" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                        <div class="opd-cs-popup"><input type="text" class="opd-cs-search" placeholder="Search..."><div class="opd-cs-list"></div></div>
-                    </div>
-                    <input type="hidden" id="ipdOrdDeptFilter">
-                </div>
-                <div class="opd-filter-field">
                     <label class="opd-filter-label">Status</label>
-                    <select class="opd-filter-select" id="ipdOrdStatusFilter">
+                    <select class="opd-filter-select" id="ipdPatStatusFilter">
                         <option value="all">All Status</option>
-                        <option value="Active">Active</option>
-                        <option value="Discharged">Discharged</option>
-                        <option value="Discharge Requested">Discharge Requested</option>
+                        <option value="active">Active</option>
+                        <option value="discharged">Discharged</option>
+                        <option value="pending">Pending</option>
                     </select>
                 </div>
                 <div class="opd-filter-field">
-                    <label class="opd-filter-label">Date From</label>
-                    <div class="opd-dp-wrap" id="ipdOrdDpDateFrom" data-target="ipdOrdDateFrom" data-placeholder="Select date">
-                        <div class="opd-dp-trigger"><span class="opd-dp-val opd-ph">Select date</span><i data-lucide="calendar" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                        <div class="opd-dp-popup"></div>
-                    </div>
-                    <input type="hidden" id="ipdOrdDateFrom">
-                </div>
-                <div class="opd-filter-field">
-                    <label class="opd-filter-label">Date To</label>
-                    <div class="opd-dp-wrap" id="ipdOrdDpDateTo" data-target="ipdOrdDateTo" data-placeholder="Select date">
-                        <div class="opd-dp-trigger"><span class="opd-dp-val opd-ph">Select date</span><i data-lucide="calendar" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                        <div class="opd-dp-popup"></div>
-                    </div>
-                    <input type="hidden" id="ipdOrdDateTo">
+                    <label class="opd-filter-label">Ward</label>
+                    <select class="opd-filter-select" id="ipdPatWardFilter">
+                        <option value="all">All Wards</option>
+                    </select>
                 </div>
             </div>
             <div class="opd-filter-pane-foot">
-                <button class="opd-filter-reset" type="button" onclick="resetIpdOrdFilters()">
+                <button class="opd-filter-reset" type="button" onclick="resetIpdPatFilters()">
                     <i data-lucide="rotate-ccw"></i> Reset
                 </button>
-                <button class="opd-filter-apply" type="button" onclick="applyIpdOrdFilters()">
+                <button class="opd-filter-apply" type="button" onclick="applyIpdPatFilters()">
                     <i data-lucide="check"></i> Apply Filters
                 </button>
             </div>
@@ -757,7 +660,7 @@
 
         <div class="data-table-wrapper">
             <div style="overflow-x:auto">
-                <table class="data-table" id="ordersTable">
+                <table class="data-table" id="ipdPatTable">
                     <thead>
                         <tr>
                             <th>MRN</th>
@@ -765,556 +668,32 @@
                             <th>Visit ID</th>
                             <th>Department</th>
                             <th>Doctor</th>
-                            <th>Ward / Bed</th>
-                            <th>Initial Diagnosis</th>
-                            <th class="text-center">Pending Orders</th>
-                            <th class="text-center">Active Meds</th>
-                            <th>Last Order</th>
-                            <th>Status</th>
-                            <th>Date / Time</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ordersTableBody"></tbody>
-                </table>
-            </div>
-            <div class="opd-pagination" id="ipdOrdPagination">
-                <div class="opd-pagination-left">
-                    <div class="opd-page-info" id="ordersTableInfo">Showing — of — results</div>
-                </div>
-                <div class="opd-page-btns">
-                    <button class="opd-page-btn" id="ipdOrdPrevPage" disabled><i data-lucide="chevron-left"></i></button>
-                    <div class="opd-page-nums" id="ipdOrdPageNums"></div>
-                    <button class="opd-page-btn" id="ipdOrdNextPage"><i data-lucide="chevron-right"></i></button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- TAB 4: Medication MAR --}}
-    <div class="tab-content" id="tab-mar" style="display:none">
-
-        {{-- Module Header --}}
-        <div class="module-header" style="margin-bottom:20px">
-            <div>
-                <h2 style="font-size:20px;font-weight:700;color:var(--midnight-blue);margin:0">Medication Administration Record</h2>
-                <p style="font-size:13px;color:var(--color-muted-foreground);margin:4px 0 0">Track and manage patient medication schedules</p>
-            </div>
-        </div>
-
-        {{-- Mini Stats --}}
-        <div class="mini-stats">
-            <div class="mini-stat-card">
-                <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(59,130,246,0.1)"><i data-lucide="users" style="color:#3B82F6"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Active Patients</p>
-                        <h3 class="mini-stat-value" style="color:var(--midnight-blue)" id="marStatPatients">0</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="mini-stat-card">
-                <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(245,158,11,0.1)"><i data-lucide="clock" style="color:#F59E0B"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Pending Doses</p>
-                        <h3 class="mini-stat-value" style="color:#F59E0B" id="marStatPending">0</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="mini-stat-card">
-                <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(16,185,129,0.1)"><i data-lucide="check-circle" style="color:#10B981"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Given Today</p>
-                        <h3 class="mini-stat-value" style="color:#10B981" id="marStatGiven">0</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="mini-stat-card">
-                <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(127,255,212,0.2)"><i data-lucide="pill" style="color:var(--midnight-blue)"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Total Doses Today</p>
-                        <h3 class="mini-stat-value" id="marStatTotal">0</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Toolbar --}}
-        <div class="opd-toolbar" style="margin-bottom:16px">
-            <div class="opd-search-wrap">
-                <i data-lucide="search" class="opd-search-icon"></i>
-                <input type="text" class="opd-search-input" id="marToolbarSearch" placeholder="Search by Patient Name, MRN...">
-            </div>
-            <div class="opd-toolbar-right">
-                <button class="opd-tool-btn opd-tool-btn--icon" type="button" id="btnMarFilter" onclick="toggleMarFilter()" title="Filter">
-                    <i data-lucide="filter"></i>
-                    <span class="opd-filter-badge" id="marFilterBadge" style="display:none">0</span>
-                </button>
-                <div class="opd-export-wrap">
-                    <button class="opd-tool-btn" type="button" onclick="toggleMarExportMenu(event)" title="Export" style="padding:0 10px">
-                        <i data-lucide="upload"></i>
-                        <i data-lucide="chevron-down" style="width:13px;height:13px;margin-left:2px"></i>
-                    </button>
-                    <div class="opd-export-menu" id="marExportMenu">
-                        <button onclick="exportMar('pdf')"><i data-lucide="file-text"></i> PDF</button>
-                        <button onclick="exportMar('print')"><i data-lucide="printer"></i> Print</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Filter Pane --}}
-        <div class="opd-filter-pane" id="marFilterPane" style="display:none">
-            <div class="opd-filter-pane-head">
-                <div style="display:flex;align-items:center;gap:8px">
-                    <i data-lucide="sliders-horizontal" style="width:16px;height:16px;color:#060740"></i>
-                    <span style="font-weight:700;font-size:14px;color:var(--color-foreground)">Filters</span>
-                </div>
-                <button class="opd-filter-close" onclick="toggleMarFilter()" type="button">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-            <div class="opd-filter-pane-body">
-                <div class="opd-filter-field">
-                    <label class="opd-filter-label">Administration Status</label>
-                    <select class="opd-filter-select" id="marStatusFilter">
-                        <option value="all">All Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="given">Given</option>
-                        <option value="held">Held</option>
-                        <option value="missed">Missed</option>
-                    </select>
-                </div>
-                <div class="opd-filter-field">
-                    <label class="opd-filter-label">Date From</label>
-                    <div class="opd-dp-wrap" id="marDpDateFrom" data-target="marDateFrom" data-placeholder="Select date">
-                        <div class="opd-dp-trigger"><span class="opd-dp-val opd-ph">Select date</span><i data-lucide="calendar" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                        <div class="opd-dp-popup"></div>
-                    </div>
-                    <input type="hidden" id="marDateFrom">
-                </div>
-                <div class="opd-filter-field">
-                    <label class="opd-filter-label">Date To</label>
-                    <div class="opd-dp-wrap" id="marDpDateTo" data-target="marDateTo" data-placeholder="Select date">
-                        <div class="opd-dp-trigger"><span class="opd-dp-val opd-ph">Select date</span><i data-lucide="calendar" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                        <div class="opd-dp-popup"></div>
-                    </div>
-                    <input type="hidden" id="marDateTo">
-                </div>
-            </div>
-            <div class="opd-filter-pane-foot">
-                <button class="opd-filter-reset" type="button" onclick="resetMarFilters()">
-                    <i data-lucide="rotate-ccw"></i> Reset
-                </button>
-                <button class="opd-filter-apply" type="button" onclick="applyMarFilters()">
-                    <i data-lucide="check"></i> Apply Filters
-                </button>
-            </div>
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:24px" class="mar-layout">
-            <div style="display:flex;gap:24px">
-                <div style="width:320px;flex-shrink:0;border-radius:12px;border:1px solid var(--color-border);background:var(--color-card);box-shadow:0 1px 3px rgba(0,0,0,0.04)">
-                    <div style="border-bottom:1px solid var(--color-border);padding:16px">
-                        <div style="position:relative">
-                            <i data-lucide="search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--color-muted-foreground)"></i>
-                            <input type="text" class="form-control" id="marPatientSearch" placeholder="Search patient..." style="height:36px;padding-left:36px;font-size:14px">
-                        </div>
-                    </div>
-                    <div style="max-height:480px;overflow-y:auto;padding:8px" id="marPatientList"></div>
-                </div>
-                <div style="flex:1" id="marMainContent"></div>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:12px;border-radius:12px;border:1px solid var(--color-border);background:var(--color-card);padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
-                <button class="btn-outline"><i data-lucide="pill"></i> View Complete MAR</button>
-                <button class="btn-secondary"><i data-lucide="printer"></i> Print MAR Sheet</button>
-                <button class="btn-secondary"><i data-lucide="download"></i> Export to PDF</button>
-            </div>
-        </div>
-    </div>
-
-    {{-- TAB 5: Investigations --}}
-    <div class="tab-content" id="tab-investigations" style="display:none">
-        <div class="module-header">
-            <div>
-                <h1><i data-lucide="flask-conical"></i> Investigations</h1>
-                <p class="module-subtitle">Manage lab and radiology orders</p>
-            </div>
-        </div>
-
-        <div class="mini-stats">
-            <div class="mini-stat-card">
-                <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(245,158,11,0.1)"><i data-lucide="clock" style="color:#F59E0B"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Pending</p>
-                        <h3 class="mini-stat-value" style="color:var(--midnight-blue)" id="invStatPending">0</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="mini-stat-card">
-                <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(59,130,246,0.1)"><i data-lucide="loader" style="color:#3B82F6"></i></div>
-                    <div>
-                        <p class="mini-stat-label">In Progress</p>
-                        <h3 class="mini-stat-value" id="invStatInProgress">0</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="mini-stat-card">
-                <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(16,185,129,0.1)"><i data-lucide="check-circle" style="color:#10B981"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Completed</p>
-                        <h3 class="mini-stat-value" id="invStatCompleted">0</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="mini-stat-card">
-                <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(239,68,68,0.1)"><i data-lucide="alert-triangle" style="color:#EF4444"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Critical Results</p>
-                        <h3 class="mini-stat-value" style="color:#EF4444" id="invStatCritical">0</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Toolbar --}}
-        <div class="opd-toolbar">
-            <div class="opd-search-wrap">
-                <i data-lucide="search" class="opd-search-icon"></i>
-                <input type="text" class="opd-search-input" id="invSearch" placeholder="Search by MRN, Patient Name, Admission ID...">
-            </div>
-            <div class="opd-toolbar-right">
-                <button class="opd-tool-btn opd-tool-btn--icon" type="button" id="btnIpdInvFilter" onclick="toggleIpdInvFilter()" title="Filter">
-                    <i data-lucide="filter"></i>
-                    <span class="opd-filter-badge" id="ipdInvFilterBadge" style="display:none">0</span>
-                </button>
-                <div class="opd-rows-wrap">
-                    <button class="opd-tool-btn opd-tool-btn--icon" type="button" onclick="toggleIpdInvRowsMenu(event)" title="Rows per page">
-                        <i data-lucide="layout-list"></i>
-                    </button>
-                    <div class="opd-rows-menu" id="ipdInvRowsMenu">
-                        <div class="opd-rows-head">Rows per page</div>
-                        <button onclick="setIpdInvRowsPer(10)">10 rows</button>
-                        <button onclick="setIpdInvRowsPer(20)">20 rows</button>
-                        <button onclick="setIpdInvRowsPer(50)">50 rows</button>
-                        <button onclick="setIpdInvRowsPer(100)">100 rows</button>
-                    </div>
-                </div>
-                <div class="opd-col-vis-wrap">
-                    <button class="opd-tool-btn opd-tool-btn--icon" type="button" onclick="toggleIpdInvColVis(event)" title="Column visibility">
-                        <i data-lucide="columns-3"></i>
-                    </button>
-                    <div class="opd-col-vis-menu" id="ipdInvColVisMenu">
-                        <div class="opd-col-vis-head">
-                            <span>Column Visibility</span>
-                            <button class="opd-col-vis-selall" type="button" onclick="ipdInvColVisSelectAll()">Select All</button>
-                        </div>
-                        <div class="opd-col-vis-list" id="ipdInvColVisList">
-                            <label><input type="checkbox" data-col="0" checked> MRN</label>
-                            <label><input type="checkbox" data-col="1" checked> Patient Name</label>
-                            <label><input type="checkbox" data-col="2" checked> Visit ID</label>
-                            <label><input type="checkbox" data-col="3" checked> Department</label>
-                            <label><input type="checkbox" data-col="4" checked> Gender</label>
-                            <label><input type="checkbox" data-col="5" checked> Ward / Bed</label>
-                            <label><input type="checkbox" data-col="6" checked> Initial Diagnosis</label>
-                            <label><input type="checkbox" data-col="7" checked> Type</label>
-                            <label><input type="checkbox" data-col="8" checked> Tests</label>
-                            <label><input type="checkbox" data-col="9" checked> Ordered By</label>
-                            <label><input type="checkbox" data-col="10" checked> Priority</label>
-                            <label><input type="checkbox" data-col="11" checked> Status</label>
-                            <label><input type="checkbox" data-col="12" checked> Date / Time</label>
-                        </div>
-                        <div class="opd-col-vis-foot">
-                            <button class="opd-col-vis-save" type="button" onclick="applyIpdInvColVis()">Save</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="opd-export-wrap">
-                    <button class="opd-tool-btn" type="button" onclick="toggleIpdInvExportMenu(event)" title="Export" style="padding:0 10px">
-                        <i data-lucide="upload"></i>
-                        <i data-lucide="chevron-down" style="width:13px;height:13px;margin-left:2px"></i>
-                    </button>
-                    <div class="opd-export-menu" id="ipdInvExportMenu">
-                        <button onclick="exportIpdInv('excel')"><i data-lucide="table-2"></i> Excel (.xls)</button>
-                        <button onclick="exportIpdInv('csv')"><i data-lucide="file-spreadsheet"></i> CSV</button>
-                        <button onclick="exportIpdInv('pdf')"><i data-lucide="file-text"></i> PDF</button>
-                        <button onclick="exportIpdInv('print')"><i data-lucide="printer"></i> Print</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Filter Pane --}}
-        <div class="opd-filter-pane" id="ipdInvFilterPane" style="display:none">
-            <div class="opd-filter-pane-head">
-                <div style="display:flex;align-items:center;gap:8px">
-                    <i data-lucide="sliders-horizontal" style="width:16px;height:16px;color:#060740"></i>
-                    <span style="font-weight:700;font-size:14px;color:var(--color-foreground)">Filters</span>
-                </div>
-                <button class="opd-filter-close" onclick="toggleIpdInvFilter()" type="button">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-            <div class="opd-filter-pane-body">
-                <div class="opd-filter-field">
-                    <label class="opd-filter-label">MRN</label>
-                    <div class="opd-cs-wrap" id="ipdInvCsMrn" data-target="ipdInvMrnFilter" data-placeholder="Enter MRN">
-                        <div class="opd-cs-trigger"><span class="opd-cs-val opd-ph">Enter MRN</span><i data-lucide="chevron-down" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                        <div class="opd-cs-popup"><input type="text" class="opd-cs-search" placeholder="Search..."><div class="opd-cs-list"></div></div>
-                    </div>
-                    <input type="hidden" id="ipdInvMrnFilter">
-                </div>
-                <div class="opd-filter-field">
-                    <label class="opd-filter-label">Patient Name</label>
-                    <div class="opd-cs-wrap" id="ipdInvCsPatName" data-target="ipdInvPatNameFilter" data-placeholder="Enter Patient Name">
-                        <div class="opd-cs-trigger"><span class="opd-cs-val opd-ph">Enter Patient Name</span><i data-lucide="chevron-down" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                        <div class="opd-cs-popup"><input type="text" class="opd-cs-search" placeholder="Search..."><div class="opd-cs-list"></div></div>
-                    </div>
-                    <input type="hidden" id="ipdInvPatNameFilter">
-                </div>
-                <div class="opd-filter-field">
-                    <label class="opd-filter-label">Test Type</label>
-                    <select class="opd-filter-select" id="ipdInvTypeFilter">
-                        <option value="all">All Types</option>
-                        <option value="lab">Lab</option>
-                        <option value="radiology">Radiology</option>
-                    </select>
-                </div>
-                <div class="opd-filter-field">
-                    <label class="opd-filter-label">Priority</label>
-                    <select class="opd-filter-select" id="ipdInvPriorityFilter">
-                        <option value="all">All Priorities</option>
-                        <option value="routine">Routine</option>
-                        <option value="urgent">Urgent</option>
-                        <option value="stat">STAT</option>
-                    </select>
-                </div>
-                <div class="opd-filter-field">
-                    <label class="opd-filter-label">Status</label>
-                    <select class="opd-filter-select" id="ipdInvStatusFilter">
-                        <option value="all">All Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="in-progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                    </select>
-                </div>
-                <div class="opd-filter-field">
-                    <label class="opd-filter-label">Date From</label>
-                    <div class="opd-dp-wrap" id="ipdInvDpDateFrom" data-target="ipdInvDateFrom" data-placeholder="Select date">
-                        <div class="opd-dp-trigger"><span class="opd-dp-val opd-ph">Select date</span><i data-lucide="calendar" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                        <div class="opd-dp-popup"></div>
-                    </div>
-                    <input type="hidden" id="ipdInvDateFrom">
-                </div>
-                <div class="opd-filter-field">
-                    <label class="opd-filter-label">Date To</label>
-                    <div class="opd-dp-wrap" id="ipdInvDpDateTo" data-target="ipdInvDateTo" data-placeholder="Select date">
-                        <div class="opd-dp-trigger"><span class="opd-dp-val opd-ph">Select date</span><i data-lucide="calendar" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                        <div class="opd-dp-popup"></div>
-                    </div>
-                    <input type="hidden" id="ipdInvDateTo">
-                </div>
-            </div>
-            <div class="opd-filter-pane-foot">
-                <button class="opd-filter-reset" type="button" onclick="resetIpdInvFilters()">
-                    <i data-lucide="rotate-ccw"></i> Reset
-                </button>
-                <button class="opd-filter-apply" type="button" onclick="applyIpdInvFilters()">
-                    <i data-lucide="check"></i> Apply Filters
-                </button>
-            </div>
-        </div>
-
-        <div class="data-table-wrapper">
-            <div style="overflow-x:auto">
-                <table class="data-table" id="invTable">
-                    <thead>
-                        <tr>
-                            <th>MRN</th>
-                            <th>Patient Name</th>
-                            <th>Visit ID</th>
-                            <th>Department</th>
+                            <th>Adm. Source</th>
                             <th>Gender</th>
                             <th>Ward / Bed</th>
                             <th>Initial Diagnosis</th>
-                            <th>Type</th>
-                            <th>Tests</th>
-                            <th>Ordered By</th>
-                            <th>Priority</th>
                             <th>Status</th>
+                            <th>Payment</th>
                             <th>Date / Time</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody id="invTableBody"></tbody>
+                    <tbody id="ipdPatTableBody"></tbody>
                 </table>
             </div>
-            <div class="opd-pagination" id="ipdInvPagination">
+            <div class="opd-pagination" id="ipdPatPagination">
                 <div class="opd-pagination-left">
-                    <div class="opd-page-info" id="invTableInfo">Showing — of — results</div>
+                    <div class="opd-page-info" id="ipdPatTableInfo">Showing — of — results</div>
                 </div>
                 <div class="opd-page-btns">
-                    <button class="opd-page-btn" id="ipdInvPrevPage" disabled><i data-lucide="chevron-left"></i></button>
-                    <div class="opd-page-nums" id="ipdInvPageNums"></div>
-                    <button class="opd-page-btn" id="ipdInvNextPage"><i data-lucide="chevron-right"></i></button>
+                    <button class="opd-page-btn" id="ipdPatPrevPage" disabled><i data-lucide="chevron-left"></i></button>
+                    <div class="opd-page-nums" id="ipdPatPageNums"></div>
+                    <button class="opd-page-btn" id="ipdPatNextPage"><i data-lucide="chevron-right"></i></button>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- TAB 6: Nursing Station --}}
-    <div class="tab-content" id="tab-nursing" style="display:none">
-        <div class="module-header">
-            <div>
-                <h1><i data-lucide="heart-pulse"></i> Nursing Station</h1>
-                <p class="module-subtitle">Monitor and manage nursing care for admitted patients</p>
-            </div>
-        </div>
-
-        {{-- Mini Stats --}}
-        <div class="mini-stats">
-            <div class="mini-stat-card">
-                <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(59,130,246,0.1)"><i data-lucide="users" style="color:#3B82F6"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Occupied Beds</p>
-                        <h3 class="mini-stat-value" style="color:var(--midnight-blue)" id="nurStatOccupied">0</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="mini-stat-card">
-                <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(239,68,68,0.1)"><i data-lucide="alert-triangle" style="color:#EF4444"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Critical</p>
-                        <h3 class="mini-stat-value" style="color:#EF4444" id="nurStatCritical">0</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="mini-stat-card">
-                <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(245,158,11,0.1)"><i data-lucide="clock" style="color:#F59E0B"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Pending Tasks</p>
-                        <h3 class="mini-stat-value" style="color:#F59E0B" id="nurStatPending">0</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="mini-stat-card">
-                <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(16,185,129,0.1)"><i data-lucide="check-circle" style="color:#10B981"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Tasks Complete</p>
-                        <h3 class="mini-stat-value" style="color:#10B981" id="nurStatDone">0</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Clinical Orders Tiles --}}
-
-        {{-- Standalone Toolbar --}}
-        <div class="opd-toolbar" style="margin-top:28px">
-            <div class="opd-search-wrap">
-                <i data-lucide="search" class="opd-search-icon"></i>
-                <input type="text" class="opd-search-input" id="nurTilesSearch" placeholder="Search by MRN, Name, Doctor...">
-            </div>
-            <div class="opd-toolbar-right">
-                <button class="opd-tool-btn opd-tool-btn--icon" id="btnNurTilesFilter" onclick="toggleNurTilesFilter()" title="Filter">
-                    <i data-lucide="filter"></i>
-                    <span class="opd-filter-badge" id="nurTilesFilterBadge" style="display:none">0</span>
-                </button>
-                <div class="opd-rows-wrap">
-                    <button class="opd-tool-btn opd-tool-btn--icon" onclick="toggleNurTilesCardsMenu(event)" title="Cards per page">
-                        <i data-lucide="layout-list"></i>
-                    </button>
-                    <div class="opd-rows-menu" id="nurTilesCardsMenu">
-                        <div class="opd-rows-head font-normal">Cards per page</div>
-                        <button onclick="setNurTilesCardsPer(6)">6 cards</button>
-                        <button onclick="setNurTilesCardsPer(12)">12 cards</button>
-                        <button onclick="setNurTilesCardsPer(24)">24 cards</button>
-                        <button onclick="setNurTilesCardsPer(48)">48 cards</button>
-                    </div>
-                </div>
-                <div class="opd-export-wrap">
-                    <button class="opd-tool-btn" onclick="toggleNurTilesExportMenu(event)" title="Export" style="padding:0 10px">
-                        <i data-lucide="upload"></i>
-                        <i data-lucide="chevron-down" style="width:13px;height:13px;margin-left:2px"></i>
-                    </button>
-                    <div class="opd-export-menu" id="nurTilesExportMenu">
-                        <button onclick="exportNurTiles('csv')"><i data-lucide="file-spreadsheet"></i> CSV</button>
-                        <button onclick="exportNurTiles('print')"><i data-lucide="printer"></i> Print</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Card: Filter Pane + Tiles + Pagination --}}
-        <div style="border-radius:12px;border:1px solid var(--color-border);background:var(--color-card);box-shadow:0 1px 3px rgba(0,0,0,0.04);overflow:hidden">
-
-            {{-- Filter Pane --}}
-            <div class="opd-filter-pane" id="nurTilesFilterPane" style="display:none;border-radius:0;border-left:none;border-right:none;border-top:none">
-                <div class="opd-filter-pane-head">
-                    <div style="display:flex;align-items:center;gap:8px">
-                        <i data-lucide="sliders-horizontal" style="width:16px;height:16px;color:#060740"></i>
-                        <span style="font-weight:700;font-size:14px;color:var(--color-foreground)">Filters</span>
-                    </div>
-                    <button class="opd-filter-close" onclick="toggleNurTilesFilter()" type="button"><i data-lucide="x"></i></button>
-                </div>
-                <div class="opd-filter-pane-body">
-                    <div class="opd-filter-field">
-                        <label class="opd-filter-label">Ward</label>
-                        <select class="opd-filter-select" id="nurTilesWardFilter">
-                            <option value="all">All Wards</option>
-                        </select>
-                    </div>
-                    <div class="opd-filter-field">
-                        <label class="opd-filter-label">Doctor</label>
-                        <select class="opd-filter-select" id="nurTilesDoctorFilter">
-                            <option value="all">All Doctors</option>
-                        </select>
-                    </div>
-                    <div class="opd-filter-field">
-                        <label class="opd-filter-label">Status</label>
-                        <select class="opd-filter-select" id="nurTilesStatusFilter">
-                            <option value="all">All Status</option>
-                            <option value="Active">Active</option>
-                            <option value="Discharged">Discharged</option>
-                            <option value="Discharge Requested">Discharge Requested</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="opd-filter-pane-foot">
-                    <button class="opd-filter-reset" type="button" onclick="resetNurTilesFilters()"><i data-lucide="rotate-ccw"></i> Reset</button>
-                    <button class="opd-filter-apply" type="button" onclick="applyNurTilesFilters()"><i data-lucide="check"></i> Apply Filters</button>
-                </div>
-            </div>
-
-            {{-- Tiles Grid --}}
-            <div style="padding:16px">
-                <div id="nursingOrderTilesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px"></div>
-            </div>
-
-            {{-- Pagination --}}
-            <div class="opd-pagination" id="nurTilesPagination" style="border-top:1px solid var(--color-border);border-radius:0 0 12px 12px;margin:0">
-                <div class="opd-pagination-left">
-                    <div class="opd-page-info" id="nurTilesInfo">Showing — of — patients</div>
-                </div>
-                <div class="opd-page-btns">
-                    <button class="opd-page-btn" id="nurTilesPrevPage" disabled><i data-lucide="chevron-left"></i></button>
-                    <div class="opd-page-nums" id="nurTilesPageNums"></div>
-                    <button class="opd-page-btn" id="nurTilesNextPage"><i data-lucide="chevron-right"></i></button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- TAB 7: Discharge (Doctor View) --}}
     <style>
     .disch-pill { display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:2px solid var(--color-border);border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;background:var(--color-card);color:var(--color-foreground); }
     .disch-pill.active { background:var(--aquamint);border-color:var(--aquamint);color:var(--midnight-blue);font-weight:700; }
@@ -1327,238 +706,6 @@
     .disch-step-line { flex:1;height:2px;background:var(--color-border);margin:0 8px;transition:background 0.3s; }
     .disch-step-line.done { background:var(--midnight-blue); }
     </style>
-    <div class="tab-content" id="tab-discharge" style="display:none">
-
-        {{-- STEP 1: Patient List (always visible in tab) --}}
-        <div id="dischStep1">
-            <div class="module-header" style="margin-bottom:20px">
-                <div>
-                    <h2 style="font-size:20px;font-weight:700;color:var(--midnight-blue);margin:0">Your Admitted Patients</h2>
-                    <p style="font-size:13px;color:var(--color-muted-foreground);margin:4px 0 0">Select a patient to initiate or manage the discharge process</p>
-                </div>
-            </div>
-
-            {{-- Mini Stats --}}
-            <div class="mini-stats">
-                <div class="mini-stat-card">
-                    <div class="mini-stat-inner">
-                        <div class="mini-stat-icon" style="background:rgba(59,130,246,0.1)"><i data-lucide="users" style="color:#3B82F6"></i></div>
-                        <div>
-                            <p class="mini-stat-label">Total Admitted</p>
-                            <h3 class="mini-stat-value" style="color:var(--midnight-blue)" id="dischStatTotal">0</h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="mini-stat-card">
-                    <div class="mini-stat-inner">
-                        <div class="mini-stat-icon" style="background:rgba(245,158,11,0.1)"><i data-lucide="clock" style="color:#F59E0B"></i></div>
-                        <div>
-                            <p class="mini-stat-label">Awaiting Clearance</p>
-                            <h3 class="mini-stat-value" style="color:#F59E0B" id="dischStatAwaiting">0</h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="mini-stat-card">
-                    <div class="mini-stat-inner">
-                        <div class="mini-stat-icon" style="background:rgba(16,185,129,0.1)"><i data-lucide="check-circle" style="color:#10B981"></i></div>
-                        <div>
-                            <p class="mini-stat-label">All Cleared</p>
-                            <h3 class="mini-stat-value" style="color:#10B981" id="dischStatCleared">0</h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="mini-stat-card">
-                    <div class="mini-stat-inner">
-                        <div class="mini-stat-icon" style="background:rgba(107,114,128,0.1)"><i data-lucide="log-out" style="color:#6B7280"></i></div>
-                        <div>
-                            <p class="mini-stat-label">Discharged</p>
-                            <h3 class="mini-stat-value" id="dischStatDischarged">0</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Toolbar --}}
-            <div class="opd-toolbar">
-                <div class="opd-search-wrap">
-                    <i data-lucide="search" class="opd-search-icon"></i>
-                    <input type="text" class="opd-search-input" id="dischargeSearch" placeholder="Search by MRN, Visit ID, Patient Name...">
-                </div>
-                <div class="opd-toolbar-right">
-                    <button class="opd-tool-btn opd-tool-btn--icon" type="button" id="btnIpdDischFilter" onclick="toggleIpdDischFilter()" title="Filter">
-                        <i data-lucide="filter"></i>
-                        <span class="opd-filter-badge" id="ipdDischFilterBadge" style="display:none">0</span>
-                    </button>
-                    <div class="opd-rows-wrap">
-                        <button class="opd-tool-btn opd-tool-btn--icon" type="button" onclick="toggleIpdDischRowsMenu(event)" title="Rows per page">
-                            <i data-lucide="layout-list"></i>
-                        </button>
-                        <div class="opd-rows-menu" id="ipdDischRowsMenu">
-                            <div class="opd-rows-head">Rows per page</div>
-                            <button onclick="setIpdDischRowsPer(10)">10 rows</button>
-                            <button onclick="setIpdDischRowsPer(20)">20 rows</button>
-                            <button onclick="setIpdDischRowsPer(50)">50 rows</button>
-                            <button onclick="setIpdDischRowsPer(100)">100 rows</button>
-                        </div>
-                    </div>
-                    <div class="opd-col-vis-wrap">
-                        <button class="opd-tool-btn opd-tool-btn--icon" type="button" onclick="toggleIpdDischColVis(event)" title="Column visibility">
-                            <i data-lucide="columns-3"></i>
-                        </button>
-                        <div class="opd-col-vis-menu" id="ipdDischColVisMenu">
-                            <div class="opd-col-vis-head">
-                                <span>Column Visibility</span>
-                                <button class="opd-col-vis-selall" type="button" onclick="ipdDischColVisSelectAll()">Select All</button>
-                            </div>
-                            <div class="opd-col-vis-list" id="ipdDischColVisList">
-                                <label><input type="checkbox" data-col="0" checked> MRN</label>
-                                <label><input type="checkbox" data-col="1" checked> Patient Name</label>
-                                <label><input type="checkbox" data-col="2" checked> Visit ID</label>
-                                <label><input type="checkbox" data-col="3" checked> Department</label>
-                                <label><input type="checkbox" data-col="4" checked> Doctor</label>
-                                <label><input type="checkbox" data-col="5" checked> Ward / Bed</label>
-                                <label><input type="checkbox" data-col="6" checked> Initial Diagnosis</label>
-                                <label><input type="checkbox" data-col="7" checked> LOS</label>
-                                <label><input type="checkbox" data-col="8" checked> Discharge Status</label>
-                                <label><input type="checkbox" data-col="9" checked> Date / Time</label>
-                            </div>
-                            <div class="opd-col-vis-foot">
-                                <button class="opd-col-vis-save" type="button" onclick="applyIpdDischColVis()">Save</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="opd-export-wrap">
-                        <button class="opd-tool-btn" type="button" onclick="toggleIpdDischExportMenu(event)" title="Export" style="padding:0 10px">
-                            <i data-lucide="upload"></i>
-                            <i data-lucide="chevron-down" style="width:13px;height:13px;margin-left:2px"></i>
-                        </button>
-                        <div class="opd-export-menu" id="ipdDischExportMenu">
-                            <button onclick="exportIpdDisch('excel')"><i data-lucide="table-2"></i> Excel (.xls)</button>
-                            <button onclick="exportIpdDisch('csv')"><i data-lucide="file-spreadsheet"></i> CSV</button>
-                            <button onclick="exportIpdDisch('pdf')"><i data-lucide="file-text"></i> PDF</button>
-                            <button onclick="exportIpdDisch('print')"><i data-lucide="printer"></i> Print</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Filter Pane --}}
-            <div class="opd-filter-pane" id="ipdDischFilterPane" style="display:none">
-                <div class="opd-filter-pane-head">
-                    <div style="display:flex;align-items:center;gap:8px">
-                        <i data-lucide="sliders-horizontal" style="width:16px;height:16px;color:#060740"></i>
-                        <span style="font-weight:700;font-size:14px;color:var(--color-foreground)">Filters</span>
-                    </div>
-                    <button class="opd-filter-close" onclick="toggleIpdDischFilter()" type="button">
-                        <i data-lucide="x"></i>
-                    </button>
-                </div>
-                <div class="opd-filter-pane-body">
-                    <div class="opd-filter-field">
-                        <label class="opd-filter-label">MRN</label>
-                        <div class="opd-cs-wrap" id="ipdDischCsMrn" data-target="ipdDischMrnFilter" data-placeholder="Enter MRN">
-                            <div class="opd-cs-trigger"><span class="opd-cs-val opd-ph">Enter MRN</span><i data-lucide="chevron-down" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                            <div class="opd-cs-popup"><input type="text" class="opd-cs-search" placeholder="Search..."><div class="opd-cs-list"></div></div>
-                        </div>
-                        <input type="hidden" id="ipdDischMrnFilter">
-                    </div>
-                    <div class="opd-filter-field">
-                        <label class="opd-filter-label">Patient Name</label>
-                        <div class="opd-cs-wrap" id="ipdDischCsPatName" data-target="ipdDischPatNameFilter" data-placeholder="Enter Patient Name">
-                            <div class="opd-cs-trigger"><span class="opd-cs-val opd-ph">Enter Patient Name</span><i data-lucide="chevron-down" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                            <div class="opd-cs-popup"><input type="text" class="opd-cs-search" placeholder="Search..."><div class="opd-cs-list"></div></div>
-                        </div>
-                        <input type="hidden" id="ipdDischPatNameFilter">
-                    </div>
-                    <div class="opd-filter-field">
-                        <label class="opd-filter-label">Doctor</label>
-                        <div class="opd-cs-wrap" id="ipdDischCsDoctor" data-target="ipdDischDoctorFilter" data-placeholder="Any Doctor">
-                            <div class="opd-cs-trigger"><span class="opd-cs-val opd-ph">Any Doctor</span><i data-lucide="chevron-down" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                            <div class="opd-cs-popup"><input type="text" class="opd-cs-search" placeholder="Search..."><div class="opd-cs-list"></div></div>
-                        </div>
-                        <input type="hidden" id="ipdDischDoctorFilter">
-                    </div>
-                    <div class="opd-filter-field">
-                        <label class="opd-filter-label">Department</label>
-                        <div class="opd-cs-wrap" id="ipdDischCsDept" data-target="ipdDischDeptFilter" data-placeholder="Any Department">
-                            <div class="opd-cs-trigger"><span class="opd-cs-val opd-ph">Any Department</span><i data-lucide="chevron-down" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                            <div class="opd-cs-popup"><input type="text" class="opd-cs-search" placeholder="Search..."><div class="opd-cs-list"></div></div>
-                        </div>
-                        <input type="hidden" id="ipdDischDeptFilter">
-                    </div>
-                    <div class="opd-filter-field">
-                        <label class="opd-filter-label">Discharge Status</label>
-                        <select class="opd-filter-select" id="ipdDischStatusFilter">
-                            <option value="all">All Status</option>
-                            <option value="Active">Active</option>
-                            <option value="Awaiting Clearance">Awaiting Clearance</option>
-                            <option value="All Cleared">All Cleared</option>
-                            <option value="Discharged">Discharged</option>
-                        </select>
-                    </div>
-                    <div class="opd-filter-field">
-                        <label class="opd-filter-label">Date From</label>
-                        <div class="opd-dp-wrap" id="ipdDischDpDateFrom" data-target="ipdDischDateFrom" data-placeholder="Select date">
-                            <div class="opd-dp-trigger"><span class="opd-dp-val opd-ph">Select date</span><i data-lucide="calendar" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                            <div class="opd-dp-popup"></div>
-                        </div>
-                        <input type="hidden" id="ipdDischDateFrom">
-                    </div>
-                    <div class="opd-filter-field">
-                        <label class="opd-filter-label">Date To</label>
-                        <div class="opd-dp-wrap" id="ipdDischDpDateTo" data-target="ipdDischDateTo" data-placeholder="Select date">
-                            <div class="opd-dp-trigger"><span class="opd-dp-val opd-ph">Select date</span><i data-lucide="calendar" style="width:15px;height:15px;flex-shrink:0"></i></div>
-                            <div class="opd-dp-popup"></div>
-                        </div>
-                        <input type="hidden" id="ipdDischDateTo">
-                    </div>
-                </div>
-                <div class="opd-filter-pane-foot">
-                    <button class="opd-filter-reset" type="button" onclick="resetIpdDischFilters()">
-                        <i data-lucide="rotate-ccw"></i> Reset
-                    </button>
-                    <button class="opd-filter-apply" type="button" onclick="applyIpdDischFilters()">
-                        <i data-lucide="check"></i> Apply Filters
-                    </button>
-                </div>
-            </div>
-
-            {{-- Table --}}
-            <div class="data-table-wrapper">
-                <div style="overflow-x:auto">
-                    <table class="data-table" id="dischargeTable">
-                        <thead>
-                            <tr>
-                                <th>MRN</th>
-                                <th>Patient Name</th>
-                                <th>Visit ID</th>
-                                <th>Department</th>
-                                <th>Doctor</th>
-                                <th>Ward / Bed</th>
-                                <th>Initial Diagnosis</th>
-                                <th>LOS</th>
-                                <th>Discharge Status</th>
-                                <th>Date / Time</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dischargeTableBody"></tbody>
-                    </table>
-                </div>
-                <div class="opd-pagination" id="ipdDischPagination">
-                    <div class="opd-pagination-left">
-                        <div class="opd-page-info" id="dischargeTableInfo">Showing — of — results</div>
-                    </div>
-                    <div class="opd-page-btns">
-                        <button class="opd-page-btn" id="ipdDischPrevPage" disabled><i data-lucide="chevron-left"></i></button>
-                        <div class="opd-page-nums" id="ipdDischPageNums"></div>
-                        <button class="opd-page-btn" id="ipdDischNextPage"><i data-lucide="chevron-right"></i></button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</div>
 
 <style>
 .disch-step-item { display:flex;flex-direction:column;align-items:center;gap:6px; }
@@ -1590,9 +737,7 @@
 {{-- Registration Offcanvas --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="registrationSheet" style="width:600px;border-left:4px solid var(--aquamint)">
     <div class="offcanvas-header" style="border-bottom:1px solid var(--color-border);padding:16px 24px">
-        <h5 class="offcanvas-title" style="font-size:18px;font-weight:700;color:var(--midnight-blue);display:flex;align-items:center;gap:8px" id="regSheetTitle">
-            <i data-lucide="bed-double"></i> New IPD Admission
-        </h5>
+        <h5 class="offcanvas-title" id="regSheetTitle">New IPD Admission</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" style="padding:24px" id="regSheetBody"></div>
@@ -1602,9 +747,7 @@
 {{-- Charges Breakdown Offcanvas --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="chargesSheet" style="width:500px;border-left:4px solid var(--aquamint)">
     <div class="offcanvas-header" style="border-bottom:1px solid var(--color-border);padding:16px 24px">
-        <h5 class="offcanvas-title" style="font-size:18px;font-weight:700;color:var(--midnight-blue);display:flex;align-items:center;gap:8px">
-            <i data-lucide="clipboard-list"></i> IPD Charges Breakdown
-        </h5>
+        <h5 class="offcanvas-title">IPD Charges Breakdown</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" style="padding:24px" id="chargesSheetBody"></div>
@@ -1614,7 +757,7 @@
 {{-- Admission Detail Offcanvas --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="admissionDetailSheet" style="width:640px;max-width:95vw">
     <div class="offcanvas-header" style="border-bottom:1px solid var(--color-border)">
-        <h5 class="offcanvas-title" style="color:#060740"><i data-lucide="clipboard-list"></i> Patient Registration Details</h5>
+        <h5 class="offcanvas-title">Patient Registration Details</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" id="admissionDetailBody" style="background:var(--color-muted);padding:24px"></div>
@@ -1625,10 +768,7 @@
 <div class="offcanvas offcanvas-end" tabindex="-1" id="dischargeStepSheet" style="width:75%;max-width:1000px;border-left:4px solid var(--aquamint)">
     <div class="offcanvas-header" style="border-bottom:1px solid var(--color-border);padding:16px 24px;position:sticky;top:0;z-index:10;background:var(--color-card)">
         <div style="display:flex;flex-direction:column;gap:2px">
-            <h5 class="offcanvas-title" style="font-size:18px;font-weight:700;color:var(--midnight-blue);display:flex;align-items:center;gap:8px;margin:0">
-                <i data-lucide="log-out" style="width:18px;height:18px;color:var(--aquamint)"></i>
-                <span id="dischargeStepTitle">Patient Discharge</span>
-            </h5>
+            <h5 class="offcanvas-title" id="dischargeStepTitle">Patient Discharge</h5>
             <div id="dischargeStepSubtitle" style="font-size:12px;color:var(--color-muted-foreground);padding-left:26px"></div>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
@@ -1672,7 +812,7 @@
 {{-- Billing Detail Offcanvas --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="billingDetailSheet" style="width:900px;max-width:100vw">
     <div class="offcanvas-header" style="border-bottom:1px solid var(--color-border);padding:16px 24px;position:sticky;top:0;z-index:10;background:var(--color-card)">
-        <h5 class="offcanvas-title" style="font-size:18px;font-weight:700;color:var(--midnight-blue)" id="billingDetailTitle">Billing Details</h5>
+        <h5 class="offcanvas-title" id="billingDetailTitle">Billing Details</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" style="padding:24px" id="billingDetailBody"></div>
@@ -1682,7 +822,7 @@
 {{-- Clinical Orders Detail Offcanvas --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="ordersDetailSheet" style="width:85%">
     <div class="offcanvas-header" style="border-bottom:1px solid var(--color-border);padding:16px 24px;position:sticky;top:0;z-index:10;background:var(--color-card)">
-        <h5 class="offcanvas-title" style="font-size:18px;font-weight:700;color:var(--midnight-blue)">Clinical Orders Management</h5>
+        <h5 class="offcanvas-title">Clinical Orders Management</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" style="padding:24px" id="ordersDetailBody"></div>
@@ -1691,7 +831,7 @@
 {{-- Investigation Detail Offcanvas --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="invDetailSheet" style="width:85%">
     <div class="offcanvas-header" style="border-bottom:1px solid var(--color-border);padding:16px 24px;position:sticky;top:0;z-index:10;background:var(--color-card)">
-        <h5 class="offcanvas-title" style="font-size:18px;font-weight:700;color:var(--midnight-blue)">Investigation Details</h5>
+        <h5 class="offcanvas-title">Investigation Details</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" style="padding:24px" id="invDetailBody"></div>
@@ -1700,7 +840,7 @@
 {{-- Nursing Patient Detail Offcanvas --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="nursingDetailSheet" style="width:85%">
     <div class="offcanvas-header" style="border-bottom:1px solid var(--color-border);padding:16px 24px;position:sticky;top:0;z-index:10;background:var(--color-card)">
-        <h5 class="offcanvas-title" style="font-size:18px;font-weight:700;color:var(--midnight-blue)" id="nursingDetailTitle">Patient Details</h5>
+        <h5 class="offcanvas-title" id="nursingDetailTitle">Patient Details</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" style="padding:24px" id="nursingDetailBody"></div>
@@ -1710,7 +850,7 @@
 <div class="offcanvas offcanvas-end" tabindex="-1" id="clinicalOrdersSheet" style="width:72%;max-width:860px">
     <div class="offcanvas-header" style="border-bottom:1px solid var(--color-border);padding:16px 24px;position:sticky;top:0;z-index:10;background:var(--color-card)">
         <div>
-            <h5 class="offcanvas-title" style="font-size:17px;font-weight:700;color:var(--midnight-blue);margin:0" id="clinicalOrdersTitle">Clinical Orders</h5>
+            <h5 class="offcanvas-title" id="clinicalOrdersTitle">Clinical Orders</h5>
             <p style="font-size:12px;color:var(--color-muted-foreground);margin:2px 0 0" id="clinicalOrdersSubtitle"></p>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
@@ -1793,6 +933,206 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="labResultsBody"></div>
+        </div>
+    </div>
+</div>
+
+{{-- IPD Patient Profile Overlay --}}
+<div class="ipd-profile-overlay" id="ipdPatProfileOverlay">
+
+    {{-- Top bar --}}
+    <div class="ipd-profile-topbar">
+        <div class="ipd-profile-breadcrumb">
+            <button class="ipd-profile-back-btn" onclick="closeIpdPatProfile()">
+                <i data-lucide="arrow-left" style="width:15px;height:15px"></i> Back
+            </button>
+            <span style="margin-left:6px">IPD Patients</span>
+            <span>›</span>
+            <span id="ipdProfileBreadName" style="color:var(--color-foreground);font-weight:500">Patient Profile</span>
+        </div>
+        <div class="ipd-profile-topbar-right">
+            <span class="ipd-profile-pid">MRN: <strong id="ipdProfileMrnTop">—</strong></span>
+        </div>
+    </div>
+
+    {{-- Content --}}
+    <div class="ipd-profile-content">
+
+        {{-- Merged header card --}}
+        <div class="ipd-profile-identity">
+            <div class="ipd-profile-avatar" id="ipdProfileAvatar">?</div>
+            <div class="ipd-profile-identity-info">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+                    {{-- Left: name + meta + pills --}}
+                    <div>
+                        <h2 class="ipd-profile-name">
+                            <span id="ipdProfileName">—</span>
+                            <span class="ipd-profile-name-badge">
+                                <i data-lucide="check" style="width:12px;height:12px"></i>
+                            </span>
+                        </h2>
+                        <div class="ipd-profile-meta">
+                            <span class="ipd-profile-meta-item">
+                                <i data-lucide="map-pin" style="width:14px;height:14px"></i>
+                                <span id="ipdProfileMrn">MRN-—</span>
+                            </span>
+                            <span class="ipd-profile-meta-item">
+                                <i data-lucide="phone" style="width:14px;height:14px"></i>
+                                <span id="ipdProfilePhone">—</span>
+                            </span>
+                            <span class="ipd-profile-meta-item">
+                                <i data-lucide="user" style="width:14px;height:14px"></i>
+                                <span id="ipdProfileAgeGender">—</span>
+                            </span>
+                        </div>
+                        <div class="ipd-profile-pills">
+                            <div class="ipd-profile-pill pill-mrn">
+                                <span class="ipd-profile-pill-label">Admission ID</span>
+                                <span id="ipdProfileAdmId">—</span>
+                            </div>
+                            <div class="ipd-profile-pill" id="ipdProfileStatusPill">
+                                <span class="ipd-profile-pill-dot" id="ipdProfileStatusDot"></span>
+                                <span class="ipd-profile-pill-label">Status</span>
+                                <span id="ipdProfileStatus">—</span>
+                            </div>
+                            <div class="ipd-profile-pill" id="ipdProfilePayPill">
+                                <span class="ipd-profile-pill-dot" id="ipdProfilePayDot"></span>
+                                <span class="ipd-profile-pill-label">Payment</span>
+                                <span id="ipdProfilePay">—</span>
+                            </div>
+                        </div>
+                    </div>
+                    {{-- Right: admission info inline --}}
+                    <div class="ipd-merged-adminfo">
+                        <span class="ipd-merged-adminfo-item">
+                            <span class="ipd-merged-adminfo-key">Ward / Bed</span>
+                            <span class="ipd-merged-adminfo-val" id="ipdProfileWardBed">—</span>
+                        </span>
+                        <span class="ipd-merged-adminfo-item">
+                            <span class="ipd-merged-adminfo-key">Department</span>
+                            <span class="ipd-merged-adminfo-val" id="ipdProfileDept">—</span>
+                        </span>
+                        <span class="ipd-merged-adminfo-item">
+                            <span class="ipd-merged-adminfo-key">Doctor</span>
+                            <span class="ipd-merged-adminfo-val" id="ipdProfileDoctor">—</span>
+                        </span>
+                        <span class="ipd-merged-adminfo-item">
+                            <span class="ipd-merged-adminfo-key">Adm. Source</span>
+                            <span class="ipd-merged-adminfo-val" id="ipdProfileSource">—</span>
+                        </span>
+                        <span class="ipd-merged-adminfo-item">
+                            <span class="ipd-merged-adminfo-key">Adm. Date</span>
+                            <span class="ipd-merged-adminfo-val" id="ipdProfileDate">—</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Body: sidebar + main --}}
+        <div class="ipd-profile-body">
+
+            {{-- Left sidebar - Quick Actions --}}
+            <div class="ipd-profile-sidebar" id="ipdProfileSidebar">
+                {{-- Actions populated by JS --}}
+            </div>
+
+            {{-- Right main panel --}}
+            <div class="ipd-profile-main">
+                {{-- Navigation tabs --}}
+                <div class="ipd-profile-nav" id="ipdProfileNav">
+                    <button class="ipd-profile-nav-tab active" data-pane="overview" onclick="switchIpdProfileTab(this, 'overview')">Overview</button>
+                    <button class="ipd-profile-nav-tab" data-pane="clinical" onclick="switchIpdProfileTab(this, 'clinical')">Clinical Info</button>
+                    <button class="ipd-profile-nav-tab" data-pane="billing" onclick="switchIpdProfileTab(this, 'billing')">Billing</button>
+                    <button class="ipd-profile-nav-tab" data-pane="orders" onclick="switchIpdProfileTab(this, 'orders')">Orders</button>
+                    <button class="ipd-profile-nav-tab" data-pane="investigations" onclick="switchIpdProfileTab(this, 'investigations')">Investigations</button>
+                    <button class="ipd-profile-nav-tab" data-pane="nursing" onclick="switchIpdProfileTab(this, 'nursing')">Nursing</button>
+                    <button class="ipd-profile-nav-tab" data-pane="discharge" onclick="switchIpdProfileTab(this, 'discharge')">Discharge</button>
+                    <button class="ipd-profile-nav-tab" data-pane="mar" onclick="switchIpdProfileTab(this, 'mar')">Medication MAR</button>
+                    <button class="ipd-profile-nav-tab" data-pane="ot" onclick="switchIpdProfileTab(this, 'ot')">OT Registration</button>
+                    <button class="ipd-profile-nav-tab" data-pane="charting" onclick="switchIpdProfileTab(this, 'charting')">Charting & Docs</button>
+                </div>
+
+                {{-- Overview pane --}}
+                <div class="ipd-profile-tab-pane active" id="ipdProfilePane-overview">
+                    <div class="ipd-profile-placeholder">
+                        <i data-lucide="layout-dashboard" style="width:40px;height:40px;opacity:.3"></i>
+                        <p>Overview content will appear here</p>
+                    </div>
+                </div>
+
+                {{-- Clinical Info pane --}}
+                <div class="ipd-profile-tab-pane" id="ipdProfilePane-clinical">
+                    <div class="ipd-profile-placeholder">
+                        <i data-lucide="clipboard-list" style="width:40px;height:40px;opacity:.3"></i>
+                        <p>Clinical information will appear here</p>
+                    </div>
+                </div>
+
+                {{-- Billing pane --}}
+                <div class="ipd-profile-tab-pane" id="ipdProfilePane-billing">
+                    <div class="ipd-profile-placeholder">
+                        <i data-lucide="receipt" style="width:40px;height:40px;opacity:.3"></i>
+                        <p>Billing details will appear here</p>
+                    </div>
+                </div>
+
+                {{-- Orders pane --}}
+                <div class="ipd-profile-tab-pane" id="ipdProfilePane-orders">
+                    <div class="ipd-profile-placeholder">
+                        <i data-lucide="clipboard-check" style="width:40px;height:40px;opacity:.3"></i>
+                        <p>Clinical orders will appear here</p>
+                    </div>
+                </div>
+
+                {{-- Investigations pane --}}
+                <div class="ipd-profile-tab-pane" id="ipdProfilePane-investigations">
+                    <div class="ipd-profile-placeholder">
+                        <i data-lucide="flask-conical" style="width:40px;height:40px;opacity:.3"></i>
+                        <p>Investigation results will appear here</p>
+                    </div>
+                </div>
+
+                {{-- Nursing pane --}}
+                <div class="ipd-profile-tab-pane" id="ipdProfilePane-nursing">
+                    <div class="ipd-profile-placeholder">
+                        <i data-lucide="stethoscope" style="width:40px;height:40px;opacity:.3"></i>
+                        <p>Nursing station records will appear here</p>
+                    </div>
+                </div>
+
+                {{-- Discharge pane --}}
+                <div class="ipd-profile-tab-pane" id="ipdProfilePane-discharge">
+                    <div class="ipd-profile-placeholder">
+                        <i data-lucide="log-out" style="width:40px;height:40px;opacity:.3"></i>
+                        <p>Discharge details will appear here</p>
+                    </div>
+                </div>
+
+                {{-- Medication MAR pane --}}
+                <div class="ipd-profile-tab-pane" id="ipdProfilePane-mar">
+                    <div class="ipd-profile-placeholder">
+                        <i data-lucide="pill" style="width:40px;height:40px;opacity:.3"></i>
+                        <p>Medication Administration Record will appear here</p>
+                    </div>
+                </div>
+
+                {{-- Charting & Documentation pane --}}
+                <div class="ipd-profile-tab-pane" id="ipdProfilePane-charting">
+                    <div class="ipd-profile-placeholder">
+                        <i data-lucide="file-text" style="width:40px;height:40px;opacity:.3"></i>
+                        <p>Charting & Documentation will appear here</p>
+                    </div>
+                </div>
+
+                {{-- OT Registration pane --}}
+                <div class="ipd-profile-tab-pane" id="ipdProfilePane-ot">
+                    <div class="ipd-profile-placeholder">
+                        <i data-lucide="syringe" style="width:40px;height:40px;opacity:.3"></i>
+                        <p>OT Registration will appear here</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

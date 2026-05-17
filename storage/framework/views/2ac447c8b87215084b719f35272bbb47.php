@@ -13,38 +13,26 @@
     <div class="mini-stats" id="patientStats">
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">Total Patients</p>
-                    <h3 class="mini-stat-value" style="color:#2563eb" id="statTotal">0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(37,99,235,0.05)"><i data-lucide="users" style="color:#2563eb"></i></div>
+                <p class="mini-stat-label">Total Patients</p>
+                <h3 class="mini-stat-value" id="statTotal">0</h3>
             </div>
         </div>
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">Active In-Patients</p>
-                    <h3 class="mini-stat-value" style="color:#16a34a" id="statActive">0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(22,163,74,0.05)"><i data-lucide="users" style="color:#16a34a"></i></div>
+                <p class="mini-stat-label">Active In-Patients</p>
+                <h3 class="mini-stat-value" id="statActive">0</h3>
             </div>
         </div>
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">New Today</p>
-                    <h3 class="mini-stat-value" style="color:#9333ea" id="statNew">0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(147,51,234,0.05)"><i data-lucide="users" style="color:#9333ea"></i></div>
+                <p class="mini-stat-label">New Today</p>
+                <h3 class="mini-stat-value" id="statNew">0</h3>
             </div>
         </div>
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">VIP / Special</p>
-                    <h3 class="mini-stat-value" style="color:#ea580c" id="statVip">0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(234,88,12,0.05)"><i data-lucide="users" style="color:#ea580c"></i></div>
+                <p class="mini-stat-label">VIP / Special</p>
+                <h3 class="mini-stat-value" id="statVip">0</h3>
             </div>
         </div>
     </div>

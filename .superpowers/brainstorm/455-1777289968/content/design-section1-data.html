@@ -1,0 +1,112 @@
+<h2>Design — Section 1: Data Model</h2>
+<p class="subtitle">4 normalized tables replacing the 6 existing per-department form section tables</p>
+
+<div class="section">
+  <h3>Table Structure</h3>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">
+
+    <div style="background:#1e293b;border-radius:8px;padding:16px">
+      <div style="color:#60a5fa;font-size:13px;font-weight:700;margin-bottom:8px">form_groups</div>
+      <div style="font-family:monospace;font-size:11px;color:#e2e8f0;line-height:2">
+        <span style="color:#94a3b8">id</span> bigint PK<br>
+        <span style="color:#94a3b8">name</span> varchar(100) <span style="color:#fbbf24">— "IPD", "OPD", "Emergency", "OT"</span><br>
+        <span style="color:#94a3b8">context</span> enum('ipd','opd','emergency','ot','general')<br>
+        <span style="color:#94a3b8">description</span> text nullable<br>
+        <span style="color:#94a3b8">sort_order</span> int default 0<br>
+        <span style="color:#94a3b8">is_active</span> boolean default true<br>
+        <span style="color:#94a3b8">created_at / updated_at</span>
+      </div>
+    </div>
+
+    <div style="background:#1e293b;border-radius:8px;padding:16px">
+      <div style="color:#34d399;font-size:13px;font-weight:700;margin-bottom:8px">forms</div>
+      <div style="font-family:monospace;font-size:11px;color:#e2e8f0;line-height:2">
+        <span style="color:#94a3b8">id</span> bigint PK<br>
+        <span style="color:#94a3b8">form_group_id</span> FK → form_groups<br>
+        <span style="color:#94a3b8">name</span> varchar(150) <span style="color:#fbbf24">— "Pre-Op Checklist"</span><br>
+        <span style="color:#94a3b8">description</span> text nullable<br>
+        <span style="color:#94a3b8">is_active</span> boolean default true<br>
+        <span style="color:#94a3b8">sort_order</span> int default 0<br>
+        <span style="color:#94a3b8">created_at / updated_at</span>
+      </div>
+    </div>
+
+    <div style="background:#1e293b;border-radius:8px;padding:16px">
+      <div style="color:#f472b6;font-size:13px;font-weight:700;margin-bottom:8px">form_sections</div>
+      <div style="font-family:monospace;font-size:11px;color:#e2e8f0;line-height:2">
+        <span style="color:#94a3b8">id</span> bigint PK<br>
+        <span style="color:#94a3b8">form_id</span> FK → forms<br>
+        <span style="color:#94a3b8">title</span> varchar(150) <span style="color:#fbbf24">— "Patient Info"</span><br>
+        <span style="color:#94a3b8">sort_order</span> int default 0<br>
+        <span style="color:#94a3b8">created_at / updated_at</span>
+      </div>
+    </div>
+
+    <div style="background:#1e293b;border-radius:8px;padding:16px">
+      <div style="color:#fb923c;font-size:13px;font-weight:700;margin-bottom:8px">form_components</div>
+      <div style="font-family:monospace;font-size:11px;color:#e2e8f0;line-height:2">
+        <span style="color:#94a3b8">id</span> bigint PK<br>
+        <span style="color:#94a3b8">form_section_id</span> FK → form_sections<br>
+        <span style="color:#94a3b8">type</span> varchar(50) <span style="color:#fbbf24">— 'text_input', 'checkbox'…</span><br>
+        <span style="color:#94a3b8">label</span> varchar(200)<br>
+        <span style="color:#94a3b8">sort_order</span> int default 0<br>
+        <span style="color:#94a3b8">config</span> JSON <span style="color:#fbbf24">— type-specific settings</span><br>
+        <span style="color:#94a3b8">created_at / updated_at</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section">
+  <h3>Relationships</h3>
+  <div style="font-family:monospace;font-size:12px;background:#0f172a;border-radius:8px;padding:16px;color:#e2e8f0;line-height:2.2">
+    FormGroup <span style="color:#60a5fa">hasMany</span> Form<br>
+    Form &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#60a5fa">belongsTo</span> FormGroup<br>
+    Form &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#60a5fa">hasMany</span> FormSection<br>
+    FormSection <span style="color:#60a5fa">belongsTo</span> Form<br>
+    FormSection <span style="color:#60a5fa">hasMany</span> FormComponent<br>
+    FormComponent <span style="color:#60a5fa">belongsTo</span> FormSection
+  </div>
+</div>
+
+<div class="section">
+  <h3>config JSON examples per component type</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div style="background:#0f172a;border-radius:6px;padding:12px;font-family:monospace;font-size:10px;color:#e2e8f0;line-height:1.8">
+      <div style="color:#60a5fa;margin-bottom:4px">text_input</div>
+      { placeholder, required,<br>&nbsp;&nbsp;maxlength, width('full'|'half'|'third') }
+    </div>
+    <div style="background:#0f172a;border-radius:6px;padding:12px;font-family:monospace;font-size:10px;color:#e2e8f0;line-height:1.8">
+      <div style="color:#34d399;margin-bottom:4px">checkbox / radio</div>
+      { options:[{label,value}],<br>&nbsp;&nbsp;required, layout('h'|'v') }
+    </div>
+    <div style="background:#0f172a;border-radius:6px;padding:12px;font-family:monospace;font-size:10px;color:#e2e8f0;line-height:1.8">
+      <div style="color:#f472b6;margin-bottom:4px">dynamic_table</div>
+      { columns:[{label,type,width}],<br>&nbsp;&nbsp;min_rows:1, max_rows:50 }
+    </div>
+    <div style="background:#0f172a;border-radius:6px;padding:12px;font-family:monospace;font-size:10px;color:#e2e8f0;line-height:1.8">
+      <div style="color:#fb923c;margin-bottom:4px">header / signature / date</div>
+      { text, level('h2'|'h3') }<br>
+      { required, show_date:true }<br>
+      { required, width }
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3 style="color:#ef4444">⚠ Migration Strategy — Existing Tables</h3>
+  <p>These 6 tables will be <strong>replaced</strong> by the new system via a single migration:</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+    <span style="background:#fee2e2;color:#dc2626;border-radius:4px;padding:4px 10px;font-size:11px;font-family:monospace">opd_form_sections</span>
+    <span style="background:#fee2e2;color:#dc2626;border-radius:4px;padding:4px 10px;font-size:11px;font-family:monospace">ipd_form_sections</span>
+    <span style="background:#fee2e2;color:#dc2626;border-radius:4px;padding:4px 10px;font-size:11px;font-family:monospace">er_form_sections</span>
+    <span style="background:#fee2e2;color:#dc2626;border-radius:4px;padding:4px 10px;font-size:11px;font-family:monospace">ot_form_sections</span>
+    <span style="background:#fee2e2;color:#dc2626;border-radius:4px;padding:4px 10px;font-size:11px;font-family:monospace">ot_intraop_form_sections</span>
+    <span style="background:#fee2e2;color:#dc2626;border-radius:4px;padding:4px 10px;font-size:11px;font-family:monospace">ot_postop_form_sections</span>
+  </div>
+  <p style="font-size:12px">A seeder will re-create the existing sections as Forms within the new structure. Existing API routes (/api/opd/form-sections etc.) will be updated to read from the new tables during Phase 1.</p>
+</div>
+
+<p class="subtitle" style="margin-top:16px">Does this data model look right? Reply in terminal to confirm or raise questions before we move to the API design.</p>

@@ -51,14 +51,6 @@
             </li>
             <?php endif; ?>
 
-            <?php if(auth()->user()->hasModuleAccess('ot')): ?>
-            <li>
-                <a href="<?php echo e(url('/ot')); ?>" class="<?php echo e(request()->is('ot') ? 'active' : ''); ?>">
-                    <i data-lucide="activity"></i>
-                    <span class="nav-label">Operation Theater</span>
-                </a>
-            </li>
-            <?php endif; ?>
 
             <?php if(auth()->user()->canManageUsers()): ?>
             <li>
@@ -340,6 +332,12 @@
                         </a>
                     </li>
                 </ul>
+            </li>
+            <li class="<?php echo e(request()->is('form-builder') ? 'active' : ''); ?>">
+                <a href="<?php echo e(url('/form-builder')); ?>" class="<?php echo e(request()->is('form-builder') ? 'active' : ''); ?>">
+                    <i data-lucide="layout-template"></i>
+                    <span class="nav-label">Form Builder</span>
+                </a>
             </li>
         </ul>
         <?php endif; ?>

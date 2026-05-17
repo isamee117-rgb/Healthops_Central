@@ -1,0 +1,151 @@
+<h2>Form Builder UI Layout — Which approach?</h2>
+<p class="subtitle">How should the Form Builder interface look when an admin is designing a form?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8fafc;padding:16px;border-bottom:1px solid #e2e8f0">
+      <div style="display:flex;gap:10px;height:180px">
+        <!-- Left palette -->
+        <div style="width:130px;background:#1e293b;border-radius:6px;padding:10px;flex-shrink:0">
+          <div style="color:#94a3b8;font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Components</div>
+          <div style="background:#334155;border-radius:4px;padding:5px 8px;color:#e2e8f0;font-size:10px;margin-bottom:4px">📝 Text Input</div>
+          <div style="background:#334155;border-radius:4px;padding:5px 8px;color:#e2e8f0;font-size:10px;margin-bottom:4px">☑ Checkbox</div>
+          <div style="background:#334155;border-radius:4px;padding:5px 8px;color:#e2e8f0;font-size:10px;margin-bottom:4px">🔘 Radio</div>
+          <div style="background:#334155;border-radius:4px;padding:5px 8px;color:#e2e8f0;font-size:10px;margin-bottom:4px">📅 Date</div>
+          <div style="background:#334155;border-radius:4px;padding:5px 8px;color:#e2e8f0;font-size:10px;margin-bottom:4px">📊 Table</div>
+          <div style="background:#334155;border-radius:4px;padding:5px 8px;color:#e2e8f0;font-size:10px">✍ Signature</div>
+        </div>
+        <!-- Canvas -->
+        <div style="flex:1;background:#fff;border-radius:6px;border:1px solid #e2e8f0;padding:10px;overflow:hidden">
+          <div style="font-size:10px;color:#64748b;margin-bottom:8px;font-weight:600">Form Canvas — drag & drop here</div>
+          <div style="border:2px dashed #3b82f6;border-radius:4px;padding:8px;margin-bottom:6px;background:#eff6ff">
+            <div style="font-size:10px;color:#1d4ed8">Patient Name <span style="float:right;cursor:move">⠿</span></div>
+            <div style="background:#f1f5f9;border-radius:3px;height:16px;margin-top:4px"></div>
+          </div>
+          <div style="border:1px solid #e2e8f0;border-radius:4px;padding:8px;margin-bottom:6px">
+            <div style="font-size:10px;color:#374151">Age <span style="float:right;cursor:move">⠿</span></div>
+            <div style="background:#f1f5f9;border-radius:3px;height:16px;margin-top:4px"></div>
+          </div>
+          <div style="border:2px dashed #cbd5e1;border-radius:4px;padding:12px;text-align:center">
+            <div style="font-size:10px;color:#94a3b8">Drop component here</div>
+          </div>
+        </div>
+        <!-- Right config -->
+        <div style="width:120px;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0;padding:10px;flex-shrink:0">
+          <div style="color:#64748b;font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Properties</div>
+          <div style="font-size:9px;color:#374151;margin-bottom:4px">Label</div>
+          <div style="background:#fff;border:1px solid #d1d5db;border-radius:3px;padding:3px 6px;font-size:9px;margin-bottom:8px">Patient Name</div>
+          <div style="font-size:9px;color:#374151;margin-bottom:4px">Required</div>
+          <div style="background:#3b82f6;border-radius:10px;width:28px;height:14px;position:relative">
+            <div style="position:absolute;right:2px;top:2px;width:10px;height:10px;background:#fff;border-radius:50%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Full Drag-Drop Builder</h3>
+      <p>Three-panel: component palette (left) → canvas (center) → properties panel (right). Drag components onto the canvas. Click to configure. Similar to Google Forms admin or Typeform builder.</p>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Pros</h4><ul><li>Most powerful UX</li><li>Familiar to modern users</li><li>Visual reordering</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Most complex to build</li><li>Requires drag-drop JS library</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8fafc;padding:16px;border-bottom:1px solid #e2e8f0">
+      <div style="height:180px;background:#fff;border-radius:6px;border:1px solid #e2e8f0;padding:12px;overflow:hidden">
+        <div style="font-size:11px;font-weight:600;color:#1e293b;margin-bottom:10px">Pre-Op Checklist — Edit Form</div>
+        <!-- Section 1 -->
+        <div style="border:1px solid #e2e8f0;border-radius:4px;margin-bottom:8px;overflow:hidden">
+          <div style="background:#f1f5f9;padding:6px 10px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:10px;font-weight:600;color:#374151">Section 1: Patient Info</span>
+            <span style="font-size:10px;color:#94a3b8">▼ edit</span>
+          </div>
+          <div style="padding:8px 10px">
+            <div style="display:flex;gap:6px;margin-bottom:4px;align-items:center">
+              <div style="font-size:9px;color:#64748b;width:60px">Text Input</div>
+              <div style="flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:3px;padding:2px 6px;font-size:9px;color:#374151">Patient Name</div>
+              <div style="font-size:10px;color:#ef4444">✕</div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <div style="font-size:9px;color:#64748b;width:60px">Date</div>
+              <div style="flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:3px;padding:2px 6px;font-size:9px;color:#374151">Date of Admission</div>
+              <div style="font-size:10px;color:#ef4444">✕</div>
+            </div>
+          </div>
+        </div>
+        <!-- Add component row -->
+        <div style="border:2px dashed #3b82f6;border-radius:4px;padding:8px;text-align:center">
+          <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+            <span style="background:#dbeafe;color:#1d4ed8;border-radius:10px;padding:2px 8px;font-size:9px;cursor:pointer">+ Text</span>
+            <span style="background:#dbeafe;color:#1d4ed8;border-radius:10px;padding:2px 8px;font-size:9px;cursor:pointer">+ Check</span>
+            <span style="background:#dbeafe;color:#1d4ed8;border-radius:10px;padding:2px 8px;font-size:9px;cursor:pointer">+ Table</span>
+            <span style="background:#dbeafe;color:#1d4ed8;border-radius:10px;padding:2px 8px;font-size:9px;cursor:pointer">+ Date</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Click-to-Add Section Editor</h3>
+      <p>No drag-drop. Each section is an accordion/card. Click "+ Add Component" buttons to append fields in sequence. Click a field to edit its properties in a modal. Reorder via up/down arrows.</p>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Pros</h4><ul><li>Simpler to build</li><li>Familiar accordion UI</li><li>Works on tablets</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Less visual</li><li>Up/down reorder is slower</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8fafc;padding:16px;border-bottom:1px solid #e2e8f0">
+      <div style="display:flex;gap:10px;height:180px">
+        <!-- Sidebar tree -->
+        <div style="width:140px;background:#1e293b;border-radius:6px;padding:10px;flex-shrink:0;overflow:hidden">
+          <div style="color:#94a3b8;font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Form Groups</div>
+          <div style="color:#60a5fa;font-size:10px;margin-bottom:4px;padding-left:4px">▾ IPD</div>
+          <div style="color:#e2e8f0;font-size:10px;margin-bottom:2px;padding-left:12px">▾ Pre-Op Forms</div>
+          <div style="background:#3b82f6;border-radius:3px;padding:2px 8px;font-size:9px;color:#fff;margin-bottom:2px;padding-left:20px">Pre-Op Checklist ●</div>
+          <div style="color:#94a3b8;font-size:9px;padding-left:20px;margin-bottom:4px">Pre-Op Orders</div>
+          <div style="color:#94a3b8;font-size:10px;padding-left:12px;margin-bottom:4px">Intra-Op Forms</div>
+          <div style="color:#60a5fa;font-size:10px;padding-left:4px;margin-bottom:4px">▸ OPD</div>
+          <div style="color:#60a5fa;font-size:10px;padding-left:4px">▸ Emergency</div>
+        </div>
+        <!-- Main editor (same as B) -->
+        <div style="flex:1;background:#fff;border-radius:6px;border:1px solid #e2e8f0;padding:10px;overflow:hidden">
+          <div style="font-size:10px;font-weight:600;color:#1e293b;margin-bottom:8px">Pre-Op Checklist</div>
+          <div style="border:1px solid #e2e8f0;border-radius:4px;margin-bottom:6px;overflow:hidden">
+            <div style="background:#f1f5f9;padding:4px 8px;font-size:9px;font-weight:600;color:#374151">Section: Patient Details</div>
+            <div style="padding:6px 8px">
+              <div style="display:flex;gap:4px;margin-bottom:3px;align-items:center">
+                <div style="font-size:8px;background:#dbeafe;color:#1d4ed8;border-radius:3px;padding:1px 5px">Text</div>
+                <div style="font-size:9px;flex:1;color:#374151">Patient Name</div>
+                <div style="font-size:9px;color:#94a3b8">↑↓ ✎ ✕</div>
+              </div>
+              <div style="display:flex;gap:4px;align-items:center">
+                <div style="font-size:8px;background:#d1fae5;color:#065f46;border-radius:3px;padding:1px 5px">Check</div>
+                <div style="font-size:9px;flex:1;color:#374151">Identity Confirmed</div>
+                <div style="font-size:9px;color:#94a3b8">↑↓ ✎ ✕</div>
+              </div>
+            </div>
+          </div>
+          <div style="border:2px dashed #3b82f6;border-radius:4px;padding:5px;display:flex;gap:4px;justify-content:center">
+            <span style="background:#eff6ff;color:#3b82f6;border-radius:3px;padding:2px 6px;font-size:8px">+ Field</span>
+            <span style="background:#eff6ff;color:#3b82f6;border-radius:3px;padding:2px 6px;font-size:8px">+ Section</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Tree Nav + Section Editor (Hybrid)</h3>
+      <p>Left sidebar shows Form Group → Form hierarchy as a tree. Clicking a form opens the section editor (same click-to-add approach as B). Best of both: easy navigation across forms + simple editing.</p>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Pros</h4><ul><li>Clear hierarchy visible</li><li>Easy to jump between forms</li><li>Manageable build complexity</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Sidebar takes space</li><li>No drag-drop reorder</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px">Click your preferred layout above, or reply in the terminal.</p>

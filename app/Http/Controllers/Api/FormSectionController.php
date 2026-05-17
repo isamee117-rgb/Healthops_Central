@@ -26,9 +26,11 @@ class FormSectionController extends Controller
             $request->validate(['title' => 'required|string|max:150']);
             $maxOrder = FormSection::where('form_id', $formId)->max('sort_order') ?? 0;
             $section = FormSection::create([
-                'form_id'    => $formId,
-                'title'      => $request->input('title'),
-                'sort_order' => $maxOrder + 1,
+                'form_id'        => $formId,
+                'title'          => $request->input('title'),
+                'description'    => $request->input('description'),
+                'is_collapsible' => $request->boolean('isCollapsible'),
+                'sort_order'     => $maxOrder + 1,
             ]);
             return response()->json($this->toCamel($section->fresh()), 201);
         } catch (\Exception $e) {
@@ -53,8 +55,10 @@ class FormSectionController extends Controller
         try {
             $section = FormSection::findOrFail($id);
             $data    = [];
-            if ($request->has('title'))     $data['title']      = $request->input('title');
-            if ($request->has('sortOrder')) $data['sort_order'] = $request->input('sortOrder');
+            if ($request->has('title'))         $data['title']          = $request->input('title');
+            if ($request->has('description'))   $data['description']    = $request->input('description');
+            if ($request->has('isCollapsible')) $data['is_collapsible'] = $request->boolean('isCollapsible');
+            if ($request->has('sortOrder'))     $data['sort_order']     = $request->input('sortOrder');
             $section->update($data);
             return response()->json($this->toCamel($section->fresh()));
         } catch (\Exception $e) {

@@ -5,12 +5,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class FormComponent extends Model
 {
-    protected $fillable = ['form_section_id', 'type', 'label', 'key', 'is_required', 'sort_order', 'config'];
+    protected $fillable = ['form_section_id', 'type', 'label', 'key', 'is_required', 'sort_order', 'config', 'conditions'];
 
     protected function casts(): array
     {
         return [
             'config'      => 'array',
+            'conditions'  => 'array',
             'is_required' => 'boolean',
         ];
     }

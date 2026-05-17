@@ -57,9 +57,9 @@
 
 <!-- Verify Offcanvas (480px, slides right) -->
 <div class="offcanvas offcanvas-end" tabindex="-1" id="verifyDeptSheet" style="width:480px">
-  <div class="offcanvas-header" style="background:var(--midnight-blue);color:#fff;padding:20px 24px">
-    <h5 class="offcanvas-title" id="verifyDeptTitle" style="font-weight:700;margin:0">Verify Charges</h5>
-    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+  <div class="offcanvas-header" style="padding:20px 24px">
+    <h5 class="offcanvas-title" id="verifyDeptTitle">Verify Charges</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
   </div>
   <div class="offcanvas-body" id="verifyDeptBody" style="padding:24px"></div>
 </div>

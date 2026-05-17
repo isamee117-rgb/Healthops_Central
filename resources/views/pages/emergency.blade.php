@@ -225,8 +225,8 @@
     <div class="tab-content" id="tab-treatment" style="display:none">
         <div class="module-header">
             <div>
-                <h2 style="font-size:20px;font-weight:700;color:var(--midnight-blue);margin:0">Clinical Orders</h2>
-                <p style="font-size:14px;color:var(--color-muted-foreground);margin:4px 0 0">Manage medications, investigations, and procedures</p>
+                <h1>Clinical Orders</h1>
+                <p class="module-subtitle">Manage medications, investigations, and procedures</p>
             </div>
             <div class="module-header-actions">
                 <button class="btn-primary" id="btnERNewOrder"><i data-lucide="plus"></i> Create New Order</button>
@@ -236,38 +236,26 @@
         <div class="mini-stats">
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(245,158,11,0.1)"><i data-lucide="clock" style="color:#F59E0B"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Pending Orders</p>
-                        <h3 class="mini-stat-value" style="color:var(--midnight-blue)" id="erStatPendingOrders">0</h3>
-                    </div>
+                    <p class="mini-stat-label">Pending Orders</p>
+                    <h3 class="mini-stat-value" id="erStatPendingOrders">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(127,255,212,0.2)"><i data-lucide="pill" style="color:var(--midnight-blue)"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Active Meds</p>
-                        <h3 class="mini-stat-value" id="erStatActiveMeds">0</h3>
-                    </div>
+                    <p class="mini-stat-label">Active Meds</p>
+                    <h3 class="mini-stat-value" id="erStatActiveMeds">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(59,130,246,0.1)"><i data-lucide="flask-conical" style="color:#3B82F6"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Investigations</p>
-                        <h3 class="mini-stat-value" id="erStatInvestigations">0</h3>
-                    </div>
+                    <p class="mini-stat-label">Investigations</p>
+                    <h3 class="mini-stat-value" id="erStatInvestigations">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(239,68,68,0.1)"><i data-lucide="alert-triangle" style="color:#EF4444"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Critical ESI</p>
-                        <h3 class="mini-stat-value" style="color:#EF4444" id="erStatCriticalESI">0</h3>
-                    </div>
+                    <p class="mini-stat-label">Critical ESI</p>
+                    <h3 class="mini-stat-value" id="erStatCriticalESI">0</h3>
                 </div>
             </div>
         </div>
@@ -453,10 +441,8 @@
         {{-- Header --}}
         <div class="module-header">
             <div>
-                <h2 style="font-size:20px;font-weight:700;color:var(--midnight-blue);margin:0;display:flex;align-items:center;gap:8px">
-                    <i data-lucide="flask-conical" style="width:20px;height:20px"></i> Investigations
-                </h2>
-                <p style="font-size:14px;color:var(--color-muted-foreground);margin:4px 0 0">Manage lab and radiology orders</p>
+                <h1>Investigations</h1>
+                <p class="module-subtitle">Manage lab and radiology orders</p>
             </div>
         </div>
 
@@ -464,38 +450,26 @@
         <div class="mini-stats">
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(245,158,11,0.1)"><i data-lucide="clock" style="color:#F59E0B"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Pending</p>
-                        <h3 class="mini-stat-value" style="color:var(--midnight-blue)" id="erInvStatPending">0</h3>
-                    </div>
+                    <p class="mini-stat-label">Pending</p>
+                    <h3 class="mini-stat-value" id="erInvStatPending">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(59,130,246,0.1)"><i data-lucide="loader" style="color:#3B82F6"></i></div>
-                    <div>
-                        <p class="mini-stat-label">In Progress</p>
-                        <h3 class="mini-stat-value" id="erInvStatInProgress">0</h3>
-                    </div>
+                    <p class="mini-stat-label">In Progress</p>
+                    <h3 class="mini-stat-value" id="erInvStatInProgress">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(34,197,94,0.1)"><i data-lucide="circle-check" style="color:#16a34a"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Completed</p>
-                        <h3 class="mini-stat-value" style="color:#16a34a" id="erInvStatCompleted">0</h3>
-                    </div>
+                    <p class="mini-stat-label">Completed</p>
+                    <h3 class="mini-stat-value" id="erInvStatCompleted">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(239,68,68,0.1)"><i data-lucide="alert-triangle" style="color:#EF4444"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Critical Results</p>
-                        <h3 class="mini-stat-value" style="color:#EF4444" id="erInvStatCritical">0</h3>
-                    </div>
+                    <p class="mini-stat-label">Critical Results</p>
+                    <h3 class="mini-stat-value" id="erInvStatCritical">0</h3>
                 </div>
             </div>
         </div>
@@ -691,8 +665,8 @@
         {{-- Header --}}
         <div class="module-header">
             <div>
-                <h2 style="font-size:20px;font-weight:700;color:var(--midnight-blue);margin:0">Your Admitted Patients</h2>
-                <p style="font-size:14px;color:var(--color-muted-foreground);margin:4px 0 0">Select a patient to initiate or manage the discharge process</p>
+                <h1>Your Admitted Patients</h1>
+                <p class="module-subtitle">Select a patient to initiate or manage the discharge process</p>
             </div>
         </div>
 
@@ -700,38 +674,26 @@
         <div class="mini-stats">
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(99,102,241,0.1)"><i data-lucide="users" style="color:#6366f1"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Total Admitted</p>
-                        <h3 class="mini-stat-value" style="color:var(--midnight-blue)" id="erDispStatTotal">0</h3>
-                    </div>
+                    <p class="mini-stat-label">Total Admitted</p>
+                    <h3 class="mini-stat-value" id="erDispStatTotal">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(245,158,11,0.1)"><i data-lucide="clock" style="color:#F59E0B"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Awaiting Clearance</p>
-                        <h3 class="mini-stat-value" style="color:#F59E0B" id="erDispStatAwaiting">0</h3>
-                    </div>
+                    <p class="mini-stat-label">Awaiting Clearance</p>
+                    <h3 class="mini-stat-value" id="erDispStatAwaiting">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(34,197,94,0.1)"><i data-lucide="circle-check" style="color:#16a34a"></i></div>
-                    <div>
-                        <p class="mini-stat-label">All Cleared</p>
-                        <h3 class="mini-stat-value" style="color:#16a34a" id="erDispStatCleared">0</h3>
-                    </div>
+                    <p class="mini-stat-label">All Cleared</p>
+                    <h3 class="mini-stat-value" id="erDispStatCleared">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div class="mini-stat-icon" style="background:rgba(100,116,139,0.1)"><i data-lucide="log-out" style="color:#64748b"></i></div>
-                    <div>
-                        <p class="mini-stat-label">Discharged</p>
-                        <h3 class="mini-stat-value" style="color:#64748b" id="erDispStatDischarged">0</h3>
-                    </div>
+                    <p class="mini-stat-label">Discharged</p>
+                    <h3 class="mini-stat-value" id="erDispStatDischarged">0</h3>
                 </div>
             </div>
         </div>
@@ -920,38 +882,26 @@
         <div class="mini-stats" id="erBillingStats">
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div>
-                        <p class="mini-stat-label">Total Outstanding</p>
-                        <h3 class="mini-stat-value" style="color:#EF4444" id="erStatOutstanding">0</h3>
-                    </div>
-                    <div class="mini-stat-icon" style="background:rgba(239,68,68,0.1)"><i data-lucide="dollar-sign" style="color:#EF4444"></i></div>
+                    <p class="mini-stat-label">Total Outstanding</p>
+                    <h3 class="mini-stat-value" id="erStatOutstanding">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div>
-                        <p class="mini-stat-label">Collected Today</p>
-                        <h3 class="mini-stat-value" style="color:#10B981" id="erStatCollected">0</h3>
-                    </div>
-                    <div class="mini-stat-icon" style="background:rgba(16,185,129,0.1)"><i data-lucide="dollar-sign" style="color:#10B981"></i></div>
+                    <p class="mini-stat-label">Collected Today</p>
+                    <h3 class="mini-stat-value" id="erStatCollected">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div>
-                        <p class="mini-stat-label">Pending Bills</p>
-                        <h3 class="mini-stat-value" style="color:#F59E0B" id="erStatPending">0</h3>
-                    </div>
-                    <div class="mini-stat-icon" style="background:rgba(245,158,11,0.1)"><i data-lucide="clock" style="color:#F59E0B"></i></div>
+                    <p class="mini-stat-label">Pending Bills</p>
+                    <h3 class="mini-stat-value" id="erStatPending">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div>
-                        <p class="mini-stat-label">Total Patients</p>
-                        <h3 class="mini-stat-value" style="color:#3B82F6" id="erStatPatients">0</h3>
-                    </div>
-                    <div class="mini-stat-icon" style="background:rgba(59,130,246,0.1)"><i data-lucide="users" style="color:#3B82F6"></i></div>
+                    <p class="mini-stat-label">Total Patients</p>
+                    <h3 class="mini-stat-value" id="erStatPatients">0</h3>
                 </div>
             </div>
         </div>
@@ -1019,7 +969,7 @@
 {{-- ER Billing Detail Offcanvas --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="erBillingDetailSheet" style="width:820px;max-width:95vw">
     <div class="offcanvas-header" style="border-bottom:1px solid var(--color-border);padding:16px 24px">
-        <h5 class="offcanvas-title" id="erBillingDetailTitle" style="font-size:18px;font-weight:700;color:var(--midnight-blue)">Billing &amp; Payment</h5>
+        <h5 class="offcanvas-title" id="erBillingDetailTitle">Billing &amp; Payment</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" id="erBillingDetailBody" style="background:var(--color-muted);padding:24px;overflow-y:auto"></div>
@@ -1053,7 +1003,7 @@
 {{-- Registration Offcanvas --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="erRegistrationSheet" style="width:600px;max-width:95vw;border-left:4px solid var(--color-destructive)">
     <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="erRegSheetTitle" style="color:var(--color-destructive);font-weight:700;display:flex;align-items:center;gap:8px"><i data-lucide="siren" style="width:20px;height:20px"></i> New Emergency Arrival</h5>
+        <h5 class="offcanvas-title" id="erRegSheetTitle">New Emergency Arrival</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" id="erRegSheetBody"></div>
@@ -1063,7 +1013,7 @@
 {{-- Charges Breakdown Offcanvas --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="erChargesSheet" style="width:500px;max-width:95vw;border-left:4px solid var(--color-destructive)">
     <div class="offcanvas-header">
-        <h5 class="offcanvas-title" style="color:var(--color-destructive);font-weight:700;display:flex;align-items:center;gap:8px"><i data-lucide="clipboard-list" style="width:20px;height:20px"></i> ER Charges Breakdown</h5>
+        <h5 class="offcanvas-title">ER Charges Breakdown</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" id="erChargesSheetBody"></div>
@@ -1073,7 +1023,7 @@
 {{-- Clinical Orders Management Offcanvas --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="erOrdersDetailSheet" style="width:85%;max-width:95vw">
     <div class="offcanvas-header" style="border-bottom:1px solid var(--color-border);padding:16px 24px;position:sticky;top:0;z-index:10;background:var(--color-card)">
-        <h5 class="offcanvas-title" style="font-size:18px;font-weight:700;color:var(--midnight-blue)">Clinical Orders Management</h5>
+        <h5 class="offcanvas-title">Clinical Orders Management</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" style="padding:24px" id="erOrdersDetailBody"></div>
@@ -1082,7 +1032,7 @@
 {{-- ER Registration Detail Offcanvas --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="erDetailSheet" style="width:640px;max-width:95vw">
     <div class="offcanvas-header" style="border-bottom:1px solid var(--color-border)">
-        <h5 class="offcanvas-title" style="color:#060740"><i data-lucide="clipboard-list"></i> Patient Registration Details</h5>
+        <h5 class="offcanvas-title">Patient Registration Details</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" id="erDetailBody" style="background:var(--color-muted);padding:24px"></div>
@@ -1091,393 +1041,6 @@
 
 @endsection
 
-@push('styles')
-<style>
-/* ── Shared Toolbar / Filter / Pagination (ER) ─────────────────────────── */
-.opd-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-.opd-search-wrap{position:relative;flex:1;min-width:200px}
-.opd-search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--color-muted-foreground);pointer-events:none}
-.opd-search-input{width:100%;height:40px;padding:0 14px 0 40px;border:1px solid var(--color-border);border-radius:10px;background:#fff!important;background-color:#fff!important;font-size:13.5px;color:var(--color-foreground);outline:none;transition:border-color .15s,box-shadow .15s}
-.opd-search-input::placeholder{color:var(--color-muted-foreground)}
-.opd-search-input:focus{border-color:#060740;box-shadow:0 0 0 3px rgba(6,7,64,.08)}
-.opd-toolbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.opd-tool-btn{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 16px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-card);font-size:13.5px;font-weight:600;color:var(--color-foreground);cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s,box-shadow .15s}
-.opd-tool-btn svg{width:15px;height:15px;color:var(--color-muted-foreground)}
-.opd-tool-btn--icon{width:40px;padding:0;justify-content:center;gap:0}
-.opd-tool-btn:hover{background:var(--color-muted);border-color:#060740;box-shadow:0 2px 6px rgba(6,7,64,.08)}
-.opd-tool-btn.active{background:rgba(6,7,64,.06);border-color:#060740}
-.opd-filter-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:20px;background:#060740;color:#7FFFD4;font-size:10px;font-weight:800;line-height:1;margin-left:2px}
-.opd-export-wrap{position:relative}
-.opd-export-menu{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:200;min-width:180px;background:var(--color-card);border:1px solid var(--color-border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:6px}
-.opd-export-menu.open{display:block}
-.opd-export-menu button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border:none;background:none;font-size:13.5px;font-weight:500;color:var(--color-foreground);cursor:pointer;border-radius:7px;text-align:left;transition:background .12s}
-.opd-export-menu button:hover{background:var(--color-muted)}
-.opd-export-menu button svg{width:15px;height:15px;color:var(--color-muted-foreground);flex-shrink:0}
-.opd-rows-wrap{position:relative}
-.opd-rows-menu{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:200;min-width:140px;background:var(--color-card);border:1px solid var(--color-border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:6px}
-.opd-rows-menu.open{display:block}
-.opd-rows-head{padding:8px 10px 6px;font-size:11px;font-weight:700;color:var(--color-muted-foreground);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--color-border);margin-bottom:4px}
-.opd-rows-menu button{display:flex;align-items:center;width:100%;padding:8px 10px;border:none;background:none;font-size:13px;font-weight:500;color:var(--color-foreground);cursor:pointer;border-radius:7px;text-align:left;transition:background .1s}
-.opd-rows-menu button:hover{background:var(--color-muted)}
-.opd-col-vis-wrap{position:relative}
-.opd-col-vis-menu{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:200;width:220px;background:var(--color-card);border:1px solid var(--color-border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);overflow:hidden}
-.opd-col-vis-menu.open{display:block}
-.opd-col-vis-list{padding:8px 6px;max-height:280px;overflow-y:auto}
-.opd-col-vis-list label{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:6px;font-size:13px;font-weight:500;color:var(--color-foreground);cursor:pointer;transition:background .1s}
-.opd-col-vis-list label:hover{background:var(--color-muted)}
-.opd-col-vis-list input[type="checkbox"]{width:15px;height:15px;accent-color:#060740;cursor:pointer;flex-shrink:0}
-.opd-filter-pane{background:var(--color-card);border:1px solid var(--color-border);border-radius:12px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.opd-filter-pane-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--color-border);background:rgba(6,7,64,.02);border-radius:12px 12px 0 0}
-.opd-filter-close{width:28px;height:28px;border-radius:7px;border:1px solid var(--color-border);background:var(--color-card);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s}
-.opd-filter-close:hover{background:var(--color-muted)}
-.opd-filter-close svg{width:14px;height:14px}
-.opd-filter-pane-body{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:16px 18px}
-@media(max-width:1100px){.opd-filter-pane-body{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:700px){.opd-filter-pane-body{grid-template-columns:1fr 1fr}}
-.opd-filter-field{display:flex;flex-direction:column;gap:5px}
-.opd-filter-label{font-size:11.5px;font-weight:700;color:var(--color-muted-foreground);text-transform:uppercase;letter-spacing:.04em}
-.opd-filter-input,.opd-filter-select{height:38px;padding:0 12px;border:1px solid #e2e6ea;border-radius:8px;background:#fff!important;background-color:#fff!important;color-scheme:light;font-size:13.5px;color:#111827!important;outline:none;transition:border-color .15s,box-shadow .15s;width:100%}
-.opd-filter-input:focus,.opd-filter-select:focus{border-color:#060740;box-shadow:0 0 0 3px rgba(6,7,64,.07);background:#fff!important}
-input[type="date"].opd-filter-input{color-scheme:light}
-.opd-filter-pane-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--color-border);background:rgba(6,7,64,.02)}
-.opd-filter-reset{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 16px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-card);font-size:13px;font-weight:600;color:var(--color-muted-foreground);cursor:pointer;transition:all .15s}
-.opd-filter-reset:hover{background:var(--color-muted);color:var(--color-foreground)}
-.opd-filter-reset svg{width:13px;height:13px}
-.opd-filter-apply{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 20px;border:none;border-radius:8px;background:#060740;color:#7FFFD4;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s,transform .1s}
-.opd-filter-apply:hover{opacity:.88}
-.opd-filter-apply svg{width:13px;height:13px}
-.opd-pagination{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-top:1px solid var(--color-border);flex-wrap:wrap;gap:10px}
-.opd-pagination-left{display:flex;align-items:center;gap:16px}
-.opd-page-info{font-size:12.5px;color:var(--color-muted-foreground);font-weight:500}
-.opd-page-btns{display:flex;align-items:center;gap:4px}
-.opd-page-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--color-border);background:var(--color-card);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;color:var(--color-foreground)}
-.opd-page-btn svg{width:15px;height:15px}
-.opd-page-btn:hover:not(:disabled){background:var(--color-muted);border-color:#060740}
-.opd-page-btn:disabled{opacity:.4;cursor:not-allowed}
-.opd-page-nums{display:flex;align-items:center;gap:4px}
-.opd-page-num{min-width:34px;height:34px;padding:0 8px;border-radius:8px;border:1px solid var(--color-border);background:var(--color-card);font-size:13px;font-weight:600;color:var(--color-foreground);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.opd-page-num:hover{background:var(--color-muted)}
-.opd-page-num.active{background:#060740;color:#7FFFD4;border-color:#060740}
-.table-wrapper{overflow-x:auto;border-radius:12px;border:1px solid var(--color-border)}
-/* ───────────────────────────────────────────────────────────────────────── */
-.er-trauma-alert {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 12px;
-    background: rgba(239,68,68,0.1);
-    color: var(--color-destructive);
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 500;
-    animation: pulse 2s infinite;
-}
-.er-trauma-alert i { width: 16px; height: 16px; }
-
-.btn-destructive {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    background: var(--color-destructive);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(239,68,68,0.2);
-    transition: all 0.15s;
-}
-.btn-destructive:hover { background: #dc2626; }
-.btn-destructive i { width: 16px; height: 16px; }
-
-.er-board-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    height: calc(100vh - 280px);
-    margin-top: 8px;
-}
-@media (max-width: 1024px) { .er-board-grid { grid-template-columns: repeat(2, 1fr); height: auto; } }
-@media (max-width: 640px) { .er-board-grid { grid-template-columns: 1fr; } }
-
-.er-board-column {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    background: var(--color-card);
-    border-radius: 12px;
-    border: 1px solid var(--color-border);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    overflow: hidden;
-}
-.er-board-column-header {
-    padding: 12px;
-    border-bottom: 1px solid var(--color-border);
-    background: rgba(245,246,250,0.3);
-    font-size: 13px;
-    font-weight: 600;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.er-board-column-body {
-    flex: 1;
-    padding: 12px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    background: rgba(245,246,250,0.1);
-}
-.er-board-card {
-    background: #fff;
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid var(--color-border);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    cursor: pointer;
-    transition: box-shadow 0.15s;
-    position: relative;
-    overflow: hidden;
-}
-.er-board-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-.er-board-card.border-waiting { border-left: 4px solid #ffc107; }
-.er-board-card.border-treatment { border-left: 4px solid #3B82F6; }
-.er-board-card.border-observation { border-left: 4px solid #8B5CF6; }
-.er-board-card.border-disposition { border-left: 4px solid #10B981; }
-
-.er-triage-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-.er-triage-dot.triage-red { background: #dc3545; }
-.er-triage-dot.triage-orange { background: #fd7e14; }
-.er-triage-dot.triage-yellow { background: #ffc107; }
-.er-triage-dot.triage-green { background: #198754; }
-.er-triage-dot.triage-black { background: #000; }
-.er-triage-dot.triage-default { background: #64748b; }
-
-.badge-triage-red { background: #dc3545; color: #fff; }
-.badge-triage-orange { background: #fd7e14; color: #fff; }
-.badge-triage-yellow { background: #ffc107; color: #000; }
-.badge-triage-green { background: #198754; color: #fff; }
-.badge-triage-black { background: #000; color: #fff; }
-.badge-triage-default { background: #64748b; color: #fff; }
-.badge-triage-red.pulse-badge { animation: pulse 2s infinite; }
-
-.er-treatment-layout {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: 24px;
-}
-@media (max-width: 768px) { .er-treatment-layout { grid-template-columns: 1fr; } }
-.er-treatment-sidebar {
-    border-right: 1px solid var(--color-border);
-    padding-right: 24px;
-}
-@media (max-width: 768px) { .er-treatment-sidebar { border-right: none; padding-right: 0; } }
-
-.er-esi-selector {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 8px;
-}
-@media (max-width: 640px) { .er-esi-selector { grid-template-columns: repeat(3, 1fr); } }
-.er-esi-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 8px;
-    border: 2px solid var(--color-border);
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 11px;
-    font-weight: 700;
-    text-align: center;
-    transition: all 0.15s;
-}
-.er-esi-btn:hover { opacity: 0.8; }
-.er-esi-btn.active { box-shadow: 0 0 0 2px var(--aquamint), 0 0 0 4px rgba(127,255,212,0.3); }
-.er-esi-btn.esi-red { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
-.er-esi-btn.esi-orange { background: #ffedd5; border-color: #fed7aa; color: #9a3412; }
-.er-esi-btn.esi-yellow { background: #fef9c3; border-color: #fde68a; color: #854d0e; }
-.er-esi-btn.esi-green { background: #dcfce7; border-color: #bbf7d0; color: #166534; }
-.er-esi-btn.esi-blue { background: #dbeafe; border-color: #bfdbfe; color: #1e40af; }
-
-.contact-type-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    cursor: pointer;
-    flex: 1;
-    transition: all 0.15s;
-}
-.contact-type-option:hover { background: var(--color-muted); }
-.contact-type-option.active {
-    border-color: var(--aquamint);
-    background: rgba(127,255,212,0.05);
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
-/* ── ER Discharge stepper ─────────────────────────────────────────── */
-.er-disch-step-crumb {
-    font-size: 12px;
-    font-weight: 600;
-    color: rgba(255,255,255,0.4);
-    padding: 4px 10px;
-    border-radius: 20px;
-    cursor: default;
-    white-space: nowrap;
-}
-.er-disch-step-crumb.active {
-    background: var(--aquamint);
-    color: var(--midnight-blue);
-}
-.er-disch-step-crumb.done {
-    color: rgba(255,255,255,0.7);
-}
-
-/* reuse IPD discharge card styles */
-.billing-clearance-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
-    border-radius: 10px;
-    border: 1px solid var(--color-border);
-    background: var(--color-card);
-    transition: border-color 0.2s;
-}
-.billing-clearance-row.cleared {
-    border-color: rgba(16,185,129,0.3);
-    background: rgba(16,185,129,0.04);
-}
-.clearance-status-badge {
-    font-size: 11px;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 20px;
-    white-space: nowrap;
-}
-.clearance-cleared { background: rgba(16,185,129,0.12); color: #065F46; }
-.clearance-pending { background: rgba(245,158,11,0.12); color: #B45309; }
-
-.er-disch-checklist-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 1px solid var(--color-border);
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
-    background: var(--color-card);
-}
-.er-disch-checklist-item:hover { background: var(--color-muted); }
-.er-disch-checklist-item.checked { border-color: var(--aquamint); background: rgba(127,255,212,0.06); }
-.er-disch-check-box {
-    width: 18px; height: 18px;
-    border-radius: 4px;
-    border: 2px solid var(--color-border);
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    transition: border-color 0.15s, background 0.15s;
-}
-.er-disch-checklist-item.checked .er-disch-check-box {
-    border-color: var(--aquamint);
-    background: rgba(127,255,212,0.2);
-}
-
-.er-disch-type-btn {
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: 1.5px solid var(--color-border);
-    background: var(--color-card);
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-    color: var(--midnight-blue);
-}
-.er-disch-type-btn:hover { border-color: var(--aquamint); }
-.er-disch-type-btn.active { border-color: var(--aquamint); background: rgba(127,255,212,0.12); color: var(--midnight-blue); }
-
-.er-disch-condition-group { display: grid; grid-template-columns: repeat(5,1fr); gap:8px; max-width:500px; }
-.er-disch-condition-btn {
-    display: flex; flex-direction: column; align-items: center;
-    gap: 4px; padding: 10px 6px;
-    border-radius: 10px; border: 2px solid var(--color-border);
-    background: var(--color-card); cursor: pointer; font-size: 20px;
-    transition: all 0.15s;
-}
-.er-disch-condition-btn:hover { border-color: var(--aquamint); }
-.er-disch-condition-btn.active { border-color: var(--aquamint); background: rgba(127,255,212,0.12); }
-
-/* ── data-table-wrapper ───────────────────────────────────────────────────── */
-.data-table-wrapper { background:var(--color-card); border:1px solid var(--color-border); border-radius:12px; overflow:hidden; }
-.data-table-wrapper .opd-pagination { border-top:1px solid var(--color-border); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; background:var(--color-card); }
-
-/* ── Column visibility (OPD-style) ───────────────────────────────────────── */
-.opd-col-vis-head { display:flex; align-items:center; justify-content:space-between; padding:11px 14px 10px; border-bottom:1px solid var(--color-border); font-size:13px; font-weight:700; color:var(--color-foreground); }
-.opd-col-vis-selall { font-size:11.5px; font-weight:500; color:#060740; background:none; border:none; cursor:pointer; padding:0; text-decoration:underline; text-underline-offset:2px; }
-.opd-col-vis-foot { padding:10px 14px; border-top:1px solid var(--color-border); display:flex; justify-content:flex-end; }
-.opd-col-vis-save { height:32px; padding:0 18px; background:#060740; color:#fff; border:none; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer; transition:opacity .15s; }
-.opd-col-vis-save:hover { opacity:.88; }
-
-/* ── Custom Date Picker ───────────────────────────────────────────────────── */
-.opd-dp-wrap { position:relative; }
-.opd-dp-trigger { display:flex; align-items:center; justify-content:space-between; height:38px; padding:0 12px; border:1px solid #e2e6ea !important; border-radius:8px; background:#ffffff !important; background-color:#ffffff !important; font-size:13.5px; color:#111827 !important; cursor:pointer; gap:8px; transition:border-color .15s,box-shadow .15s; }
-.opd-dp-trigger:hover { border-color:#9496b8 !important; }
-.opd-dp-trigger.open { border-color:#060740 !important; box-shadow:0 0 0 3px rgba(6,7,64,.07); }
-.opd-dp-val { flex:1; color:#111827; font-size:13.5px; }
-.opd-dp-val.opd-ph { color:#374151 !important; }
-.opd-dp-popup { display:none; position:fixed; z-index:9999; background:#fff; border:1px solid #e2e6ea; border-radius:12px; box-shadow:0 8px 28px rgba(0,0,0,0.13); padding:14px; min-width:268px; }
-.opd-dp-popup.open { display:block; }
-.opd-dp-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-.opd-dp-nav { background:none; border:none; cursor:pointer; padding:4px 10px; border-radius:6px; font-size:18px; color:var(--color-foreground); line-height:1; }
-.opd-dp-nav:hover { background:var(--color-muted); }
-.opd-dp-month-year { font-size:14px; font-weight:600; color:var(--color-foreground); }
-.opd-dp-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
-.opd-dp-dayname { font-size:11px; font-weight:600; color:var(--color-muted-foreground); text-align:center; padding:4px 0; }
-.opd-dp-day { font-size:13px; text-align:center; padding:7px 2px; border-radius:6px; cursor:pointer; color:var(--color-foreground); }
-.opd-dp-day:hover:not(.empty) { background:var(--color-muted); }
-.opd-dp-day.selected { background:#2563EB; color:#fff; font-weight:600; }
-.opd-dp-day.selected:hover { background:#1D4ED8; }
-.opd-dp-day.other-month { color:var(--color-muted-foreground); opacity:.35; }
-.opd-dp-day.empty { cursor:default; }
-
-/* ── Custom Searchable Select ─────────────────────────────────────────────── */
-.opd-cs-wrap { position:relative; }
-.opd-cs-trigger { display:flex; align-items:center; justify-content:space-between; height:38px; padding:0 12px; border:1px solid #e2e6ea !important; border-radius:8px; background:#ffffff !important; background-color:#ffffff !important; font-size:13.5px; color:#111827 !important; cursor:pointer; gap:8px; user-select:none; transition:border-color .15s,box-shadow .15s; }
-.opd-cs-trigger:hover { border-color:#9496b8 !important; }
-.opd-cs-trigger.open { border-color:#060740 !important; box-shadow:0 0 0 3px rgba(6,7,64,.07); }
-.opd-cs-trigger.open > i { transform:rotate(180deg); }
-.opd-cs-trigger > i { transition:transform .2s; }
-.opd-cs-val { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#111827; font-size:13.5px; }
-.opd-cs-val.opd-ph { color:#374151 !important; }
-.opd-cs-popup { display:none; position:fixed; z-index:9999; background:#fff; border:1px solid #e2e6ea; border-radius:10px; box-shadow:0 8px 28px rgba(0,0,0,0.13); overflow:hidden; }
-.opd-cs-popup.open { display:block; }
-.opd-cs-search { width:100%; padding:9px 14px; border:none; border-bottom:1px solid var(--color-border); font-size:13px; outline:none; background:#fff; color:var(--color-foreground); }
-.opd-cs-list { max-height:200px; overflow-y:auto; }
-.opd-cs-option { padding:10px 14px; font-size:13.5px; cursor:pointer; color:var(--color-foreground); border-bottom:1px solid rgba(0,0,0,0.04); }
-.opd-cs-option:hover { background:var(--color-muted); }
-.opd-cs-option.selected { background:#EFF6FF; color:#1D4ED8; font-weight:500; }
-.opd-cs-option:last-child { border-bottom:none; }
-.opd-cs-empty { padding:12px 14px; font-size:13px; color:var(--color-muted-foreground); text-align:center; }
-</style>
-@endpush
 
 @push('scripts')
 <script src="{{ asset('js/emergency.js') }}?v={{ filemtime(public_path('js/emergency.js')) }}"></script>

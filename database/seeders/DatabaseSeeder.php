@@ -122,5 +122,7 @@ class DatabaseSeeder extends Seeder
 
         IpdAdmission::create(['admission_id' => 'MRN-2026-0001-IPD-1', 'admission_number' => 1, 'mrn' => 'MRN-2026-0001', 'patient_name' => 'Ahmed Ali', 'doctor_name' => 'Ayesha Siddiqui', 'department' => 'Cardiology', 'admission_date' => '2026-02-12', 'admission_source' => 'Outpatient', 'status' => 'Active', 'payment_status' => 'Paid', 'admission_type' => 'Routine', 'initial_diagnosis' => 'Angina', 'estimated_stay' => '5 Days', 'ward' => 'General Ward A', 'floor_room' => 'FLR-2', 'bed' => 'G-101']);
         IpdAdmission::create(['admission_id' => 'MRN-2026-0003-IPD-1', 'admission_number' => 1, 'mrn' => 'MRN-2026-0003', 'patient_name' => 'Usman Ali', 'doctor_name' => 'Hassan Raza', 'department' => 'Emergency', 'admission_date' => '2026-02-14', 'admission_source' => 'Emergency', 'status' => 'Active', 'payment_status' => 'Pending', 'admission_type' => 'Emergency', 'initial_diagnosis' => 'Severe head trauma', 'estimated_stay' => '10 Days', 'ward' => 'Intensive Care Unit (ICU)', 'floor_room' => 'FLR-2', 'bed' => 'B-106']);
+
+        $this->call(\Database\Seeders\FormBuilderSeeder::class);
     }
 }

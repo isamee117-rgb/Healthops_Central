@@ -688,7 +688,7 @@
     <div class="offcanvas offcanvas-end" tabindex="-1" id="docTypeSheet" style="width:440px;max-width:95vw">
         <div class="offcanvas-header" style="border-bottom:1px solid var(--color-border);padding:20px 24px;flex-shrink:0">
             <div>
-                <h5 class="offcanvas-title" id="docTypeSheetTitle" style="font-size:16px;font-weight:700;color:var(--color-foreground)">Configure Template</h5>
+                <h5 class="offcanvas-title" id="docTypeSheetTitle">Configure Template</h5>
                 <p style="font-size:12px;color:var(--color-muted-foreground);margin:2px 0 0">Select where this template is applied</p>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
@@ -1109,7 +1109,7 @@
 {{-- Department Add/Edit Offcanvas --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="deptSheet" style="width:600px;max-width:95vw">
     <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="deptSheetTitle"><i data-lucide="layout-grid"></i> Add Department</h5>
+        <h5 class="offcanvas-title" id="deptSheetTitle">Add Department</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" id="deptSheetBody">
@@ -1199,7 +1199,7 @@
 {{-- Signatory Add/Edit Offcanvas --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="signatorySheet" style="width:600px;max-width:95vw">
     <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="signatorySheetTitle"><i data-lucide="pen-tool"></i> Add Signatory</h5>
+        <h5 class="offcanvas-title" id="signatorySheetTitle">Add Signatory</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" id="signatorySheetBody">

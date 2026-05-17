@@ -15,56 +15,38 @@
     <div class="mini-stats" id="staffStats">
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">Total Staff</p>
-                    <h3 class="mini-stat-value" style="color:#2563eb" id="statTotal">0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(37,99,235,0.05)"><i data-lucide="users" style="color:#2563eb"></i></div>
+                <p class="mini-stat-label">Total Staff</p>
+                <h3 class="mini-stat-value" id="statTotal">0</h3>
             </div>
         </div>
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">Clinical Staff</p>
-                    <h3 class="mini-stat-value" style="color:#16a34a" id="statClinical">0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(22,163,74,0.05)"><i data-lucide="heart-pulse" style="color:#16a34a"></i></div>
+                <p class="mini-stat-label">Clinical Staff</p>
+                <h3 class="mini-stat-value" id="statClinical">0</h3>
             </div>
         </div>
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">Support Staff</p>
-                    <h3 class="mini-stat-value" style="color:#9333ea" id="statSupport">0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(147,51,234,0.05)"><i data-lucide="hard-hat" style="color:#9333ea"></i></div>
+                <p class="mini-stat-label">Support Staff</p>
+                <h3 class="mini-stat-value" id="statSupport">0</h3>
             </div>
         </div>
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">Admin Staff</p>
-                    <h3 class="mini-stat-value" style="color:#ea580c" id="statAdmin">0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(234,88,12,0.05)"><i data-lucide="briefcase" style="color:#ea580c"></i></div>
+                <p class="mini-stat-label">Admin Staff</p>
+                <h3 class="mini-stat-value" id="statAdmin">0</h3>
             </div>
         </div>
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">Active</p>
-                    <h3 class="mini-stat-value" style="color:#0891b2" id="statActive">0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(8,145,178,0.05)"><i data-lucide="check-circle" style="color:#0891b2"></i></div>
+                <p class="mini-stat-label">Active</p>
+                <h3 class="mini-stat-value" id="statActive">0</h3>
             </div>
         </div>
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">On Leave</p>
-                    <h3 class="mini-stat-value" style="color:#dc2626" id="statLeave">0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(220,38,38,0.05)"><i data-lucide="calendar-off" style="color:#dc2626"></i></div>
+                <p class="mini-stat-label">On Leave</p>
+                <h3 class="mini-stat-value" id="statLeave">0</h3>
             </div>
         </div>
     </div>

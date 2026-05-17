@@ -89,9 +89,9 @@
 
 {{-- Add / Edit Custom Section Offcanvas --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="otSectionBuilderSheet" style="width:520px;max-width:95vw;border-left:4px solid var(--aquamint)">
-    <div class="offcanvas-header" style="background:var(--midnight-blue)">
-        <h5 class="offcanvas-title" style="color:var(--aquamint);font-weight:700;font-size:16px" id="otSectionBuilderTitle">Add Custom Section</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="otSectionBuilderTitle">Add Custom Section</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" style="padding:24px;background:var(--color-muted);overflow-y:auto">
         <input type="hidden" id="otSectionBuilderId" value="">
@@ -132,9 +132,9 @@
 </div>
 {{-- Post-Op Add / Edit Custom Section Offcanvas --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="otPostopSectionBuilderSheet" style="width:520px;max-width:95vw;border-left:4px solid var(--aquamint)">
-    <div class="offcanvas-header" style="background:var(--midnight-blue)">
-        <h5 class="offcanvas-title" style="color:var(--aquamint);font-weight:700;font-size:16px" id="otPostopSectionBuilderTitle">Add Post-Op Custom Section</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="otPostopSectionBuilderTitle">Add Post-Op Custom Section</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" style="padding:24px;background:var(--color-muted);overflow-y:auto">
         <input type="hidden" id="otPostopSectionBuilderId" value="">
@@ -168,9 +168,9 @@
 
 {{-- Intra-Op Add / Edit Custom Section Offcanvas --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="otIntraopSectionBuilderSheet" style="width:520px;max-width:95vw;border-left:4px solid var(--aquamint)">
-    <div class="offcanvas-header" style="background:var(--midnight-blue)">
-        <h5 class="offcanvas-title" style="color:var(--aquamint);font-weight:700;font-size:16px" id="otIntraopSectionBuilderTitle">Add Intra-Op Custom Section</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="otIntraopSectionBuilderTitle">Add Intra-Op Custom Section</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body" style="padding:24px;background:var(--color-muted);overflow-y:auto">
         <input type="hidden" id="otIntraopSectionBuilderId" value="">

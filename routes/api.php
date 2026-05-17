@@ -43,6 +43,7 @@ use App\Http\Controllers\Api\FormGroupController;
 use App\Http\Controllers\Api\FormController;
 use App\Http\Controllers\Api\FormSectionController;
 use App\Http\Controllers\Api\FormComponentController;
+use App\Http\Controllers\Api\FormSubmissionController;
 
 Route::middleware(['web', 'auth.hms'])->group(function () {
 
@@ -95,9 +96,6 @@ Route::post('/er/clinical-orders', [ClinicalController::class, 'addOrder']);
 Route::patch('/er/clinical-orders/{orderId}/discontinue', [ClinicalController::class, 'discontinueOrder']);
 
 Route::get('/er/form-sections', [\App\Http\Controllers\Api\ErFormSectionController::class, 'index']);
-Route::post('/er/form-sections', [\App\Http\Controllers\Api\ErFormSectionController::class, 'store']);
-Route::patch('/er/form-sections/{id}', [\App\Http\Controllers\Api\ErFormSectionController::class, 'update']);
-Route::delete('/er/form-sections/{id}', [\App\Http\Controllers\Api\ErFormSectionController::class, 'destroy']);
 Route::patch('/er/visits/{visitId}/custom-order-data', [EmergencyController::class, 'saveCustomOrderData']);
 
 Route::get('/ipd/admissions', [IpdController::class, 'admissions']);
@@ -128,40 +126,12 @@ Route::patch('/ipd/clinical-orders/{orderId}/discontinue', [ClinicalController::
 Route::post('/ipd/clinical-orders/pass-to-lab', [ClinicalController::class, 'passToLab']);
 
 Route::get('/ipd/form-sections', [\App\Http\Controllers\Api\IpdFormSectionController::class, 'index']);
-Route::post('/ipd/form-sections', [\App\Http\Controllers\Api\IpdFormSectionController::class, 'store']);
-Route::patch('/ipd/form-sections/{id}', [\App\Http\Controllers\Api\IpdFormSectionController::class, 'update']);
-Route::delete('/ipd/form-sections/{id}', [\App\Http\Controllers\Api\IpdFormSectionController::class, 'destroy']);
 Route::patch('/ipd/admissions/{admissionId}/custom-order-data', [IpdController::class, 'saveCustomOrderData']);
 Route::get('/ipd/progress-notes/{admissionId}', [ClinicalController::class, 'progressNotes']);
 Route::post('/ipd/progress-notes', [ClinicalController::class, 'addProgressNote']);
 
 Route::get('/ot/operations', [OtController::class, 'operations']);
 Route::post('/ot/operations', [OtController::class, 'createOperation']);
-Route::get('/ot/bills', [OtController::class, 'bills']);
-Route::post('/ot/bills', [OtController::class, 'createBillTransaction']);
-Route::get('/ot/checklist/{operationId}', [OtController::class, 'getChecklist']);
-Route::post('/ot/checklist/{operationId}', [OtController::class, 'saveChecklist']);
-Route::get('/ot/intraop/{operationId}', [OtController::class, 'getIntraOp']);
-Route::post('/ot/intraop/{operationId}', [OtController::class, 'saveIntraOp']);
-Route::post('/ot/intraop/{operationId}/complete', [OtController::class, 'completeIntraOp']);
-Route::get('/ot/postop/{operationId}', [OtController::class, 'getPostOp']);
-Route::post('/ot/postop/{operationId}', [OtController::class, 'savePostOp']);
-Route::post('/ot/postop/{operationId}/discharge', [OtController::class, 'dischargePatient']);
-Route::patch('/ot/operations/{operationId}/custom-checklist-data', [OtController::class, 'saveCustomChecklistData']);
-Route::patch('/ot/operations/{operationId}/custom-intraop-data', [OtController::class, 'saveCustomIntraopData']);
-Route::get('/ot/form-sections', [\App\Http\Controllers\Api\OtFormSectionController::class, 'index']);
-Route::post('/ot/form-sections', [\App\Http\Controllers\Api\OtFormSectionController::class, 'store']);
-Route::patch('/ot/form-sections/{id}', [\App\Http\Controllers\Api\OtFormSectionController::class, 'update']);
-Route::delete('/ot/form-sections/{id}', [\App\Http\Controllers\Api\OtFormSectionController::class, 'destroy']);
-Route::get('/ot/intraop-form-sections', [\App\Http\Controllers\Api\OtIntraopFormSectionController::class, 'index']);
-Route::post('/ot/intraop-form-sections', [\App\Http\Controllers\Api\OtIntraopFormSectionController::class, 'store']);
-Route::patch('/ot/intraop-form-sections/{id}', [\App\Http\Controllers\Api\OtIntraopFormSectionController::class, 'update']);
-Route::delete('/ot/intraop-form-sections/{id}', [\App\Http\Controllers\Api\OtIntraopFormSectionController::class, 'destroy']);
-Route::patch('/ot/operations/{operationId}/custom-postop-data', [\App\Http\Controllers\Api\OtController::class, 'saveCustomPostopData']);
-Route::get('/ot/postop-form-sections', [\App\Http\Controllers\Api\OtPostopFormSectionController::class, 'index']);
-Route::post('/ot/postop-form-sections', [\App\Http\Controllers\Api\OtPostopFormSectionController::class, 'store']);
-Route::patch('/ot/postop-form-sections/{id}', [\App\Http\Controllers\Api\OtPostopFormSectionController::class, 'update']);
-Route::delete('/ot/postop-form-sections/{id}', [\App\Http\Controllers\Api\OtPostopFormSectionController::class, 'destroy']);
 
 Route::post('/billing/mark-paid', [BillingController::class, 'markAsPaid']);
 Route::post('/billing/refund', [BillingController::class, 'refund']);
@@ -423,11 +393,10 @@ Route::put('/opd-config/{id}', [OpdConfigController::class, 'update']);
 Route::delete('/opd-config/{id}', [OpdConfigController::class, 'destroy']);
 
 Route::get('/opd/form-sections', [OpdFormSectionController::class, 'index']);
-Route::post('/opd/form-sections', [OpdFormSectionController::class, 'store']);
-Route::patch('/opd/form-sections/{id}', [OpdFormSectionController::class, 'update']);
-Route::delete('/opd/form-sections/{id}', [OpdFormSectionController::class, 'destroy']);
 
 Route::get('/pharmacy-config', [PharmacyConfigController::class, 'index']);
+Route::get('/pharmacy-config/department-routing', [PharmacyConfigController::class, 'getDeptRouting']);
+Route::put('/pharmacy-config/department-routing', [PharmacyConfigController::class, 'updateDeptRouting']);
 Route::get('/pharmacy-config/{category}', [PharmacyConfigController::class, 'listByCategory']);
 Route::post('/pharmacy-config', [PharmacyConfigController::class, 'store']);
 Route::put('/pharmacy-config/{id}', [PharmacyConfigController::class, 'update']);
@@ -454,6 +423,7 @@ Route::post('/form-groups/{groupId}/forms', [FormController::class, 'store']);
 Route::patch('/forms/reorder',              [FormController::class, 'reorder']); // MUST be before /{id}
 Route::patch('/forms/{id}',                 [FormController::class, 'update']);
 Route::delete('/forms/{id}',                [FormController::class, 'destroy']);
+Route::get('/forms/by-context/{context}',   [FormController::class, 'byContext']); // MUST be before /{id}/full
 Route::get('/forms/{id}/full',              [FormController::class, 'full']);
 
 Route::get('/forms/{formId}/sections',      [FormSectionController::class, 'index']);
@@ -461,6 +431,9 @@ Route::post('/forms/{formId}/sections',     [FormSectionController::class, 'stor
 Route::patch('/form-sections/reorder',      [FormSectionController::class, 'reorder']); // MUST be before /{id}
 Route::patch('/form-sections/{id}',         [FormSectionController::class, 'update']);
 Route::delete('/form-sections/{id}',        [FormSectionController::class, 'destroy']);
+
+Route::get('/form-submissions',  [FormSubmissionController::class, 'index']);
+Route::post('/form-submissions', [FormSubmissionController::class, 'store']);
 
 Route::post('/form-sections/{sectionId}/components', [FormComponentController::class, 'store']);
 Route::patch('/form-components/reorder',             [FormComponentController::class, 'reorder']); // MUST be before /{id}

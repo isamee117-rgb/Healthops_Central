@@ -8,6 +8,19 @@
         </div>
     </div>
 
+    <div class="section-label">Department Order Routing</div>
+    <p class="section-desc">Control which departments can send medication orders to the Pharmacy queue. When a department is blocked, its orders will not appear on the Medication Orders page.</p>
+
+    <div class="card mb-4" style="max-width:520px">
+        <div class="card-header d-flex align-items-center gap-2" style="background:var(--midnight-blue);color:#fff;padding:12px 16px">
+            <i data-lucide="git-branch" style="width:16px;height:16px"></i>
+            <h6 class="mb-0" style="font-size:14px;font-weight:600">Departments</h6>
+        </div>
+        <div class="card-body p-0" id="deptRoutingBody">
+            <div style="padding:20px;text-align:center;color:var(--color-muted-foreground);font-size:13px">Loading...</div>
+        </div>
+    </div>
+
     <div class="section-label">Prescription Dropdowns</div>
     <p class="section-desc">Add, edit, activate or remove the options that appear in the Unit, Route and Frequency selects when writing a prescription in OPD.</p>
 
@@ -70,6 +83,55 @@
 
 @push('styles')
 <style>
+    .dept-routing-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--color-border);
+        font-size: 13px;
+    }
+    .dept-routing-row:last-child { border-bottom: none; }
+    .dept-routing-row .dept-label {
+        flex: 1;
+        font-weight: 600;
+        color: var(--color-foreground);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .dept-status {
+        font-size: 12px;
+        font-weight: 500;
+        min-width: 110px;
+        text-align: right;
+    }
+    .dept-status.on  { color: #16A34A; }
+    .dept-status.off { color: #DC2626; }
+    .dept-toggle-wrap { position: relative; display: inline-flex; align-items: center; }
+    .dept-toggle-wrap input[type="checkbox"] { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-slider {
+        display: block;
+        width: 42px;
+        height: 24px;
+        border-radius: 12px;
+        background: #D1D5DB;
+        cursor: pointer;
+        transition: background 0.2s;
+        position: relative;
+    }
+    .toggle-slider::after {
+        content: '';
+        position: absolute;
+        top: 3px; left: 3px;
+        width: 18px; height: 18px;
+        border-radius: 50%;
+        background: #fff;
+        transition: left 0.2s;
+        box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .dept-toggle-wrap input:checked + .toggle-slider { background: #16A34A; }
+    .dept-toggle-wrap input:checked + .toggle-slider::after { left: 21px; }
     .section-label {
         font-size: 12px;
         font-weight: 700;

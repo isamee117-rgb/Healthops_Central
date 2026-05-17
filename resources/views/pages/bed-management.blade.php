@@ -34,56 +34,38 @@
         <div class="mini-stats" id="bedStats">
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div>
-                        <p class="mini-stat-label">Total Beds</p>
-                        <h3 class="mini-stat-value" id="statTotal">0</h3>
-                    </div>
-                    <div class="mini-stat-icon" style="background:rgba(79,70,229,0.1)"><i data-lucide="bed" style="color:#4f46e5"></i></div>
+                    <p class="mini-stat-label">Total Beds</p>
+                    <h3 class="mini-stat-value" id="statTotal">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div>
-                        <p class="mini-stat-label">Available</p>
-                        <h3 class="mini-stat-value" style="color:#16a34a" id="statAvailable">0</h3>
-                    </div>
-                    <div class="mini-stat-icon" style="background:rgba(22,163,74,0.1)"><i data-lucide="check-circle" style="color:#16a34a"></i></div>
+                    <p class="mini-stat-label">Available</p>
+                    <h3 class="mini-stat-value" id="statAvailable">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div>
-                        <p class="mini-stat-label">Occupied</p>
-                        <h3 class="mini-stat-value" style="color:#dc2626" id="statOccupied">0</h3>
-                    </div>
-                    <div class="mini-stat-icon" style="background:rgba(220,38,38,0.1)"><i data-lucide="user-check" style="color:#dc2626"></i></div>
+                    <p class="mini-stat-label">Occupied</p>
+                    <h3 class="mini-stat-value" id="statOccupied">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div>
-                        <p class="mini-stat-label">Cleaning</p>
-                        <h3 class="mini-stat-value" style="color:#ca8a04" id="statCleaning">0</h3>
-                    </div>
-                    <div class="mini-stat-icon" style="background:rgba(202,138,4,0.1)"><i data-lucide="sparkles" style="color:#ca8a04"></i></div>
+                    <p class="mini-stat-label">Cleaning</p>
+                    <h3 class="mini-stat-value" id="statCleaning">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div>
-                        <p class="mini-stat-label">Out of Order</p>
-                        <h3 class="mini-stat-value" style="color:#64748b" id="statOutOfOrder">0</h3>
-                    </div>
-                    <div class="mini-stat-icon" style="background:rgba(100,116,139,0.1)"><i data-lucide="wrench" style="color:#64748b"></i></div>
+                    <p class="mini-stat-label">Out of Order</p>
+                    <h3 class="mini-stat-value" id="statOutOfOrder">0</h3>
                 </div>
             </div>
             <div class="mini-stat-card">
                 <div class="mini-stat-inner">
-                    <div>
-                        <p class="mini-stat-label">Floors / Wards</p>
-                        <h3 class="mini-stat-value" id="statFloors">0 / 0</h3>
-                    </div>
-                    <div class="mini-stat-icon" style="background:rgba(190,24,93,0.1)"><i data-lucide="layers" style="color:#be185d"></i></div>
+                    <p class="mini-stat-label">Floors / Wards</p>
+                    <h3 class="mini-stat-value" id="statFloors">0 / 0</h3>
                 </div>
             </div>
         </div>
@@ -251,7 +233,7 @@
 {{-- FLOOR OFFCANVAS --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="floorOffcanvas">
     <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="floorOffcanvasTitle"><i data-lucide="building"></i> Add Floor</h5>
+        <h5 class="offcanvas-title" id="floorOffcanvasTitle">Add Floor</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body">
@@ -277,7 +259,7 @@
 {{-- WARD OFFCANVAS --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="wardOffcanvas">
     <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="wardOffcanvasTitle"><i data-lucide="grid-3x3"></i> Add Ward</h5>
+        <h5 class="offcanvas-title" id="wardOffcanvasTitle">Add Ward</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body">
@@ -314,7 +296,7 @@
 {{-- BED OFFCANVAS --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="bedOffcanvas">
     <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="bedOffcanvasTitle"><i data-lucide="bed"></i> Add Bed</h5>
+        <h5 class="offcanvas-title" id="bedOffcanvasTitle">Add Bed</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body">

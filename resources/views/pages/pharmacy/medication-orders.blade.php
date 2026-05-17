@@ -141,38 +141,26 @@
 <div class="mini-stats">
     <div class="mini-stat-card">
         <div class="mini-stat-inner">
-            <div>
-                <p class="mini-stat-label">Pending Orders</p>
-                <h3 class="mini-stat-value" style="color:#eab308" id="statPending">--</h3>
-            </div>
-            <div class="mini-stat-icon" style="background:rgba(234,179,8,0.1)"><i data-lucide="clock" style="color:#eab308"></i></div>
+            <p class="mini-stat-label">Pending Orders</p>
+            <h3 class="mini-stat-value" id="statPending">--</h3>
         </div>
     </div>
     <div class="mini-stat-card">
         <div class="mini-stat-inner">
-            <div>
-                <p class="mini-stat-label">In Progress</p>
-                <h3 class="mini-stat-value" style="color:#3b82f6" id="statInProgress">--</h3>
-            </div>
-            <div class="mini-stat-icon" style="background:rgba(59,130,246,0.1)"><i data-lucide="loader" style="color:#3b82f6"></i></div>
+            <p class="mini-stat-label">In Progress</p>
+            <h3 class="mini-stat-value" id="statInProgress">--</h3>
         </div>
     </div>
     <div class="mini-stat-card">
         <div class="mini-stat-inner">
-            <div>
-                <p class="mini-stat-label">Completed Orders</p>
-                <h3 class="mini-stat-value" style="color:#22c55e" id="statReady">--</h3>
-            </div>
-            <div class="mini-stat-icon" style="background:rgba(34,197,94,0.1)"><i data-lucide="check-circle" style="color:#22c55e"></i></div>
+            <p class="mini-stat-label">Completed Orders</p>
+            <h3 class="mini-stat-value" id="statReady">--</h3>
         </div>
     </div>
     <div class="mini-stat-card">
         <div class="mini-stat-inner">
-            <div>
-                <p class="mini-stat-label">Completed Today</p>
-                <h3 class="mini-stat-value" style="color:#6b7280" id="statCompleted">--</h3>
-            </div>
-            <div class="mini-stat-icon" style="background:rgba(107,114,128,0.1)"><i data-lucide="package-check" style="color:#6b7280"></i></div>
+            <p class="mini-stat-label">Completed Today</p>
+            <h3 class="mini-stat-value" id="statCompleted">--</h3>
         </div>
     </div>
 </div>
@@ -414,17 +402,12 @@
 {{-- ── Order Detail Offcanvas ─────────────────────────────────────────────── --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="orderDetailSheet" style="width:700px;border-left:1px solid var(--color-border)">
     <div class="offcanvas-header" style="padding:20px 24px;border-bottom:1px solid var(--color-border);background:var(--color-background)">
-        <div style="display:flex;align-items:center;gap:12px;flex:1">
-            <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,rgba(127,255,212,0.2),rgba(0,51,102,0.1));display:flex;align-items:center;justify-content:center">
-                <i data-lucide="clipboard-list" style="width:22px;height:22px;color:var(--aquamint)"></i>
+        <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px">
+                <h5 class="offcanvas-title" id="detailOrderId">ORDER DETAILS</h5>
+                <span id="detailPriorityBadge"></span>
             </div>
-            <div style="flex:1">
-                <div style="display:flex;align-items:center;gap:8px">
-                    <h5 class="offcanvas-title" style="font-size:16px;font-weight:700;margin:0;font-family:'Roobert',sans-serif" id="detailOrderId">ORDER DETAILS</h5>
-                    <span id="detailPriorityBadge"></span>
-                </div>
-                <p id="detailOrderMeta" style="font-size:12px;color:var(--color-muted-foreground);margin:2px 0 0"></p>
-            </div>
+            <p id="detailOrderMeta" style="font-size:12px;color:var(--color-muted-foreground);margin:2px 0 0"></p>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>

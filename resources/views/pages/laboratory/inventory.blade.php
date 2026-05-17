@@ -131,14 +131,9 @@
 
 <div class="offcanvas offcanvas-end" tabindex="-1" id="reagentDetailSheet" style="width:700px;border-left:1px solid var(--color-border)">
     <div class="offcanvas-header" style="padding:20px 24px;border-bottom:1px solid var(--color-border);background:var(--color-background)">
-        <div style="display:flex;align-items:center;gap:12px">
-            <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,rgba(127,255,212,0.2),rgba(0,51,102,0.1));display:flex;align-items:center;justify-content:center">
-                <i data-lucide="flask-conical" style="width:22px;height:22px;color:var(--aquamint)"></i>
-            </div>
-            <div>
-                <h5 id="detailTitle" class="offcanvas-title" style="font-size:16px;font-weight:700;margin:0;font-family:'Roobert',sans-serif">Reagent Detail</h5>
-                <p id="detailSub" style="font-size:12px;color:var(--color-muted-foreground);margin:2px 0 0"></p>
-            </div>
+        <div>
+            <h5 id="detailTitle" class="offcanvas-title">Reagent Detail</h5>
+            <p id="detailSub" style="font-size:12px;color:var(--color-muted-foreground);margin:2px 0 0"></p>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
@@ -156,14 +151,9 @@
 
 <div class="offcanvas offcanvas-end" tabindex="-1" id="analyzerSheet" style="width:700px;border-left:1px solid var(--color-border)">
     <div class="offcanvas-header" style="padding:20px 24px;border-bottom:1px solid var(--color-border);background:var(--color-background)">
-        <div style="display:flex;align-items:center;gap:12px">
-            <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,rgba(127,255,212,0.2),rgba(0,51,102,0.1));display:flex;align-items:center;justify-content:center">
-                <i data-lucide="cpu" style="width:22px;height:22px;color:var(--aquamint)"></i>
-            </div>
-            <div>
-                <h5 class="offcanvas-title" style="font-size:16px;font-weight:700;margin:0;font-family:'Roobert',sans-serif">Analyzer Reagent Status</h5>
-                <p style="font-size:12px;color:var(--color-muted-foreground);margin:2px 0 0">On-board reagent levels &amp; alerts</p>
-            </div>
+        <div>
+            <h5 class="offcanvas-title">Analyzer Reagent Status</h5>
+            <p style="font-size:12px;color:var(--color-muted-foreground);margin:2px 0 0">On-board reagent levels &amp; alerts</p>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>

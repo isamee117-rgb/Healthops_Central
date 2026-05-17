@@ -5,7 +5,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class FormSection extends Model
 {
-    protected $fillable = ['form_id', 'title', 'sort_order'];
+    protected $fillable = ['form_id', 'title', 'description', 'is_collapsible', 'sort_order'];
+
+    protected function casts(): array
+    {
+        return ['is_collapsible' => 'boolean'];
+    }
 
     public function form()
     {

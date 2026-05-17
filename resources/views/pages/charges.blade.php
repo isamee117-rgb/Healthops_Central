@@ -15,56 +15,38 @@
     <div class="mini-stats" id="chargeStats">
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">Total Charges</p>
-                    <h3 class="mini-stat-value" style="color:#2563eb" id="statTotal">0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(37,99,235,0.05)"><i data-lucide="file-text" style="color:#2563eb"></i></div>
+                <p class="mini-stat-label">Total Charges</p>
+                <h3 class="mini-stat-value" id="statTotal">0</h3>
             </div>
         </div>
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">OPD Charges</p>
-                    <h3 class="mini-stat-value" style="color:#16a34a" id="statOPD">0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(22,163,74,0.05)"><i data-lucide="stethoscope" style="color:#16a34a"></i></div>
+                <p class="mini-stat-label">OPD Charges</p>
+                <h3 class="mini-stat-value" id="statOPD">0</h3>
             </div>
         </div>
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">IPD Charges</p>
-                    <h3 class="mini-stat-value" style="color:#9333ea" id="statIPD">0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(147,51,234,0.05)"><i data-lucide="building-2" style="color:#9333ea"></i></div>
+                <p class="mini-stat-label">IPD Charges</p>
+                <h3 class="mini-stat-value" id="statIPD">0</h3>
             </div>
         </div>
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">OT Charges</p>
-                    <h3 class="mini-stat-value" style="color:#ea580c" id="statOT">0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(234,88,12,0.05)"><i data-lucide="scissors" style="color:#ea580c"></i></div>
+                <p class="mini-stat-label">OT Charges</p>
+                <h3 class="mini-stat-value" id="statOT">0</h3>
             </div>
         </div>
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">ER Charges</p>
-                    <h3 class="mini-stat-value" style="color:#dc2626" id="statER">0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(220,38,38,0.05)"><i data-lucide="siren" style="color:#dc2626"></i></div>
+                <p class="mini-stat-label">ER Charges</p>
+                <h3 class="mini-stat-value" id="statER">0</h3>
             </div>
         </div>
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">Active</p>
-                    <h3 class="mini-stat-value" style="color:#0891b2" id="statActive">0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(8,145,178,0.05)"><i data-lucide="check-circle" style="color:#0891b2"></i></div>
+                <p class="mini-stat-label">Active</p>
+                <h3 class="mini-stat-value" id="statActive">0</h3>
             </div>
         </div>
     </div>

@@ -38,6 +38,21 @@ $(document).ready(function() {
     var ipdBillPerPageVal  = 10;
     var ipdBillFiltered    = null;
 
+    /* IPD Patient tab pagination / filter state */
+    var ipdPatCurrentPage = 1;
+    var ipdPatPerPageVal  = 10;
+    var ipdPatFiltered    = null;
+
+    /* IPD Patient Profile — currently open admission */
+    var _ipdProfileCurrentAdmId   = null;
+    var _ipdOrdersInProfileMode   = false;
+    var _ipdInvInProfileMode      = false;
+    var _ipdNurInProfileMode      = false;
+    var _ipdDischInProfileMode    = false;
+    var _ipdMARInProfileMode      = false;
+    var _ipdProfileMarTasks       = [];
+    var _ipdChartingGroups        = null;
+
     /* IPD Clinical Orders pagination / filter state */
     var ipdOrdCurrentPage = 1;
     var ipdOrdPerPageVal  = 10;
@@ -219,6 +234,7 @@ $(document).ready(function() {
     function renderAll() {
         try { renderRegistrationTab(); } catch(e) { console.warn('renderRegistrationTab error:', e); }
         try { renderBillingTab(); } catch(e) { console.warn('renderBillingTab error:', e); }
+        try { renderIpdPatientTab(); } catch(e) { console.warn('renderIpdPatientTab error:', e); }
         try { renderOrdersTab(); } catch(e) { console.warn('renderOrdersTab error:', e); }
         try { renderMARTab(); } catch(e) { console.warn('renderMARTab error:', e); }
         try { renderInvestigationsTab(); } catch(e) { console.warn('renderInvestigationsTab error:', e); }
@@ -344,6 +360,474 @@ $(document).ready(function() {
     $('#ipdRegNextPage').on('click', function() { ipdRegCurrentPage++; renderRegistrationTab(); });
 
     $('#regSearch').on('input', function() { ipdRegCurrentPage = 1; renderRegistrationTab(); });
+
+    // ===== TAB 2b: IPD PATIENT =====
+    function _ipdPatBuildRows(list) {
+        if (list.length === 0) {
+            return '<tr><td colspan="13"><div class="empty-state"><i data-lucide="users"></i><p>No patients found</p><p class="empty-sub">No IPD admissions match your search</p></div></td></tr>';
+        }
+        var html = '';
+        list.forEach(function(a) {
+            var statusClass = a.status === 'Active' ? 'badge-success' : a.status === 'Discharged' ? 'badge-info' : 'badge-outline';
+            var payClass = a.paymentStatus === 'Paid' ? 'badge-success' : a.paymentStatus === 'Pending' ? 'badge-warning' : 'badge-outline';
+            var shortId = a.admissionId.replace(a.mrn + '-', '');
+            var admDate = new Date(a.admissionDate);
+            var admFormatted = admDate.toLocaleDateString() + ', ' + admDate.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+            var wardBed = (a.ward || '-') + (a.bed ? ', ' + a.bed : '');
+            var patient = patients.find(function(p) { return p.mrn === a.mrn; });
+            var gender = (patient && patient.gender) ? patient.gender : (a.gender || '-');
+            var diagnosis = a.initialDiagnosis || '-';
+            html += '<tr>' +
+                '<td class="font-mono" style="font-size:12px;font-weight:500;color:var(--midnight-blue)">' + esc(a.mrn) + '</td>' +
+                '<td><span style="font-weight:500;font-size:14px">' + esc(a.patientName) + '</span></td>' +
+                '<td style="font-size:12px;color:var(--color-muted-foreground)">' + esc(shortId) + '</td>' +
+                '<td style="font-size:12px;color:var(--color-muted-foreground)">' + esc(a.department || '-') + '</td>' +
+                '<td style="font-size:12px;font-weight:500;color:var(--midnight-blue)">' + esc(a.doctorName || '-') + '</td>' +
+                '<td style="font-size:12px;color:var(--color-muted-foreground)">' + esc(a.admissionSource || '-') + '</td>' +
+                '<td style="font-size:12px;color:var(--color-muted-foreground)">' + esc(gender) + '</td>' +
+                '<td style="font-size:12px;color:var(--color-muted-foreground)">' + esc(wardBed) + '</td>' +
+                '<td style="font-size:12px;color:var(--color-muted-foreground);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(diagnosis) + '">' + esc(diagnosis) + '</td>' +
+                '<td><span class="badge ' + statusClass + '">' + esc(a.status).toUpperCase() + '</span></td>' +
+                '<td><span class="badge ' + payClass + '">' + esc(a.paymentStatus || 'N/A').toUpperCase() + '</span></td>' +
+                '<td style="font-size:12px;color:var(--color-muted-foreground);white-space:nowrap">' + esc(admFormatted) + '</td>' +
+                '<td><button class="btn-view-profile" onclick="openIpdPatProfile(\'' + esc(a.admissionId) + '\')"><i data-lucide="user-circle" style="width:13px;height:13px"></i> View Profile</button></td>' +
+                '</tr>';
+        });
+        return html;
+    }
+
+    function _ipdPatRenderPagination(source) {
+        var sorted = source.slice().sort(function(a, b) {
+            return new Date(b.createdAt || b.admissionDate || 0) - new Date(a.createdAt || a.admissionDate || 0);
+        });
+        var total = sorted.length;
+        var pages = Math.max(1, Math.ceil(total / ipdPatPerPageVal));
+        ipdPatCurrentPage = Math.min(ipdPatCurrentPage, pages);
+        var start = (ipdPatCurrentPage - 1) * ipdPatPerPageVal;
+        var slice = sorted.slice(start, start + ipdPatPerPageVal);
+
+        $('#ipdPatTableBody').html(_ipdPatBuildRows(slice));
+
+        var end = Math.min(start + ipdPatPerPageVal, total);
+        $('#ipdPatTableInfo').text(total === 0 ? 'No results' : 'Showing ' + (start + 1) + '–' + end + ' of ' + total + ' admissions');
+
+        var nums = '';
+        for (var p = 1; p <= pages; p++) {
+            nums += '<button class="opd-page-num' + (p === ipdPatCurrentPage ? ' active' : '') + '" data-p="' + p + '">' + p + '</button>';
+        }
+        $('#ipdPatPageNums').html(nums);
+        $('#ipdPatPrevPage').prop('disabled', ipdPatCurrentPage <= 1);
+        $('#ipdPatNextPage').prop('disabled', ipdPatCurrentPage >= pages);
+
+        lucide.createIcons();
+    }
+
+    function renderIpdPatientTab() {
+        var search = ($('#ipdPatSearch').val() || '').toLowerCase();
+        var base = ipdPatFiltered !== null ? ipdPatFiltered : admissions;
+        var filtered = base.filter(function(a) {
+            return !search || a.patientName.toLowerCase().indexOf(search) > -1 || a.admissionId.toLowerCase().indexOf(search) > -1 || a.mrn.toLowerCase().indexOf(search) > -1;
+        });
+
+        var activeCount = admissions.filter(function(a) { return a.status === 'Active'; }).length;
+        var today = new Date().toDateString();
+        var todayAdm = admissions.filter(function(a) { return new Date(a.admissionDate).toDateString() === today; }).length;
+
+        $('#ipdPatStatActive').text(activeCount);
+        $('#ipdPatStatTotal').text(admissions.length);
+        $('#ipdPatStatBeds').text(availableBeds.length);
+        $('#ipdPatStatToday').text(todayAdm);
+
+        var wardSel = document.getElementById('ipdPatWardFilter');
+        if (wardSel && wardSel.options.length <= 1) {
+            var wardNames = [];
+            admissions.forEach(function(a) { if (a.ward && wardNames.indexOf(a.ward) === -1) wardNames.push(a.ward); });
+            wardNames.sort().forEach(function(w) {
+                var o = document.createElement('option'); o.value = w; o.textContent = w; wardSel.appendChild(o);
+            });
+        }
+
+        _ipdPatRenderPagination(filtered);
+    }
+
+    /* IPD Patient tab — event bindings */
+    $(document).on('click', '#ipdPatPageNums .opd-page-num', function() {
+        ipdPatCurrentPage = parseInt($(this).data('p'));
+        renderIpdPatientTab();
+    });
+    $('#ipdPatPrevPage').on('click', function() { if (ipdPatCurrentPage > 1) { ipdPatCurrentPage--; renderIpdPatientTab(); } });
+    $('#ipdPatNextPage').on('click', function() { ipdPatCurrentPage++; renderIpdPatientTab(); });
+    $('#ipdPatSearch').on('input', function() { ipdPatCurrentPage = 1; renderIpdPatientTab(); });
+
+    $(document).on('click', '#ipdPatTableBody .clickable-row', function() {
+        var admissionId = $(this).data('admission-id');
+        if (admissionId) window.ipdViewAdmission(admissionId);
+    });
+
+    window.toggleIpdPatFilter = function() {
+        var pane = document.getElementById('ipdPatFilterPane');
+        if (pane) pane.style.display = pane.style.display === 'none' ? 'block' : 'none';
+        lucide.createIcons();
+    };
+
+    window.toggleIpdPatRowsMenu = function(e) {
+        e.stopPropagation();
+        var menu = document.getElementById('ipdPatRowsMenu');
+        if (menu) menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    };
+
+    window.setIpdPatRowsPer = function(n) {
+        ipdPatPerPageVal = n;
+        ipdPatCurrentPage = 1;
+        var menu = document.getElementById('ipdPatRowsMenu');
+        if (menu) menu.style.display = 'none';
+        renderIpdPatientTab();
+    };
+
+    window.toggleIpdPatColVis = function(e) {
+        e.stopPropagation();
+        var menu = document.getElementById('ipdPatColVisMenu');
+        if (menu) menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    };
+
+    window.ipdPatColVisSelectAll = function() {
+        $('#ipdPatColVisList input[type=checkbox]').prop('checked', true);
+    };
+
+    window.applyIpdPatColVis = function() {
+        $('#ipdPatColVisList input[type=checkbox]').each(function() {
+            var col = parseInt($(this).data('col'));
+            var vis = $(this).is(':checked');
+            $('#ipdPatTable thead tr th:eq(' + col + ')').toggle(vis);
+            $('#ipdPatTableBody tr').each(function() { $(this).find('td:eq(' + col + ')').toggle(vis); });
+        });
+        var menu = document.getElementById('ipdPatColVisMenu');
+        if (menu) menu.style.display = 'none';
+    };
+
+    window.toggleIpdPatExportMenu = function(e) {
+        e.stopPropagation();
+        var menu = document.getElementById('ipdPatExportMenu');
+        if (menu) menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    };
+
+    window.exportIpdPat = function(type) {
+        var menu = document.getElementById('ipdPatExportMenu');
+        if (menu) menu.style.display = 'none';
+        var base = ipdPatFiltered !== null ? ipdPatFiltered : admissions;
+        var search = ($('#ipdPatSearch').val() || '').toLowerCase();
+        var data = base.filter(function(a) {
+            return !search || a.patientName.toLowerCase().indexOf(search) > -1 || a.admissionId.toLowerCase().indexOf(search) > -1 || a.mrn.toLowerCase().indexOf(search) > -1;
+        });
+        var rows = data.map(function(a) {
+            var wardBed = (a.ward || '-') + (a.bed ? ', ' + a.bed : '');
+            var patient = patients.find(function(p) { return p.mrn === a.mrn; });
+            return [a.mrn, a.patientName, a.admissionId, a.department || '-', a.doctorName || '-', a.admissionSource || '-', (patient && patient.gender) || a.gender || '-', wardBed, a.initialDiagnosis || '-', a.status, a.paymentStatus || 'N/A', a.admissionDate];
+        });
+        var headers = ['MRN','Patient Name','Visit ID','Department','Doctor','Adm. Source','Gender','Ward/Bed','Initial Diagnosis','Status','Payment','Date/Time'];
+        if (type === 'csv') {
+            var csv = [headers.join(',')].concat(rows.map(function(r) { return r.map(function(v) { return '"' + String(v).replace(/"/g,'""') + '"'; }).join(','); })).join('\n');
+            var a2 = document.createElement('a'); a2.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv); a2.download = 'ipd-patients.csv'; a2.click();
+        } else if (type === 'print') {
+            var win = window.open('','_blank');
+            var trs = rows.map(function(r) { return '<tr>' + r.map(function(v) { return '<td>' + esc(String(v)) + '</td>'; }).join('') + '</tr>'; }).join('');
+            win.document.write('<html><head><title>IPD Patients</title></head><body><table border="1"><thead><tr>' + headers.map(function(h){return '<th>'+h+'</th>';}).join('') + '</tr></thead><tbody>' + trs + '</tbody></table></body></html>');
+            win.document.close(); win.print();
+        }
+    };
+
+    window.resetIpdPatFilters = function() {
+        document.getElementById('ipdPatStatusFilter').value = 'all';
+        document.getElementById('ipdPatWardFilter').value = 'all';
+        ipdPatFiltered = null;
+        ipdPatCurrentPage = 1;
+        $('#ipdPatFilterBadge').hide();
+        renderIpdPatientTab();
+    };
+
+    window.applyIpdPatFilters = function() {
+        var status = document.getElementById('ipdPatStatusFilter').value;
+        var ward = document.getElementById('ipdPatWardFilter').value;
+        var filtered = admissions.filter(function(a) {
+            var statusOk = status === 'all' || (a.status || '').toLowerCase() === status;
+            var wardOk = ward === 'all' || (a.ward || '') === ward;
+            return statusOk && wardOk;
+        });
+        ipdPatFiltered = filtered;
+        ipdPatCurrentPage = 1;
+        var count = (status !== 'all' ? 1 : 0) + (ward !== 'all' ? 1 : 0);
+        if (count > 0) { $('#ipdPatFilterBadge').text(count).show(); } else { $('#ipdPatFilterBadge').hide(); }
+        document.getElementById('ipdPatFilterPane').style.display = 'none';
+        renderIpdPatientTab();
+    };
+
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#ipdPatRowsMenu, [onclick*="toggleIpdPatRowsMenu"]').length) {
+            var m = document.getElementById('ipdPatRowsMenu'); if (m) m.style.display = 'none';
+        }
+        if (!$(e.target).closest('#ipdPatColVisMenu, [onclick*="toggleIpdPatColVis"]').length) {
+            var m2 = document.getElementById('ipdPatColVisMenu'); if (m2) m2.style.display = 'none';
+        }
+        if (!$(e.target).closest('#ipdPatExportMenu, [onclick*="toggleIpdPatExportMenu"]').length) {
+            var m3 = document.getElementById('ipdPatExportMenu'); if (m3) m3.style.display = 'none';
+        }
+    });
+
+    // ===== IPD PATIENT PROFILE OVERLAY =====
+    window.openIpdPatProfile = function(admissionId) {
+        var adm = admissions.find(function(a) { return a.admissionId === admissionId; });
+        if (!adm) return;
+        _ipdProfileCurrentAdmId = admissionId;
+
+        var patient = patients.find(function(p) { return p.mrn === adm.mrn; });
+        var name    = adm.patientName || (patient && patient.name) || '—';
+        var phone   = (patient && patient.phone) || '—';
+        var age     = patient ? (patient.age || '—') : '—';
+        var gender  = patient ? (patient.gender || adm.gender || '—') : (adm.gender || '—');
+        var ageGend = (age !== '—' || gender !== '—') ? (age + ' / ' + gender) : '—';
+        var shortId = adm.admissionId.replace(adm.mrn + '-', '');
+        var wardBed = (adm.ward || '—') + (adm.bed ? ', ' + adm.bed : '');
+        var admDate = adm.admissionDate ? new Date(adm.admissionDate) : null;
+        var admDateStr = admDate
+            ? admDate.toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}) + ', ' +
+              admDate.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})
+            : '—';
+
+        /* avatar initials */
+        var initials = name.split(' ').map(function(n) { return n[0] || ''; }).join('').substring(0, 2).toUpperCase() || '?';
+
+        /* status pill classes */
+        var statusPillClass = adm.status === 'Active' ? 'pill-active' : adm.status === 'Discharged' ? 'pill-discharged' : 'pill-default';
+        var statusDotColor  = adm.status === 'Active' ? '#16A34A' : adm.status === 'Discharged' ? '#64748B' : '#6B7280';
+        var payPillClass    = adm.paymentStatus === 'Paid' ? 'pill-paid' : adm.paymentStatus === 'Pending' ? 'pill-pending' : 'pill-default';
+        var payDotColor     = adm.paymentStatus === 'Paid' ? '#16A34A' : adm.paymentStatus === 'Pending' ? '#D97706' : '#6B7280';
+
+        /* populate header */
+        document.getElementById('ipdProfileBreadName').textContent = name;
+        document.getElementById('ipdProfileMrnTop').textContent    = adm.mrn;
+        document.getElementById('ipdProfileAvatar').textContent    = initials;
+        document.getElementById('ipdProfileName').textContent      = name;
+        document.getElementById('ipdProfileMrn').textContent       = adm.mrn;
+        document.getElementById('ipdProfilePhone').textContent     = phone;
+        document.getElementById('ipdProfileAgeGender').textContent = ageGend;
+        document.getElementById('ipdProfileAdmId').textContent     = shortId;
+
+        var statusEl = document.getElementById('ipdProfileStatus');
+        var statusPill = document.getElementById('ipdProfileStatusPill');
+        var statusDot = document.getElementById('ipdProfileStatusDot');
+        statusEl.textContent = adm.status || '—';
+        statusPill.className = 'ipd-profile-pill ' + statusPillClass;
+        statusDot.style.background = statusDotColor;
+
+        var payEl = document.getElementById('ipdProfilePay');
+        var payPill = document.getElementById('ipdProfilePayPill');
+        var payDot = document.getElementById('ipdProfilePayDot');
+        payEl.textContent = adm.paymentStatus || '—';
+        payPill.className = 'ipd-profile-pill ' + payPillClass;
+        payDot.style.background = payDotColor;
+
+        /* info card */
+        document.getElementById('ipdProfileWardBed').textContent = wardBed;
+        document.getElementById('ipdProfileDept').textContent    = adm.department || '—';
+        document.getElementById('ipdProfileDoctor').textContent  = adm.doctorName || '—';
+        document.getElementById('ipdProfileSource').textContent  = adm.admissionSource || '—';
+        document.getElementById('ipdProfileDate').textContent    = admDateStr;
+
+        /* sidebar quick actions (placeholder — content specified by user later) */
+        document.getElementById('ipdProfileSidebar').innerHTML =
+            '<div class="ipd-profile-action-btn">' +
+                '<div class="ipd-profile-action-icon" style="background:#EFF6FF"><i data-lucide="user" style="color:#1D4ED8;width:16px;height:16px"></i></div>' +
+                '<div><div class="ipd-profile-action-label">Patient Info</div><div class="ipd-profile-action-sub">View personal details</div></div>' +
+            '</div>' +
+            '<hr class="ipd-profile-sidebar-divider">' +
+            '<div class="ipd-profile-action-btn" onclick="ipdProfileGoToOrders()" style="cursor:pointer">' +
+                '<div class="ipd-profile-action-icon" style="background:#F0FDF4"><i data-lucide="clipboard-list" style="color:#16A34A;width:16px;height:16px"></i></div>' +
+                '<div><div class="ipd-profile-action-label">Clinical Orders</div><div class="ipd-profile-action-sub">Active orders & notes</div></div>' +
+            '</div>' +
+            '<hr class="ipd-profile-sidebar-divider">' +
+            '<div class="ipd-profile-action-btn">' +
+                '<div class="ipd-profile-action-icon" style="background:#FEF9C3"><i data-lucide="receipt" style="color:#CA8A04;width:16px;height:16px"></i></div>' +
+                '<div><div class="ipd-profile-action-label">Billing</div><div class="ipd-profile-action-sub">Charges & payments</div></div>' +
+            '</div>' +
+            '<hr class="ipd-profile-sidebar-divider">' +
+            '<div class="ipd-profile-action-btn" onclick="ipdProfileGoToInvestigations()" style="cursor:pointer">' +
+                '<div class="ipd-profile-action-icon" style="background:#FEF3C7"><i data-lucide="flask-conical" style="color:#D97706;width:16px;height:16px"></i></div>' +
+                '<div><div class="ipd-profile-action-label">Investigations</div><div class="ipd-profile-action-sub">Lab & radiology</div></div>' +
+            '</div>' +
+            '<hr class="ipd-profile-sidebar-divider">' +
+            '<div class="ipd-profile-action-btn" onclick="ipdProfileGoToNursing()" style="cursor:pointer">' +
+                '<div class="ipd-profile-action-icon" style="background:#F0F9FF"><i data-lucide="stethoscope" style="color:#0284C7;width:16px;height:16px"></i></div>' +
+                '<div><div class="ipd-profile-action-label">Nursing Station</div><div class="ipd-profile-action-sub">Vitals & nursing notes</div></div>' +
+            '</div>' +
+            '<hr class="ipd-profile-sidebar-divider">' +
+            '<div class="ipd-profile-action-btn" onclick="ipdProfileGoToDischarge()" style="cursor:pointer">' +
+                '<div class="ipd-profile-action-icon" style="background:#FFF1F2"><i data-lucide="log-out" style="color:#E11D48;width:16px;height:16px"></i></div>' +
+                '<div><div class="ipd-profile-action-label">Discharge</div><div class="ipd-profile-action-sub">Discharge summary</div></div>' +
+            '</div>' +
+            '<hr class="ipd-profile-sidebar-divider">' +
+            '<div class="ipd-profile-action-btn" onclick="ipdProfileGoToMAR()" style="cursor:pointer">' +
+                '<div class="ipd-profile-action-icon" style="background:#F5F3FF"><i data-lucide="pill" style="color:#7C3AED;width:16px;height:16px"></i></div>' +
+                '<div><div class="ipd-profile-action-label">Medication MAR</div><div class="ipd-profile-action-sub">Administration record</div></div>' +
+            '</div>' +
+            '<hr class="ipd-profile-sidebar-divider">' +
+            '<div class="ipd-profile-action-btn" onclick="ipdProfileGoToOT()" style="cursor:pointer">' +
+                '<div class="ipd-profile-action-icon" style="background:#FFF7ED"><i data-lucide="syringe" style="color:#EA580C;width:16px;height:16px"></i></div>' +
+                '<div><div class="ipd-profile-action-label">OT Registration</div><div class="ipd-profile-action-sub">Book surgery for patient</div></div>' +
+            '</div>' +
+            '<div id="ipdOtProfileBtnSlot"></div>' +
+            '<hr class="ipd-profile-sidebar-divider">' +
+            '<div class="ipd-profile-action-btn" onclick="ipdProfileGoToCharting()" style="cursor:pointer">' +
+                '<div class="ipd-profile-action-icon" style="background:#F0F4FF"><i data-lucide="file-text" style="color:#4F46E5;width:16px;height:16px"></i></div>' +
+                '<div><div class="ipd-profile-action-label">Charting & Docs</div><div class="ipd-profile-action-sub">Clinical documentation</div></div>' +
+            '</div>';
+
+        /* check if patient already has OT operations */
+        (function(mrn) {
+            $.get('/api/ot/operations').done(function(ops) {
+                var patientOps = (ops || []).filter(function(o) { return o.mrn === mrn; });
+                if (patientOps.length > 0) {
+                    showOtProfileSidebarBtn();
+                }
+            });
+        })(adm.mrn);
+
+        /* reset to overview tab */
+        switchIpdProfileTab(document.querySelector('.ipd-profile-nav-tab[data-pane="overview"]'), 'overview');
+
+        /* show overlay */
+        var overlay = document.getElementById('ipdPatProfileOverlay');
+        overlay.classList.add('open');
+        overlay.scrollTop = 0;
+        lucide.createIcons();
+    };
+
+    window.closeIpdPatProfile = function() {
+        document.getElementById('ipdPatProfileOverlay').classList.remove('open');
+        _ipdOrdersInProfileMode = false;
+        _ipdInvInProfileMode    = false;
+        _ipdNurInProfileMode    = false;
+        _ipdDischInProfileMode  = false;
+        _ipdMARInProfileMode    = false;
+        _ipdProfileMarTasks     = [];
+    };
+
+    window.ipdProfileGoToOrders = function() {
+        if (!_ipdProfileCurrentAdmId) return;
+        var admId = _ipdProfileCurrentAdmId;
+
+        /* Switch to the "Orders" tab inside the profile */
+        switchIpdProfileTab(
+            document.querySelector('.ipd-profile-nav-tab[data-pane="orders"]'),
+            'orders'
+        );
+
+        /* Show a loading state while data fetches */
+        $('#ipdProfilePane-orders').html(
+            '<div class="ipd-profile-placeholder">' +
+                '<i data-lucide="loader" style="width:32px;height:32px;opacity:.35"></i>' +
+                '<p>Loading clinical orders…</p>' +
+            '</div>'
+        );
+        lucide.createIcons();
+
+        /* Load and render orders directly into the profile pane */
+        _ipdOrdersInProfileMode = true;
+        openOrdersDetail(admId);
+    };
+
+    window.ipdProfileGoToInvestigations = function() {
+        if (!_ipdProfileCurrentAdmId) return;
+        var adm = admissions.find(function(a) { return a.admissionId === _ipdProfileCurrentAdmId; });
+        if (!adm) return;
+
+        /* Switch to the Investigations tab inside the profile */
+        switchIpdProfileTab(
+            document.querySelector('.ipd-profile-nav-tab[data-pane="investigations"]'),
+            'investigations'
+        );
+
+        /* Loading state */
+        $('#ipdProfilePane-investigations').html(
+            '<div class="ipd-profile-placeholder">' +
+                '<i data-lucide="loader" style="width:32px;height:32px;opacity:.35"></i>' +
+                '<p>Loading investigations…</p>' +
+            '</div>'
+        );
+        lucide.createIcons();
+
+        _ipdInvInProfileMode = true;
+        var groupKey = adm.mrn + '|' + adm.admissionId;
+
+        /* Fetch fresh investigation data for this admission, then render */
+        $.get('/api/ipd/clinical-orders/investigations')
+            .done(function(r) {
+                if (r && r.grouped) {
+                    groupedInvestigations = r.grouped;
+                    masterInvestigations  = r.all || masterInvestigations;
+                }
+                showInvGroupDetail(groupKey);
+            })
+            .fail(function() {
+                /* Fall back to already-loaded data */
+                showInvGroupDetail(groupKey);
+            });
+    };
+
+    window.ipdProfileGoToNursing = function() {
+        if (!_ipdProfileCurrentAdmId) return;
+
+        switchIpdProfileTab(
+            document.querySelector('.ipd-profile-nav-tab[data-pane="nursing"]'),
+            'nursing'
+        );
+
+        $('#ipdProfilePane-nursing').html(
+            '<div class="ipd-profile-placeholder">' +
+                '<i data-lucide="loader" style="width:32px;height:32px;opacity:.35"></i>' +
+                '<p>Loading nursing orders…</p>' +
+            '</div>'
+        );
+        lucide.createIcons();
+
+        _ipdNurInProfileMode = true;
+        openNursingOrderDetail(_ipdProfileCurrentAdmId);
+    };
+
+    window.ipdProfileGoToDischarge = function() {
+        if (!_ipdProfileCurrentAdmId) return;
+
+        switchIpdProfileTab(
+            document.querySelector('.ipd-profile-nav-tab[data-pane="discharge"]'),
+            'discharge'
+        );
+
+        $('#ipdProfilePane-discharge').html(
+            '<div class="ipd-profile-placeholder">' +
+                '<i data-lucide="loader" style="width:32px;height:32px;opacity:.35"></i>' +
+                '<p>Loading discharge info…</p>' +
+            '</div>'
+        );
+        lucide.createIcons();
+
+        _ipdDischInProfileMode = true;
+        showDischStep(2, _ipdProfileCurrentAdmId);
+    };
+
+    window.switchIpdProfileTab = function(btn, pane) {
+        document.querySelectorAll('.ipd-profile-nav-tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.ipd-profile-tab-pane').forEach(function(p) { p.classList.remove('active'); });
+        if (btn) btn.classList.add('active');
+        var paneEl = document.getElementById('ipdProfilePane-' + pane);
+        if (paneEl) paneEl.classList.add('active');
+    };
+
+    /* Close profile on Escape key */
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape') {
+            var overlay = document.getElementById('ipdPatProfileOverlay');
+            if (overlay && overlay.classList.contains('open')) closeIpdPatProfile();
+        }
+    });
 
     $(document).on('click', '#regTableBody .clickable-row', function() {
         var admissionId = $(this).data('admission-id');
@@ -2985,7 +3469,9 @@ $(document).ready(function() {
 
         $.when(ordersReq, admReq).always(function() {
             renderOrdersSheet();
-            new bootstrap.Offcanvas(document.getElementById('ordersDetailSheet')).show();
+            if (!_ipdOrdersInProfileMode) {
+                new bootstrap.Offcanvas(document.getElementById('ordersDetailSheet')).show();
+            }
         });
     }
 
@@ -3090,11 +3576,14 @@ $(document).ready(function() {
         body += '</div></div>';
 
         body += '<div style="display:flex;justify-content:flex-end;gap:12px;padding-top:16px;border-top:1px solid var(--color-border);margin-top:24px">' +
-            '<button class="btn-outline" data-bs-dismiss="offcanvas">Close</button>' +
             '<button class="btn-primary" id="btnSaveIpdOrders"><i data-lucide="send" style="width:16px;height:16px"></i> Save Orders</button>' +
+            (!_ipdOrdersInProfileMode ? '<button class="btn-outline" data-bs-dismiss="offcanvas">Close</button>' : '') +
         '</div></div>';
 
-        $('#ordersDetailBody').html(body);
+        var $target = _ipdOrdersInProfileMode
+            ? $('#ipdProfilePane-orders')
+            : $('#ordersDetailBody');
+        $target.html(body);
         lucide.createIcons();
         bindOrdersEvents();
     }
@@ -4497,10 +4986,11 @@ $(document).ready(function() {
         lucide.createIcons();
     }
 
-    function renderMARContent(allOrders) {
-        var selected = marPatients[selectedMarPatient];
+    function renderMARContent(allOrders, _selected, _$target) {
+        var selected = _selected !== undefined ? _selected : marPatients[selectedMarPatient];
+        var $marTarget = _$target !== undefined ? _$target : $('#marMainContent');
         if (!selected) {
-            $('#marMainContent').html('<div class="empty-state"><i data-lucide="pill"></i><p>Select a patient</p><p class="empty-sub">Choose a patient from the list to view their medication schedule</p></div>');
+            $marTarget.html('<div class="empty-state"><i data-lucide="pill"></i><p>Select a patient</p><p class="empty-sub">Choose a patient from the list to view their medication schedule</p></div>');
             lucide.createIcons();
             return;
         }
@@ -4637,10 +5127,10 @@ $(document).ready(function() {
         }
 
         mainHtml += '</div>';
-        $('#marMainContent').html(mainHtml);
+        $marTarget.html(mainHtml);
         lucide.createIcons();
         setTimeout(function() {
-            var strip = document.getElementById('marDateStrip');
+            var strip = $marTarget.find('#marDateStrip')[0];
             if (strip) {
                 var activeBtn = strip.querySelector('.mar-date-jump[data-date="' + marSelectedDate + '"]');
                 if (activeBtn) {
@@ -4648,6 +5138,1064 @@ $(document).ready(function() {
                 }
             }
         }, 50);
+    }
+
+    function renderMARInProfile(admissionId) {
+        var $target = $('#ipdProfilePane-mar');
+        $.get('/api/ipd/clinical-orders').done(function(allOrders) {
+            allOrders = allOrders || [];
+            var adm = admissions.find(function(a) { return a.admissionId === admissionId; });
+            if (!adm) {
+                $target.html('<div class="ipd-profile-placeholder"><i data-lucide="pill" style="width:40px;height:40px;opacity:.3"></i><p>Patient not found</p></div>');
+                lucide.createIcons();
+                return;
+            }
+            var tasks = buildMarTasks(allOrders, admissionId);
+            _ipdProfileMarTasks = tasks;
+            if (tasks.length === 0) {
+                $target.html('<div class="ipd-profile-placeholder"><i data-lucide="pill" style="width:40px;height:40px;opacity:.3"></i><p>No active medication orders</p><p style="font-size:12px;margin-top:4px;color:var(--color-muted-foreground)">Add medication orders in Clinical Orders first</p></div>');
+                lucide.createIcons();
+                return;
+            }
+            var profilePatient = {
+                name: adm.patientName,
+                mrn: adm.mrn,
+                bed: adm.bedNumber || adm.wardName || '-',
+                allTasks: tasks
+            };
+            renderMARContent(null, profilePatient, $target);
+        }).fail(function() {
+            $target.html('<div class="ipd-profile-placeholder"><i data-lucide="pill" style="width:40px;height:40px;opacity:.3"></i><p>Failed to load medication schedule</p></div>');
+            lucide.createIcons();
+        });
+    }
+
+    window.ipdProfileGoToMAR = function() {
+        if (!_ipdProfileCurrentAdmId) return;
+        var admId = _ipdProfileCurrentAdmId;
+        var tabBtn = document.querySelector('#ipdProfileNav [data-pane="mar"]');
+        if (tabBtn) switchIpdProfileTab(tabBtn, 'mar');
+        _ipdMARInProfileMode = true;
+        $('#ipdProfilePane-mar').html('<div style="padding:32px;text-align:center;color:var(--color-muted-foreground)"><i data-lucide="loader-2" style="width:24px;height:24px"></i><p style="margin-top:8px;font-size:13px">Loading medication schedule...</p></div>');
+        lucide.createIcons();
+        renderMARInProfile(admId);
+    };
+
+    function showOtProfileSidebarBtn() {
+        var slot = document.getElementById('ipdOtProfileBtnSlot');
+        if (!slot || slot.innerHTML.trim() !== '') return;
+        slot.innerHTML =
+            '<hr class="ipd-profile-sidebar-divider">' +
+            '<div class="ipd-profile-action-btn" onclick="ipdProfileGoToOTProfile()" style="cursor:pointer">' +
+                '<div class="ipd-profile-action-icon" style="background:#F0FDF4"><i data-lucide="clipboard-check" style="color:#16A34A;width:16px;height:16px"></i></div>' +
+                '<div><div class="ipd-profile-action-label">OT Profile</div><div class="ipd-profile-action-sub">View surgery records</div></div>' +
+            '</div>';
+        lucide.createIcons();
+    }
+
+    window.ipdProfileGoToOTProfile = function() {
+        if (!_ipdProfileCurrentAdmId) return;
+        var adm = admissions.find(function(a) { return a.admissionId === _ipdProfileCurrentAdmId; });
+        if (!adm || !adm.mrn) return;
+
+        var tabBtn = document.querySelector('#ipdProfileNav [data-pane="ot"]');
+        if (tabBtn) switchIpdProfileTab(tabBtn, 'ot');
+
+        $('#ipdProfilePane-ot').html(
+            '<div style="padding:32px;text-align:center;color:var(--color-muted-foreground)">' +
+            '<i data-lucide="loader-2" style="width:24px;height:24px"></i>' +
+            '<p style="margin-top:8px;font-size:13px">Loading OT records...</p></div>'
+        );
+        lucide.createIcons();
+
+        $.get('/api/ot/operations').done(function(ops) {
+            var patientOps = (ops || []).filter(function(o) { return o.mrn === adm.mrn; });
+            if (patientOps.length === 0) {
+                $('#ipdProfilePane-ot').html(
+                    '<div class="ipd-profile-placeholder"><i data-lucide="clipboard-x" style="width:40px;height:40px;opacity:.3"></i><p>No OT records found</p></div>'
+                );
+                lucide.createIcons();
+                return;
+            }
+
+            var statusColors = { 'Scheduled': '#D97706', 'In Progress': '#2563EB', 'Completed': '#16A34A', 'Discharged': '#64748B' };
+            var html = '<div style="padding:24px">';
+            patientOps.forEach(function(op) {
+                var color = statusColors[op.status] || '#64748B';
+                html +=
+                    '<div style="border:1px solid var(--color-border);border-radius:10px;padding:16px;margin-bottom:12px;background:var(--color-card)">' +
+                        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
+                            '<span style="font-size:11px;font-family:monospace;color:var(--color-muted-foreground)">' + op.operationId + '</span>' +
+                            '<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:' + color + '22;color:' + color + '">' + op.status + '</span>' +
+                        '</div>' +
+                        '<p style="font-size:14px;font-weight:700;color:var(--midnight-blue);margin:0 0 4px">' + op.procedure + '</p>' +
+                        '<p style="font-size:12px;color:var(--color-muted-foreground);margin:0">' +
+                            '<i data-lucide="user-check" style="width:12px;height:12px;vertical-align:middle"></i> ' + (op.surgeon || '—') +
+                            ' &nbsp;·&nbsp; ' +
+                            '<i data-lucide="building-2" style="width:12px;height:12px;vertical-align:middle"></i> ' + (op.theater || '—') +
+                            (op.surgeryDate ? ' &nbsp;·&nbsp; ' + op.surgeryDate : '') +
+                        '</p>' +
+                    '</div>';
+            });
+            html += '</div>';
+            $('#ipdProfilePane-ot').html(html);
+            lucide.createIcons();
+        });
+    };
+
+    window.ipdProfileGoToCharting = function() {
+        if (!_ipdProfileCurrentAdmId) return;
+        var tabBtn = document.querySelector('#ipdProfileNav [data-pane="charting"]');
+        if (tabBtn) switchIpdProfileTab(tabBtn, 'charting');
+
+        var $pane = $('#ipdProfilePane-charting');
+
+        if (_ipdChartingGroups !== null) {
+            renderIpdChartingForms(_ipdChartingGroups);
+            return;
+        }
+
+        $pane.html(
+            '<div style="padding:32px;text-align:center;color:var(--color-muted-foreground)">' +
+            '<i data-lucide="loader-2" style="width:24px;height:24px"></i>' +
+            '<p style="margin-top:8px;font-size:13px">Loading forms...</p></div>'
+        );
+        lucide.createIcons();
+
+        $.get('/api/forms/by-context/ipd').done(function(groups) {
+            _ipdChartingGroups = groups || [];
+            renderIpdChartingForms(_ipdChartingGroups);
+        }).fail(function() {
+            $pane.html(
+                '<div class="ipd-profile-placeholder">' +
+                '<i data-lucide="file-x" style="width:40px;height:40px;opacity:.3"></i>' +
+                '<p>Failed to load forms</p></div>'
+            );
+            lucide.createIcons();
+        });
+    };
+
+    function renderIpdChartingForms(groups) {
+        var $pane = $('#ipdProfilePane-charting');
+        if (!groups || groups.length === 0) {
+            $pane.html(
+                '<div class="ipd-profile-placeholder">' +
+                '<i data-lucide="file-x" style="width:40px;height:40px;opacity:.3"></i>' +
+                '<p>No forms configured for IPD. Add forms via Form Builder.</p></div>'
+            );
+            lucide.createIcons();
+            return;
+        }
+        var html = '<div style="padding:24px">';
+        html += '<div style="margin-bottom:20px">' +
+            '<h4 style="font-size:15px;font-weight:700;color:var(--midnight-blue);margin:0">Charting & Documentation</h4>' +
+            '<p style="font-size:12px;color:var(--color-muted-foreground);margin:4px 0 0">Select a form to document</p>' +
+            '</div>';
+        groups.forEach(function(group) {
+            html += '<div style="margin-bottom:24px">';
+            html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;' +
+                'color:var(--color-muted-foreground);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--color-border);' +
+                'display:flex;align-items:center;justify-content:space-between">' +
+                '<span>' + group.name + '</span>' +
+                '<button onclick="downloadIpdGroupPdf(' + group.id + ')" title="Download all forms in this group as PDF" ' +
+                'style="background:none;border:1px solid var(--color-border);border-radius:5px;padding:3px 9px;font-size:10px;' +
+                'cursor:pointer;color:var(--color-muted-foreground);display:inline-flex;align-items:center;gap:4px;line-height:1.5">' +
+                '<i data-lucide="download" style="width:11px;height:11px"></i> Download All' +
+                '</button></div>';
+            html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">';
+            (group.forms || []).forEach(function(form) {
+                html +=
+                    '<div onclick="openIpdChartingForm(' + form.id + ')" ' +
+                    'style="position:relative;border:1px solid var(--color-border);border-radius:10px;padding:14px;cursor:pointer;' +
+                    'background:var(--color-card);transition:box-shadow .15s" ' +
+                    'onmouseenter="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.1)\'" ' +
+                    'onmouseleave="this.style.boxShadow=\'none\'">' +
+                    '<button onclick="event.stopPropagation();downloadIpdFormPdf(' + form.id + ')" title="Download as PDF" ' +
+                    'style="position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;padding:4px;' +
+                    'color:var(--color-muted-foreground);border-radius:4px;line-height:1;display:flex;align-items:center">' +
+                    '<i data-lucide="file-down" style="width:13px;height:13px"></i></button>' +
+                    '<div style="width:36px;height:36px;border-radius:8px;background:rgba(0,51,102,0.08);' +
+                    'display:flex;align-items:center;justify-content:center;margin-bottom:10px">' +
+                    '<i data-lucide="file-text" style="width:18px;height:18px;color:var(--midnight-blue)"></i></div>' +
+                    '<div style="font-size:13px;font-weight:600;color:var(--color-foreground);line-height:1.3;padding-right:18px">' + form.name + '</div>' +
+                    (form.description
+                        ? '<div style="font-size:11px;color:var(--color-muted-foreground);margin-top:4px;line-height:1.4">' + form.description + '</div>'
+                        : '') +
+                    '</div>';
+            });
+            html += '</div></div>';
+        });
+        html += '</div>';
+        $pane.html(html);
+        lucide.createIcons();
+    }
+
+    window.openIpdChartingForm = function(formId) {
+        var $pane = $('#ipdProfilePane-charting');
+        $pane.html(
+            '<div style="padding:32px;text-align:center;color:var(--color-muted-foreground)">' +
+            '<i data-lucide="loader-2" style="width:24px;height:24px"></i>' +
+            '<p style="margin-top:8px;font-size:13px">Loading form...</p></div>'
+        );
+        lucide.createIcons();
+
+        $.get('/api/forms/' + formId + '/full').done(function(form) {
+            renderIpdFormDetail(form);
+        }).fail(function() {
+            $pane.html(
+                '<div class="ipd-profile-placeholder">' +
+                '<i data-lucide="file-x" style="width:40px;height:40px;opacity:.3"></i>' +
+                '<p>Failed to load form</p></div>'
+            );
+            lucide.createIcons();
+        });
+    };
+
+    function renderIpdFormDetail(form) {
+        var $pane = $('#ipdProfilePane-charting');
+        var adm = admissions.find(function(a) { return a.admissionId === _ipdProfileCurrentAdmId; });
+        var admissionId = adm ? adm.admissionId : '';
+        var mrn = adm ? adm.mrn : '';
+        var fid = form.id;
+
+        var html = '<div style="padding:24px" id="ipdFormDetailWrap">';
+
+        html +=
+            '<button onclick="ipdProfileGoToCharting()" ' +
+            'style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--color-muted-foreground);' +
+            'padding:0;display:inline-flex;align-items:center;gap:4px;margin-bottom:16px">' +
+            '<i data-lucide="arrow-left" style="width:14px;height:14px"></i> Back to forms</button>';
+
+        html +=
+            '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px">' +
+            '<div>' +
+            '<h4 style="font-size:15px;font-weight:700;color:var(--midnight-blue);margin:0">' + form.name + '</h4>' +
+            (form.description ? '<p style="font-size:12px;color:var(--color-muted-foreground);margin:4px 0 0">' + form.description + '</p>' : '') +
+            '</div>' +
+            '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">' +
+            '<button onclick="downloadIpdFormPdf(' + fid + ')" ' +
+            'style="font-size:11px;padding:5px 12px;border:1px solid var(--color-border);border-radius:6px;background:var(--color-card);' +
+            'cursor:pointer;display:inline-flex;align-items:center;gap:5px;color:var(--color-foreground);white-space:nowrap">' +
+            '<i data-lucide="file-down" style="width:13px;height:13px"></i> Download PDF' +
+            '</button>' +
+            '<div id="ipdFormSubHistory" style="font-size:11px;color:var(--color-muted-foreground);text-align:right;white-space:nowrap"></div>' +
+            '</div>' +
+            '</div>';
+
+        if (form.instructions) {
+            html +=
+                '<div style="background:#F0F9FF;border:1px solid #BAE6FD;border-radius:8px;padding:10px 14px;margin-bottom:16px">' +
+                '<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#0369A1;margin-bottom:3px">Instructions</div>' +
+                '<div style="font-size:12px;color:#075985">' + form.instructions + '</div>' +
+                '</div>';
+        }
+
+        if (!form.sections || form.sections.length === 0) {
+            html +=
+                '<div class="ipd-profile-placeholder">' +
+                '<i data-lucide="layout-panel-left" style="width:40px;height:40px;opacity:.3"></i>' +
+                '<p>No sections configured for this form</p></div>';
+        } else {
+            form.sections.forEach(function(section, si) {
+                var sId  = 'ipd-form-section-' + si;
+                var sbId = 'ipd-fs-body-' + section.id;
+                var collapsible  = !!section.isCollapsible;
+                var headerStyle  =
+                    'background:var(--color-muted);padding:10px 16px;font-size:13px;font-weight:700;' +
+                    'color:var(--midnight-blue);border-bottom:1px solid var(--color-border);' +
+                    'display:flex;align-items:center;justify-content:space-between';
+                if (collapsible) headerStyle += ';cursor:pointer;user-select:none';
+
+                html += '<div style="border:1px solid var(--color-border);border-radius:10px;margin-bottom:14px;overflow:hidden">';
+                html += '<div style="' + headerStyle + '"' +
+                    (collapsible ? ' onclick="toggleIpdFormSection(\'' + sId + '\', this)"' : '') + '>' +
+                    '<span>' + section.title + '</span>';
+                if (collapsible) {
+                    html += '<i data-lucide="chevron-down" style="width:16px;height:16px;transition:transform .2s" id="' + sId + '-icon"></i>';
+                }
+                html += '</div>';
+
+                html += '<div id="' + sId + '" style="' + (collapsible ? 'display:none' : '') + '">';
+                html += '<div id="' + sbId + '" data-section-id="' + section.id + '" style="padding:16px">';
+                if (section.description) {
+                    html += '<p style="font-size:12px;color:var(--color-muted-foreground);margin:0 0 12px;font-style:italic">' + section.description + '</p>';
+                }
+                if (!section.components || section.components.length === 0) {
+                    html += '<p style="font-size:12px;color:var(--color-muted-foreground);margin:0">No fields configured</p>';
+                } else {
+                    section.components.forEach(function(comp) {
+                        html += renderIpdFormComponent(comp);
+                    });
+                }
+                html += '</div>';
+
+                html +=
+                    '<div style="padding:10px 16px;border-top:1px solid var(--color-border);display:flex;justify-content:flex-end;background:var(--color-card)">' +
+                    '<button class="btn-outline btn-sm" id="btn-sec-save-' + section.id + '" ' +
+                    'onclick="saveIpdSection(' + fid + ',' + section.id + ',\'' + admissionId + '\',\'' + mrn + '\')" ' +
+                    'style="font-size:12px;display:flex;align-items:center;gap:5px">' +
+                    '<i data-lucide="save" style="width:13px;height:13px"></i> Save Section' +
+                    '</button>' +
+                    '</div>';
+
+                html += '</div></div>';
+            });
+
+            html +=
+                '<div style="display:flex;justify-content:flex-end;margin-top:4px;padding-top:16px;border-top:1px solid var(--color-border)">' +
+                '<button class="btn-primary" id="btnIpdSaveFullForm" ' +
+                'onclick="saveIpdFullForm(' + fid + ',\'' + admissionId + '\',\'' + mrn + '\')" ' +
+                'style="font-size:13px;display:flex;align-items:center;gap:6px">' +
+                '<i data-lucide="check-circle" style="width:15px;height:15px"></i> Save Form' +
+                '</button>' +
+                '</div>';
+        }
+
+        html += '</div>';
+        $pane.html(html);
+        lucide.createIcons();
+        applyIpdFormConditions($pane);
+
+        if (admissionId) {
+            loadIpdFormSubmissionHistory(fid, admissionId);
+        }
+    }
+
+    function renderIpdFormComponent(comp) {
+        var key = comp.key || '';
+        var conditions = comp.conditions || [];
+        var condAttr = conditions.length
+            ? ' data-conditions=\'' + JSON.stringify(conditions).replace(/'/g, '&#39;') + '\''
+            : '';
+        var fieldKeyAttr = ' data-field-key="' + key + '"';
+
+        if (comp.type === 'header') {
+            return '<div style="font-size:13px;font-weight:700;color:var(--midnight-blue);' +
+                'border-bottom:1px solid var(--color-border);padding-bottom:6px;margin:12px 0 8px"' +
+                fieldKeyAttr + condAttr + '>' + comp.label + '</div>';
+        }
+
+        var required = comp.isRequired
+            ? '<span style="color:#EF4444;margin-left:2px">*</span>'
+            : '';
+        var label = '<label style="display:block;font-size:12px;font-weight:600;color:var(--color-foreground);margin-bottom:4px">' +
+            comp.label + required + '</label>';
+        var field = '';
+        var inputStyle = 'width:100%;padding:6px 10px;border:1px solid var(--color-border);' +
+            'border-radius:6px;font-size:12px;background:var(--color-background);box-sizing:border-box';
+
+        switch (comp.type) {
+            case 'text_input':
+                field = '<input type="text" placeholder="Enter ' + comp.label.toLowerCase() + '" style="' + inputStyle + '">';
+                break;
+            case 'textarea':
+                field = '<textarea placeholder="Enter ' + comp.label.toLowerCase() + '" rows="3" style="' + inputStyle + ';resize:vertical"></textarea>';
+                break;
+            case 'date':
+                field = '<input type="date" style="' + inputStyle + '">';
+                break;
+            case 'time':
+                field = '<input type="time" style="' + inputStyle + '">';
+                break;
+            case 'checkbox': {
+                var ckopts = (comp.config && comp.config.options) ? comp.config.options : [];
+                if (ckopts.length === 0) {
+                    field = '<label style="display:flex;align-items:center;gap:6px;font-size:12px">' +
+                        '<input type="checkbox" value="' + comp.label + '"> ' + comp.label + '</label>';
+                } else {
+                    field = ckopts.map(function(o) {
+                        return '<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:4px">' +
+                            '<input type="checkbox" value="' + o + '"> ' + o + '</label>';
+                    }).join('');
+                }
+                break;
+            }
+            case 'radio': {
+                var rdopts = (comp.config && comp.config.options) ? comp.config.options : [];
+                field = rdopts.map(function(o) {
+                    return '<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:4px">' +
+                        '<input type="radio" name="comp_' + comp.id + '" value="' + o + '"> ' + o + '</label>';
+                }).join('');
+                break;
+            }
+            case 'dropdown': {
+                var ddopts = (comp.config && comp.config.options) ? comp.config.options : [];
+                field = '<select style="' + inputStyle + '">' +
+                    '<option value="">Select...</option>' +
+                    ddopts.map(function(o) { return '<option value="' + o + '">' + o + '</option>'; }).join('') +
+                    '</select>';
+                break;
+            }
+            case 'signature':
+                field = '<div style="border:1px dashed var(--color-border);border-radius:6px;height:60px;' +
+                    'display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--color-muted-foreground)">' +
+                    '<i data-lucide="pen-line" style="width:14px;height:14px;margin-right:4px"></i> Signature area</div>';
+                break;
+            case 'dynamic_table': {
+                var rawDynCols = (comp.config && comp.config.columns) ? comp.config.columns : [];
+                var dynCols = rawDynCols.map(function(c) {
+                    return typeof c === 'string' ? { name: c, type: 'text' } : c;
+                });
+                if (dynCols.length > 0) {
+                    var dynColsAttr = JSON.stringify(dynCols).replace(/"/g, '&quot;');
+                    var makeDynCell = function(colType) {
+                        if (colType === 'date') return '<input type="date" style="width:100%;border:none;font-size:12px;background:transparent;outline:none">';
+                        if (colType === 'textarea') return '<textarea rows="2" style="width:100%;border:none;font-size:12px;background:transparent;outline:none;resize:vertical"></textarea>';
+                        if (colType === 'number') return '<input type="number" style="width:100%;border:none;font-size:12px;background:transparent;outline:none">';
+                        return '<input type="text" style="width:100%;border:none;font-size:12px;background:transparent;outline:none">';
+                    };
+                    var thCells = dynCols.map(function(c) {
+                        return '<th style="padding:6px 8px;border:1px solid var(--color-border);background:var(--color-muted);font-weight:600;text-align:left;font-size:11px">' + c.name + '</th>';
+                    }).join('') + '<th style="padding:6px 8px;border:1px solid var(--color-border);background:var(--color-muted);width:30px"></th>';
+                    var tdCells = dynCols.map(function(c) {
+                        return '<td style="padding:4px 6px;border:1px solid var(--color-border)">' + makeDynCell(c.type) + '</td>';
+                    }).join('') + '<td style="padding:4px 6px;border:1px solid var(--color-border);text-align:center">' +
+                        '<span onclick="ipdTableDeleteRow(this)" style="color:#EF4444;cursor:pointer;font-size:14px;line-height:1;font-weight:700" title="Remove row">×</span></td>';
+                    field = '<div style="overflow-x:auto" data-dyn-table="1" data-cols="' + dynColsAttr + '">' +
+                        '<table style="width:100%;font-size:12px;border-collapse:collapse">' +
+                        '<thead><tr>' + thCells + '</tr></thead>' +
+                        '<tbody><tr>' + tdCells + '</tr></tbody>' +
+                        '</table>' +
+                        '<button type="button" onclick="ipdTableAddRow(this)" style="margin-top:6px;padding:4px 10px;font-size:11px;border:1px solid var(--color-border);border-radius:4px;background:var(--color-muted);cursor:pointer;color:var(--color-foreground)">+ Add Row</button>' +
+                        '</div>';
+                } else {
+                    field = '<div style="font-size:12px;color:var(--color-muted-foreground)">Table (no columns configured)</div>';
+                }
+                break;
+            }
+            default:
+                field = '<input type="text" placeholder="' + comp.label + '" style="' + inputStyle + '">';
+        }
+
+        return '<div style="margin-bottom:12px"' + fieldKeyAttr + condAttr + '>' + label + field + '</div>';
+    }
+
+    window.ipdTableAddRow = function(btn) {
+        var wrapper = btn.closest('[data-dyn-table="1"]');
+        if (!wrapper) return;
+        var dynCols = JSON.parse(wrapper.getAttribute('data-cols') || '[]');
+        var tbody = wrapper.querySelector('tbody');
+        if (!tbody) return;
+        var makeDynCell = function(colType) {
+            if (colType === 'date') return '<input type="date" style="width:100%;border:none;font-size:12px;background:transparent;outline:none">';
+            if (colType === 'textarea') return '<textarea rows="2" style="width:100%;border:none;font-size:12px;background:transparent;outline:none;resize:vertical"></textarea>';
+            if (colType === 'number') return '<input type="number" style="width:100%;border:none;font-size:12px;background:transparent;outline:none">';
+            return '<input type="text" style="width:100%;border:none;font-size:12px;background:transparent;outline:none">';
+        };
+        var tr = document.createElement('tr');
+        var cells = dynCols.map(function(c) {
+            return '<td style="padding:4px 6px;border:1px solid var(--color-border)">' + makeDynCell(c.type || 'text') + '</td>';
+        }).join('') + '<td style="padding:4px 6px;border:1px solid var(--color-border);text-align:center">' +
+            '<span onclick="ipdTableDeleteRow(this)" style="color:#EF4444;cursor:pointer;font-size:14px;line-height:1;font-weight:700" title="Remove row">×</span></td>';
+        tr.innerHTML = cells;
+        tbody.appendChild(tr);
+    };
+
+    window.ipdTableDeleteRow = function(span) {
+        var tr = span.closest('tr');
+        if (tr) tr.remove();
+    };
+
+    function evaluateIpdCondition($el, $container) {
+        var conditions = $el.data('conditions');
+        if (!conditions || !conditions.length) return;
+        var visible = conditions.every(function(cond) {
+            var $field = $container.find('[data-field-key="' + cond.field + '"]');
+            var $checkable = $field.find('input[type="radio"], input[type="checkbox"]');
+            var val;
+            if ($checkable.length) {
+                val = $field.find('input:checked').val() || '';
+            } else {
+                val = $field.find('input, select, textarea').first().val() || '';
+            }
+            if (cond.operator === 'equals')     return val === cond.value;
+            if (cond.operator === 'not_equals') return val !== cond.value;
+            if (cond.operator === 'contains')   return val.indexOf(cond.value) !== -1;
+            return true;
+        });
+        $el.toggle(visible);
+    }
+
+    function applyIpdFormConditions($container) {
+        $container.find('[data-conditions]').each(function() {
+            evaluateIpdCondition($(this), $container);
+        });
+        $container.off('change.ipdcond input.ipdcond').on('change.ipdcond input.ipdcond', 'input, select, textarea', function() {
+            $container.find('[data-conditions]').each(function() {
+                evaluateIpdCondition($(this), $container);
+            });
+        });
+    }
+
+    window.toggleIpdFormSection = function(sId, headerEl) {
+        var body = document.getElementById(sId);
+        var icon = document.getElementById(sId + '-icon');
+        if (!body) return;
+        var isOpen = body.style.display !== 'none';
+        body.style.display = isOpen ? 'none' : 'block';
+        if (icon) icon.style.transform = isOpen ? '' : 'rotate(180deg)';
+    };
+
+    // ── Collect all visible field values from a container ──────────────────────
+    function collectIpdFieldValues(containerEl) {
+        var data = {};
+        $(containerEl).find('[data-field-key]').each(function() {
+            var key = $(this).data('field-key');
+            if (!key || $(this).css('display') === 'none') return;
+            var $dynTable = $(this).find('[data-dyn-table="1"]');
+            if ($dynTable.length) {
+                var rows = [];
+                $dynTable.find('tbody tr').each(function() {
+                    var row = [];
+                    $(this).find('td').not(':last-child').find('input, textarea, select').each(function() {
+                        row.push($(this).val() || '');
+                    });
+                    rows.push(row);
+                });
+                data[key] = rows;
+                return;
+            }
+            var $radios = $(this).find('input[type="radio"]');
+            var $checks = $(this).find('input[type="checkbox"]');
+            if ($radios.length) {
+                data[key] = $radios.filter(':checked').val() || '';
+            } else if ($checks.length) {
+                var vals = [];
+                $checks.filter(':checked').each(function() { vals.push($(this).val()); });
+                data[key] = vals;
+            } else {
+                data[key] = $(this).find('input, select, textarea').first().val() || '';
+            }
+        });
+        return data;
+    }
+
+    // ── Set button state helper ────────────────────────────────────────────────
+    function ipdSaveBtnState($btn, state) {
+        if (state === 'saving') {
+            $btn.prop('disabled', true).html('<i data-lucide="loader-2" style="width:13px;height:13px"></i> Saving...');
+        } else if (state === 'ok') {
+            $btn.prop('disabled', true).html('<i data-lucide="check" style="width:13px;height:13px"></i> Saved!')
+                .css({ background: '#16A34A', borderColor: '#16A34A', color: '#fff' });
+            setTimeout(function() {
+                $btn.prop('disabled', false).css({ background: '', borderColor: '', color: '' });
+                lucide.createIcons();
+            }, 2500);
+        } else {
+            $btn.prop('disabled', false);
+        }
+        lucide.createIcons();
+    }
+
+    // ── Save a single section ──────────────────────────────────────────────────
+    window.saveIpdSection = function(formId, sectionId, admissionId, mrn) {
+        var bodyEl = document.getElementById('ipd-fs-body-' + sectionId);
+        if (!bodyEl) return;
+        var data = collectIpdFieldValues(bodyEl);
+        var $btn = $('#btn-sec-save-' + sectionId);
+        ipdSaveBtnState($btn, 'saving');
+
+        $.ajax({
+            url: '/api/form-submissions',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                formId: formId, sectionId: sectionId,
+                admissionId: admissionId, mrn: mrn,
+                context: 'ipd', data: data
+            })
+        }).done(function(res) {
+            ipdSaveBtnState($btn, 'ok');
+            appendIpdSubmissionHistory(res);
+        }).fail(function() {
+            ipdSaveBtnState($btn, 'idle');
+            alert('Failed to save section. Please try again.');
+        });
+    };
+
+    // ── Save the full form (all sections) ──────────────────────────────────────
+    window.saveIpdFullForm = function(formId, admissionId, mrn) {
+        var wrapEl = document.getElementById('ipdFormDetailWrap');
+        if (!wrapEl) return;
+        var data = collectIpdFieldValues(wrapEl);
+        var $btn = $('#btnIpdSaveFullForm');
+        ipdSaveBtnState($btn, 'saving');
+
+        $.ajax({
+            url: '/api/form-submissions',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                formId: formId, sectionId: null,
+                admissionId: admissionId, mrn: mrn,
+                context: 'ipd', data: data
+            })
+        }).done(function(res) {
+            ipdSaveBtnState($btn, 'ok');
+            appendIpdSubmissionHistory(res);
+        }).fail(function() {
+            ipdSaveBtnState($btn, 'idle');
+            alert('Failed to save form. Please try again.');
+        });
+    };
+
+    // ── Load past submission count into form header ────────────────────────────
+    function loadIpdFormSubmissionHistory(formId, admissionId) {
+        $.get('/api/form-submissions', { formId: formId, admissionId: admissionId })
+            .done(function(subs) {
+                renderIpdSubHistoryBadge(subs);
+            });
+    }
+
+    function renderIpdSubHistoryBadge(subs) {
+        var $el = $('#ipdFormSubHistory');
+        if (!$el.length) return;
+        if (!subs || subs.length === 0) {
+            $el.html('<span style="color:var(--color-muted-foreground)">No previous entries</span>');
+            return;
+        }
+        var last = subs[0];
+        $el.html(
+            '<span style="color:var(--color-muted-foreground)">' + subs.length + ' entr' + (subs.length === 1 ? 'y' : 'ies') + '</span>' +
+            '<br><span style="font-size:10px">Last: ' + last.submittedAt + (last.submittedBy ? ' by ' + last.submittedBy : '') + '</span>'
+        );
+    }
+
+    function appendIpdSubmissionHistory(res) {
+        var $el = $('#ipdFormSubHistory');
+        if (!$el.length) return;
+        var cur = parseInt($el.find('span').first().text()) || 0;
+        var newCount = cur + 1;
+        $el.html(
+            '<span style="color:#16A34A;font-weight:600">' + newCount + ' entr' + (newCount === 1 ? 'y' : 'ies') + '</span>' +
+            '<br><span style="font-size:10px">Last: ' + res.submittedAt + (res.submittedBy ? ' by ' + res.submittedBy : '') + '</span>'
+        );
+    }
+
+    // ── IPD Charting PDF Export ──────────────────────────────────────────────────
+
+    function _ipdPdfStyles(primaryColor) {
+        var c = primaryColor || '#003366';
+        return [
+            '@page { size:A4; margin:14mm 14mm 20mm 14mm }',
+            '* { box-sizing:border-box; margin:0; padding:0 }',
+            'body { font-family:"Segoe UI",Arial,sans-serif; font-size:11px; color:#1e293b; line-height:1.5 }',
+            '.cover-page { padding-bottom:20px }',
+            '.hosp-hdr { display:flex; align-items:center; gap:16px; padding-bottom:14px; border-bottom:3px solid ' + c + '; margin-bottom:20px }',
+            '.hosp-logo { height:64px; width:auto; object-fit:contain }',
+            '.hosp-hdr h1 { font-size:20px; font-weight:700; color:' + c + '; margin-bottom:4px }',
+            '.hosp-hdr p { font-size:10.5px; color:#64748b; margin:2px 0 }',
+            '.cover-title { font-size:15px; font-weight:700; color:' + c + '; text-align:center; margin:18px 0 14px; padding:10px 14px; background:#f8fafc; border-radius:6px; letter-spacing:.02em }',
+            '.info-table { width:100%; border-collapse:collapse; margin:0 0 16px }',
+            '.info-table th { border:1px solid #e2e8f0; padding:7px 10px; background:#f8fafc; font-weight:700; font-size:9.5px; text-transform:uppercase; letter-spacing:.04em; color:#64748b; width:14% }',
+            '.info-table td { border:1px solid #e2e8f0; padding:7px 10px; font-size:11px; color:#0f172a; font-weight:500 }',
+            '.toc-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:#94a3b8; margin:18px 0 6px }',
+            '.toc-list { list-style:disc; padding-left:18px }',
+            '.toc-list li { font-size:10.5px; color:#334155; margin-bottom:3px }',
+            '.print-ts { font-size:9.5px; color:#94a3b8; text-align:right; margin-top:20px }',
+            '.pat-strip { background:' + c + '; color:#fff; padding:7px 14px; border-radius:6px; display:flex; flex-wrap:wrap; gap:16px; align-items:center; margin-bottom:14px; font-size:11px }',
+            '.pat-strip .ps-name { font-weight:700; font-size:12px }',
+            '.form-doc { margin-bottom:20px }',
+            '.form-ttl { font-size:15px; font-weight:700; color:' + c + '; padding-bottom:6px; border-bottom:2px solid ' + c + '; margin-bottom:6px }',
+            '.form-desc-txt { font-size:11px; color:#64748b; margin-bottom:10px }',
+            '.instr-box { background:#f0f9ff; border:1px solid #bae6fd; border-radius:5px; padding:8px 12px; font-size:11px; color:#075985; margin-bottom:14px }',
+            '.inner-sec { margin-bottom:14px }',
+            '.sec-ttl { background:#f8fafc; border-left:3px solid ' + c + '; padding:6px 10px; font-size:12px; font-weight:700; color:' + c + '; margin-bottom:8px }',
+            '.sec-desc-txt { font-size:10.5px; color:#64748b; margin-bottom:8px; font-style:italic }',
+            '.comp-hdr { font-size:12px; font-weight:700; color:' + c + '; border-bottom:1px solid #e2e8f0; padding-bottom:4px; margin:10px 0 6px }',
+            '.comp-row { display:flex; margin-bottom:9px }',
+            '.comp-lbl { font-size:9.5px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.04em; width:36%; padding-right:10px; padding-top:2px; flex-shrink:0 }',
+            '.comp-val { font-size:11px; color:#0f172a; flex:1; border-bottom:1px solid #e2e8f0; padding-bottom:4px; min-height:20px; word-break:break-word }',
+            '.comp-val-empty { color:#94a3b8; font-style:italic }',
+            '.ftbl { width:100%; border-collapse:collapse; font-size:10px; margin-top:4px }',
+            '.ftbl th { background:#f8fafc; font-weight:600; border:1px solid #e2e8f0; padding:5px 8px; color:#64748b }',
+            '.ftbl td { border:1px solid #e2e8f0; padding:5px 8px; color:#0f172a }',
+            '.sub-info { font-size:10px; color:#64748b; text-align:right; margin-top:10px; padding-top:8px; border-top:1px dashed #e2e8f0 }',
+            '.pdf-footer { position:fixed; bottom:0; left:0; right:0; border-top:1px solid #e2e8f0; padding:5px 14mm; font-size:9px; color:#94a3b8; text-align:center; background:#fff }',
+            '@media print {',
+            '  .cover-page { page-break-after:always }',
+            '  .pg-break { page-break-before:always }',
+            '  .inner-sec { page-break-inside:avoid }',
+            '  .no-print { display:none!important }',
+            '}',
+            '@media screen {',
+            '  body { padding:24px; max-width:820px; margin:0 auto }',
+            '}',
+        ].join('\n');
+    }
+
+    function _renderPdfFieldValue(comp, val) {
+        function e(v) { return (v || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        if (val === undefined || val === null || val === '') {
+            return '<span class="comp-val-empty">—</span>';
+        }
+        if (comp.type === 'checkbox') {
+            var items = Array.isArray(val) ? val : [val];
+            return items.length ? items.map(function(v) { return '&#10003; ' + e(v); }).join('<br>') : '<span class="comp-val-empty">None selected</span>';
+        }
+        if (comp.type === 'dynamic_table') {
+            if (!Array.isArray(val) || val.length === 0) return '<span class="comp-val-empty">No entries</span>';
+            var rawCols = (comp.config && comp.config.columns) ? comp.config.columns : [];
+            var cols = rawCols.map(function(c) { return typeof c === 'string' ? { name: c, type: 'text' } : c; });
+            var tbl = '<table class="ftbl"><thead><tr>';
+            cols.forEach(function(c) { tbl += '<th>' + e(c.name) + '</th>'; });
+            tbl += '</tr></thead><tbody>';
+            val.forEach(function(row) {
+                tbl += '<tr>';
+                (Array.isArray(row) ? row : []).forEach(function(cell) { tbl += '<td>' + e(cell || '') + '</td>'; });
+                tbl += '</tr>';
+            });
+            tbl += '</tbody></table>';
+            return tbl;
+        }
+        if (Array.isArray(val)) return val.map(function(v) { return e(v); }).join(', ');
+        return e(val);
+    }
+
+    function _buildIpdChartingPdf(formsData, adm, patient, lh, pr, ft) {
+        function e(v) { return (v || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+        var color    = lh.lh_primary_color || '#003366';
+        var hospName = pr.basic_name || (hospitalInfo && hospitalInfo.name) || '';
+        var logoPath = lh.lh_show_logo !== '0' ? (pr.logo || pr.basic_logo || '') : '';
+        var addrParts = [pr.address_street, pr.address_city, pr.address_state, pr.address_country].filter(Boolean);
+        var contactParts = [pr.contact_phone, pr.contact_email].filter(Boolean);
+
+        var patName  = e(adm.patientName || (patient && patient.name) || '-');
+        var mrn      = e(adm.mrn || '-');
+        var age      = e((patient && patient.age) || '-');
+        var gender   = e((patient && patient.gender) || '-');
+        var doctor   = e(adm.doctorName || '-');
+        var dept     = e(adm.department || '-');
+        var wardBed  = e((adm.ward || '-') + ' / ' + (adm.bed || '-'));
+        var admDateRaw = adm.admissionDate ? new Date(adm.admissionDate) : null;
+        var admDate  = admDateRaw ? admDateRaw.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + admDateRaw.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
+        var diagnosis = e(adm.initialDiagnosis || '-');
+        var printTs  = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) + '  ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        var wardShort = e(adm.ward || '-');
+        var bedShort  = e(adm.bed  || '-');
+
+        // Cover page
+        var cover = '<div class="cover-page">';
+        cover += '<div class="hosp-hdr">';
+        if (logoPath) cover += '<img src="' + logoPath + '" class="hosp-logo" alt="">';
+        cover += '<div>';
+        if (hospName) cover += '<h1>' + e(hospName) + '</h1>';
+        if (addrParts.length) cover += '<p>' + addrParts.map(e).join(', ') + '</p>';
+        if (contactParts.length) cover += '<p>' + contactParts.map(e).join(' &nbsp;|&nbsp; ') + '</p>';
+        cover += '</div></div>';
+        cover += '<div class="cover-title">Charting &amp; Documentation Report</div>';
+        cover += '<table class="info-table">' +
+            '<tr><th>Patient Name</th><td colspan="3"><strong>' + patName + '</strong></td></tr>' +
+            '<tr><th>MRN</th><td>' + mrn + '</td><th>Admission Date</th><td>' + admDate + '</td></tr>' +
+            '<tr><th>Age</th><td>' + age + '</td><th>Gender</th><td>' + gender + '</td></tr>' +
+            '<tr><th>Doctor</th><td>' + doctor + '</td><th>Department</th><td>' + dept + '</td></tr>' +
+            '<tr><th>Ward / Bed</th><td>' + wardBed + '</td><th>Admission Type</th><td>' + e(adm.admissionType || '-') + '</td></tr>' +
+            '<tr><th>Diagnosis</th><td colspan="3">' + diagnosis + '</td></tr>' +
+            '</table>';
+        if (formsData.filter(Boolean).length > 1) {
+            cover += '<div class="toc-label">Forms Included</div><ul class="toc-list">';
+            formsData.forEach(function(fd) { if (fd) cover += '<li>' + e(fd.form.name) + '</li>'; });
+            cover += '</ul>';
+        }
+        cover += '<div class="print-ts">Printed: ' + printTs + '</div>';
+        cover += '</div>';
+
+        // Form sections
+        var sections = '';
+        var formIndex = 0;
+        formsData.forEach(function(fd) {
+            if (!fd) return;
+            var form = fd.form;
+            var subs = fd.submissions || [];
+            var latestSub = subs.length ? subs[0] : null;
+            var subData = latestSub ? (latestSub.data || {}) : {};
+
+            sections += '<div class="form-doc' + (formIndex > 0 ? ' pg-break' : '') + '">';
+            formIndex++;
+
+            // Patient strip repeated on each form section
+            sections += '<div class="pat-strip">' +
+                '<span class="ps-name">' + patName + '</span>' +
+                '<span>MRN:&nbsp;<strong>' + mrn + '</strong></span>' +
+                '<span>Age:&nbsp;' + age + '&nbsp;|&nbsp;' + gender + '</span>' +
+                '<span>Bed:&nbsp;' + wardShort + '&nbsp;/&nbsp;' + bedShort + '</span>' +
+                '</div>';
+
+            sections += '<div class="form-ttl">' + e(form.name) + '</div>';
+            if (form.description) sections += '<div class="form-desc-txt">' + e(form.description) + '</div>';
+            if (form.instructions) sections += '<div class="instr-box"><strong>Instructions:</strong> ' + e(form.instructions) + '</div>';
+
+            (form.sections || []).forEach(function(sec) {
+                sections += '<div class="inner-sec">';
+                sections += '<div class="sec-ttl">' + e(sec.title) + '</div>';
+                if (sec.description) sections += '<div class="sec-desc-txt">' + e(sec.description) + '</div>';
+
+                (sec.components || []).forEach(function(comp) {
+                    if (comp.type === 'header') {
+                        sections += '<div class="comp-hdr">' + e(comp.label) + '</div>';
+                        return;
+                    }
+                    if (comp.type === 'signature') {
+                        sections += '<div class="comp-row"><div class="comp-lbl">' + e(comp.label) + '</div>' +
+                            '<div class="comp-val" style="height:36px;border-bottom:1px solid #94a3b8"></div></div>';
+                        return;
+                    }
+                    sections += '<div class="comp-row">' +
+                        '<div class="comp-lbl">' + e(comp.label) + (comp.isRequired ? ' <span style="color:#DC2626">*</span>' : '') + '</div>' +
+                        '<div class="comp-val">' + _renderPdfFieldValue(comp, subData[comp.key]) + '</div>' +
+                        '</div>';
+                });
+
+                sections += '</div>';
+            });
+
+            if (latestSub) {
+                sections += '<div class="sub-info">Last saved: ' + e(latestSub.submittedAt) + (latestSub.submittedBy ? ' by ' + e(latestSub.submittedBy) : '') + '</div>';
+            } else {
+                sections += '<div class="sub-info" style="color:#DC2626">Not yet submitted</div>';
+            }
+
+            sections += '</div>';
+        });
+
+        var footerHtml = (ft && ft.footer_text) ? '<div class="pdf-footer">' + e(ft.footer_text) + '</div>' : '';
+
+        return '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+            '<title>Charting Report — ' + patName + '</title>' +
+            '<style>' + _ipdPdfStyles(color) + '</style>' +
+            '</head><body>' +
+            '<div class="no-print" style="position:fixed;top:12px;right:14px;z-index:9999;display:flex;gap:8px">' +
+            '<button onclick="window.print()" style="padding:7px 16px;background:#003366;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit">&#128424; Print / Save PDF</button>' +
+            '<button onclick="window.close()" style="padding:7px 14px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit">&#x2715; Close</button>' +
+            '</div>' +
+            cover + sections + footerHtml +
+            '<script>window.addEventListener("load",function(){setTimeout(function(){window.print();},400);});<\/script>' +
+            '</body></html>';
+    }
+
+    window.downloadIpdFormPdf = function(formId) {
+        var adm = admissions.find(function(a) { return a.admissionId === _ipdProfileCurrentAdmId; });
+        if (!adm) { HMS.toast('No admission found', 'error'); return; }
+        var patient = patients.find(function(p) { return p.mrn === adm.mrn; });
+        HMS.toast('Preparing PDF…', 'success');
+        $.when(
+            $.get('/api/forms/' + formId + '/full'),
+            $.get('/api/form-submissions', { formId: formId, admissionId: adm.admissionId }),
+            $.get('/api/hospital-info/settings/letterhead'),
+            $.get('/api/hospital-info/settings/basic'),
+            $.get('/api/hospital-info/settings/footer')
+        ).done(function(fRes, sRes, lhRes, prRes, ftRes) {
+            var html = _buildIpdChartingPdf(
+                [{ form: fRes[0], submissions: sRes[0] }],
+                adm, patient,
+                lhRes[0].settings || {}, prRes[0].settings || {}, ftRes[0].settings || {}
+            );
+            var win = window.open('', '_blank', 'width=860,height=1000');
+            win.document.write(html);
+            win.document.close();
+        }).fail(function() {
+            HMS.toast('Failed to generate PDF', 'error');
+        });
+    };
+
+    window.downloadIpdGroupPdf = function(groupId) {
+        var group = _ipdChartingGroups && _ipdChartingGroups.find(function(g) { return g.id === groupId; });
+        if (!group || !(group.forms || []).length) { HMS.toast('No forms in this group', 'warning'); return; }
+        var adm = admissions.find(function(a) { return a.admissionId === _ipdProfileCurrentAdmId; });
+        if (!adm) { HMS.toast('No admission found', 'error'); return; }
+        var patient = patients.find(function(p) { return p.mrn === adm.mrn; });
+        HMS.toast('Preparing group PDF…', 'success');
+        $.when(
+            $.get('/api/hospital-info/settings/letterhead'),
+            $.get('/api/hospital-info/settings/basic'),
+            $.get('/api/hospital-info/settings/footer')
+        ).done(function(lhRes, prRes, ftRes) {
+            var lh = lhRes[0].settings || {};
+            var pr = prRes[0].settings || {};
+            var ft = ftRes[0].settings || {};
+            var formIds = group.forms.map(function(f) { return f.id; });
+            var formsData = new Array(formIds.length);
+            var remaining = formIds.length;
+            formIds.forEach(function(fid, idx) {
+                $.when(
+                    $.get('/api/forms/' + fid + '/full'),
+                    $.get('/api/form-submissions', { formId: fid, admissionId: adm.admissionId })
+                ).done(function(fRes, sRes) {
+                    formsData[idx] = { form: fRes[0], submissions: sRes[0] };
+                }).fail(function() {
+                    formsData[idx] = null;
+                }).always(function() {
+                    remaining--;
+                    if (remaining === 0) {
+                        if (!formsData.filter(Boolean).length) { HMS.toast('Failed to load forms', 'error'); return; }
+                        var html = _buildIpdChartingPdf(formsData, adm, patient, lh, pr, ft);
+                        var win = window.open('', '_blank', 'width=860,height=1000');
+                        win.document.write(html);
+                        win.document.close();
+                    }
+                });
+            });
+        }).fail(function() {
+            HMS.toast('Failed to load settings', 'error');
+        });
+    };
+
+    window.ipdProfileGoToOT = function() {
+        if (!_ipdProfileCurrentAdmId) return;
+        var adm = admissions.find(function(a) { return a.admissionId === _ipdProfileCurrentAdmId; });
+        if (!adm || !adm.mrn) return;
+
+        var tabBtn = document.querySelector('#ipdProfileNav [data-pane="ot"]');
+        if (tabBtn) switchIpdProfileTab(tabBtn, 'ot');
+
+        $('#ipdProfilePane-ot').html(
+            '<div style="padding:32px;text-align:center;color:var(--color-muted-foreground)">' +
+            '<i data-lucide="loader-2" style="width:24px;height:24px"></i>' +
+            '<p style="margin-top:8px;font-size:13px">Loading...</p></div>'
+        );
+        lucide.createIcons();
+
+        var patient = patients.find(function(p) { return p.mrn === adm.mrn; });
+
+        $.get('/api/doctors').done(function(data) {
+            var docs = (data || []).filter(function(d) { return d.status === 'ACTIVE'; });
+            renderOtProfileForm(adm, patient, docs);
+        }).fail(function() {
+            renderOtProfileForm(adm, patient, []);
+        });
+    };
+
+    function renderOtProfileForm(adm, patient, doctors) {
+        var name   = adm.patientName || (patient && patient.name) || '—';
+        var age    = (patient && patient.age) || '—';
+        var gender = (patient && patient.gender) || adm.gender || '—';
+        var phone  = (patient && patient.phone) || '—';
+
+        var doctorOptions = '<option value="">-- Select Surgeon --</option>';
+        doctors.forEach(function(d) {
+            var full = d.firstName + ' ' + d.lastName;
+            doctorOptions += '<option value="' + full + '">' + full + ' - ' + (d.specialization || '') + '</option>';
+        });
+
+        var html =
+            '<div style="padding:24px;max-width:720px">' +
+
+            // Patient info card
+            '<div style="background:rgba(127,255,212,0.05);border:1px solid rgba(127,255,212,0.2);padding:16px;border-radius:8px;margin-bottom:24px">' +
+                '<p style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--aquamint);margin:0 0 4px">PATIENT</p>' +
+                '<p style="font-size:15px;font-weight:700;color:var(--midnight-blue);margin:0">' + name + '</p>' +
+                '<p style="font-size:12px;font-family:monospace;color:var(--color-muted-foreground);margin:2px 0 0">' + adm.mrn + ' &nbsp;·&nbsp; ' + age + 'Y / ' + gender + ' &nbsp;·&nbsp; ' + phone + '</p>' +
+            '</div>' +
+
+            // Surgery Details
+            '<h4 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--color-muted-foreground);margin:0 0 14px;display:flex;align-items:center;gap:6px"><i data-lucide="activity" style="width:14px;height:14px"></i> Surgery Details</h4>' +
+            '<div class="form-grid" style="gap:16px;margin-bottom:24px">' +
+                '<div class="form-group"><label>PROCEDURE NAME <span style="color:#ef4444">*</span></label><input type="text" class="form-control" id="otpProcedure" placeholder="e.g. Laparoscopic Appendectomy"></div>' +
+                '<div class="form-grid form-grid-2">' +
+                    '<div class="form-group"><label>SURGERY TYPE</label><select class="form-select" id="otpSurgeryType"><option value="Elective">Elective</option><option value="Emergency">Emergency</option><option value="Urgent">Urgent</option></select></div>' +
+                    '<div class="form-group"><label>PRIORITY</label><select class="form-select" id="otpPriority"><option value="Elective">Elective</option><option value="Urgent">Urgent</option><option value="Emergency">Emergency</option></select></div>' +
+                '</div>' +
+                '<div class="form-group"><label>ANESTHESIA TYPE</label><select class="form-select" id="otpAnesthesiaType"><option value="General Anesthesia (GA)">General Anesthesia (GA)</option><option value="Local Anesthesia">Local Anesthesia</option><option value="Spinal/Epidural">Spinal/Epidural</option></select></div>' +
+            '</div>' +
+
+            // Surgical Team
+            '<h4 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--color-muted-foreground);margin:0 0 14px;display:flex;align-items:center;gap:6px"><i data-lucide="users" style="width:14px;height:14px"></i> Surgical Team</h4>' +
+            '<div class="form-grid" style="gap:16px;margin-bottom:24px">' +
+                '<div class="form-group"><label>PRIMARY SURGEON <span style="color:#ef4444">*</span></label><select class="form-select" id="otpSurgeon">' + doctorOptions + '</select></div>' +
+                '<div class="form-grid form-grid-2">' +
+                    '<div class="form-group"><label>ANAESTHETIST</label><input type="text" class="form-control" id="otpAnaesthetist" placeholder="Dr. Name"></div>' +
+                    '<div class="form-group"><label>ANAESTHETIST FEE</label><input type="number" class="form-control" id="otpAnaesthetistFee" placeholder="0"></div>' +
+                '</div>' +
+            '</div>' +
+
+            // Scheduling
+            '<h4 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--color-muted-foreground);margin:0 0 14px;display:flex;align-items:center;gap:6px"><i data-lucide="clock" style="width:14px;height:14px"></i> Scheduling</h4>' +
+            '<div class="form-grid" style="gap:16px;margin-bottom:32px">' +
+                '<div class="form-group"><label>THEATER <span style="color:#ef4444">*</span></label><select class="form-select" id="otpTheater"><option value="OT-1">OT-1 (General)</option><option value="OT-2">OT-2 (Cardiac)</option><option value="OT-3">OT-3 (Ortho)</option></select></div>' +
+                '<div class="form-grid form-grid-2">' +
+                    '<div class="form-group"><label>SURGERY DATE</label><input type="date" class="form-control" id="otpSurgeryDate"></div>' +
+                    '<div class="form-group"><label>START TIME</label><input type="time" class="form-control" id="otpStartTime"></div>' +
+                '</div>' +
+                '<div class="form-group"><label>ESTIMATED DURATION (hours)</label><select class="form-select" id="otpDuration"><option value="1">1 hr</option><option value="2" selected>2 hrs</option><option value="3">3 hrs</option><option value="4">4 hrs</option></select></div>' +
+            '</div>' +
+
+            // Error container
+            '<div id="otpErrors" style="display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:12px;margin-bottom:16px"></div>' +
+
+            // Submit
+            '<div style="display:flex;justify-content:flex-end">' +
+                '<button class="btn-primary" id="btnOtpSubmit" style="min-width:160px"><i data-lucide="syringe" style="width:15px;height:15px"></i> Book Surgery</button>' +
+            '</div>' +
+            '</div>';
+
+        $('#ipdProfilePane-ot').html(html);
+        lucide.createIcons();
+
+        $('#btnOtpSubmit').on('click', function() {
+            var procedure = $('#otpProcedure').val().trim();
+            var surgeon   = $('#otpSurgeon').val();
+            var theater   = $('#otpTheater').val();
+            var errors    = [];
+
+            if (!procedure) errors.push('Procedure Name is required');
+            if (!surgeon)   errors.push('Primary Surgeon is required');
+            if (!theater)   errors.push('Theater is required');
+
+            if (errors.length) {
+                $('#otpErrors').html(errors.map(function(e) {
+                    return '<p style="font-size:12px;color:#ef4444;margin:0 0 4px;display:flex;align-items:center;gap:6px"><i data-lucide="alert-triangle" style="width:13px;height:13px"></i> ' + e + '</p>';
+                }).join('')).show();
+                lucide.createIcons();
+                return;
+            }
+
+            $('#otpErrors').hide();
+            $('#btnOtpSubmit').prop('disabled', true).html('<i data-lucide="loader-2" style="width:14px;height:14px"></i> Booking...');
+            lucide.createIcons();
+
+            var payload = {
+                mrn:              adm.mrn,
+                procedure:        procedure,
+                surgeryType:      $('#otpSurgeryType').val(),
+                priority:         $('#otpPriority').val(),
+                surgeon:          surgeon,
+                anaesthetist:     $('#otpAnaesthetist').val() || undefined,
+                anaesthetistFee:  $('#otpAnaesthetistFee').val() ? Number($('#otpAnaesthetistFee').val()) : undefined,
+                theater:           theater,
+                surgeryDate:       $('#otpSurgeryDate').val() || undefined,
+                startTime:         $('#otpStartTime').val() || undefined,
+                estimatedDuration: Number($('#otpDuration').val()) || 2,
+                admissionSource:   'IPD'
+            };
+
+            $.ajax({
+                url: '/api/ot/operations',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function(op) {
+                    $('#ipdProfilePane-ot').html(
+                        '<div style="padding:48px;text-align:center">' +
+                        '<div style="width:56px;height:56px;border-radius:50%;background:#F0FDF4;display:flex;align-items:center;justify-content:center;margin:0 auto 16px"><i data-lucide="check-circle-2" style="width:28px;height:28px;color:#16A34A"></i></div>' +
+                        '<p style="font-size:16px;font-weight:700;color:var(--midnight-blue);margin:0 0 6px">Surgery Booked Successfully</p>' +
+                        '<p style="font-size:13px;color:var(--color-muted-foreground);margin:0 0 4px">Operation ID: <span style="font-family:monospace;font-weight:600">' + (op.operationId || '') + '</span></p>' +
+                        '<p style="font-size:12px;color:var(--color-muted-foreground);margin:0 0 24px">Procedure: ' + procedure + ' · ' + theater + '</p>' +
+                        '<a href="' + HMS_BASE + '/ot" class="btn-primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i data-lucide="arrow-right" style="width:14px;height:14px"></i> Go to OT Module</a>' +
+                        '</div>'
+                    );
+                    lucide.createIcons();
+                    showOtProfileSidebarBtn();
+                },
+                error: function(xhr) {
+                    $('#btnOtpSubmit').prop('disabled', false).html('<i data-lucide="syringe" style="width:15px;height:15px"></i> Book Surgery');
+                    lucide.createIcons();
+                    var msg = (xhr.responseJSON && xhr.responseJSON.error) ? xhr.responseJSON.error : 'Failed to book surgery';
+                    $('#otpErrors').html('<p style="font-size:12px;color:#ef4444;margin:0;display:flex;align-items:center;gap:6px"><i data-lucide="alert-triangle" style="width:13px;height:13px"></i> ' + msg + '</p>').show();
+                    lucide.createIcons();
+                }
+            });
+        });
     }
 
     $(document).on('click', '.mar-patient-btn', function() {
@@ -4721,7 +6269,7 @@ $(document).ready(function() {
 
     $(document).on('click', '.mar-date-jump', function() {
         marSelectedDate = $(this).data('date');
-        renderMARTab();
+        if (_ipdMARInProfileMode) { renderMARInProfile(_ipdProfileCurrentAdmId); } else { renderMARTab(); }
     });
 
     $(document).on('click', '.mar-check-btn', function() {
@@ -4733,12 +6281,14 @@ $(document).ready(function() {
             marTaskStatuses[taskId] = 'given';
             marTaskStatuses[taskId + '_time'] = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         }
-        renderMARTab();
+        if (_ipdMARInProfileMode) { renderMARInProfile(_ipdProfileCurrentAdmId); } else { renderMARTab(); }
     });
 
     $(document).on('click', '.mar-give-btn', function() {
         var taskId = $(this).data('task-id');
-        var selected = marPatients[selectedMarPatient];
+        var selected = _ipdMARInProfileMode
+            ? { allTasks: _ipdProfileMarTasks }
+            : marPatients[selectedMarPatient];
         if (!selected) return;
         var task = (selected.allTasks || []).find(function(t) { return t.taskId === taskId; });
         if (!task) return;
@@ -4761,7 +6311,7 @@ $(document).ready(function() {
             marTaskStatuses[taskId + '_time'] = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         }
         bootstrap.Modal.getInstance(document.getElementById('marAdminModal')).hide();
-        renderMARTab();
+        if (_ipdMARInProfileMode) { renderMARInProfile(_ipdProfileCurrentAdmId); } else { renderMARTab(); }
     });
 
     $(document).on('click', '.mar-shift-btn', function() { $('.mar-shift-btn').removeClass('active'); $(this).addClass('active'); });
@@ -4894,7 +6444,18 @@ $(document).ready(function() {
         var parts = groupKey.split('|');
         var mrn = parts[0], admissionId = parts[1];
         var group = groupedInvestigations.find(function(g) { return g.mrn === mrn && g.admissionId === admissionId; });
-        if (!group) return;
+        if (!group) {
+            if (_ipdInvInProfileMode) {
+                $('#ipdProfilePane-investigations').html(
+                    '<div class="ipd-profile-placeholder">' +
+                        '<i data-lucide="flask-conical" style="width:40px;height:40px;opacity:.3"></i>' +
+                        '<p>No investigations ordered for this patient</p>' +
+                    '</div>'
+                );
+                lucide.createIcons();
+            }
+            return;
+        }
 
         var invs = group.investigations || [];
         var statusSteps = ['Ordered', 'Collected', 'In Progress', 'Completed'];
@@ -4981,11 +6542,17 @@ $(document).ready(function() {
             html += '</div>';
         });
 
-        $('#invDetailBody').html(html);
-        var el = document.getElementById('invDetailSheet');
-        var existing = bootstrap.Offcanvas.getInstance(el);
-        if (existing) existing.hide();
-        new bootstrap.Offcanvas(el).show();
+        var $invTarget = _ipdInvInProfileMode
+            ? $('#ipdProfilePane-investigations')
+            : $('#invDetailBody');
+        $invTarget.html(html);
+
+        if (!_ipdInvInProfileMode) {
+            var el = document.getElementById('invDetailSheet');
+            var existing = bootstrap.Offcanvas.getInstance(el);
+            if (existing) existing.hide();
+            new bootstrap.Offcanvas(el).show();
+        }
         lucide.createIcons();
     }
 
@@ -5272,28 +6839,37 @@ $(document).ready(function() {
         lucide.createIcons();
     }
 
-    $(document).on('click', '.nursing-order-tile', function() {
-        var admissionId = $(this).data('admission-id');
+    function openNursingOrderDetail(admissionId) {
         var adm = admissions.find(function(a) { return a.admissionId === admissionId; });
         if (!adm) return;
 
         ipdNursingVitalForm = { temperature: '', systolic: '', diastolic: '', heartRate: '', spO2: '', respiratoryRate: '', weight: '', height: '', bloodSugar: '', painScale: null, notes: '' };
 
-        $('#clinicalOrdersTitle').text(adm.patientName || adm.mrn);
-        $('#clinicalOrdersSubtitle').text((adm.admissionId || '') + (adm.bed ? ' \u2022 Bed ' + adm.bed : '') + (adm.ward ? ' \u2022 ' + adm.ward : ''));
-        $('#clinicalOrdersBody').html('<div style="padding:60px;text-align:center;color:var(--color-muted-foreground)"><div style="display:inline-flex;flex-direction:column;align-items:center;gap:10px"><i data-lucide="loader-2" style="width:24px;height:24px;animation:spin 1s linear infinite"></i><span style="font-size:13px">Loading orders...</span></div></div>');
-        lucide.createIcons();
+        var $target = _ipdNurInProfileMode
+            ? $('#ipdProfilePane-nursing')
+            : $('#clinicalOrdersBody');
 
-        var sheet = new bootstrap.Offcanvas(document.getElementById('clinicalOrdersSheet'));
-        sheet.show();
+        var loadingHtml = '<div style="padding:60px;text-align:center;color:var(--color-muted-foreground)"><div style="display:inline-flex;flex-direction:column;align-items:center;gap:10px"><i data-lucide="loader-2" style="width:24px;height:24px;animation:spin 1s linear infinite"></i><span style="font-size:13px">Loading orders...</span></div></div>';
+
+        if (!_ipdNurInProfileMode) {
+            $('#clinicalOrdersTitle').text(adm.patientName || adm.mrn);
+            $('#clinicalOrdersSubtitle').text((adm.admissionId || '') + (adm.bed ? ' \u2022 Bed ' + adm.bed : '') + (adm.ward ? ' \u2022 ' + adm.ward : ''));
+            $target.html(loadingHtml);
+            lucide.createIcons();
+            var sheet = new bootstrap.Offcanvas(document.getElementById('clinicalOrdersSheet'));
+            sheet.show();
+        } else {
+            $target.html(loadingHtml);
+            lucide.createIcons();
+        }
 
         $.get('/api/ipd/clinical-orders/' + admissionId).done(function(orders) {
-            var ivOrders      = orders.filter(function(o) { return o.type === 'IV Fluids';  });
-            var dietOrders    = orders.filter(function(o) { return o.type === 'Diet';       });
-            var nursingOrders = orders.filter(function(o) { return o.type === 'Nursing';    });
+            var ivOrders      = orders.filter(function(o) { return o.type === 'IV Fluids'; });
+            var dietOrders    = orders.filter(function(o) { return o.type === 'Diet'; });
+            var nursingOrders = orders.filter(function(o) { return o.type === 'Nursing'; });
 
             var html = buildClinicalOrdersBody(adm, ivOrders, dietOrders, nursingOrders);
-            $('#clinicalOrdersBody').html(html);
+            $target.html(html);
             lucide.createIcons();
 
             $.get('/api/ipd/nursing-records/by-admission/' + admissionId).done(function(rec) {
@@ -5301,8 +6877,12 @@ $(document).ready(function() {
                 lucide.createIcons();
             });
         }).fail(function() {
-            $('#clinicalOrdersBody').html('<div style="padding:40px;text-align:center;color:var(--color-muted-foreground);font-size:13px">Failed to load orders. Please try again.</div>');
+            $target.html('<div style="padding:40px;text-align:center;color:var(--color-muted-foreground);font-size:13px">Failed to load orders. Please try again.</div>');
         });
+    }
+
+    $(document).on('click', '.nursing-order-tile', function() {
+        openNursingOrderDetail($(this).data('admission-id'));
     });
 
     function fmtOrderDate(str) {
@@ -5796,7 +7376,23 @@ $(document).ready(function() {
         else if (n === 3) { renderDischStep3(); startStep3Polling(); }
         else if (n === 4) { renderDischStep4(); }
 
-        // Open the offcanvas
+        if (_ipdDischInProfileMode) {
+            /* Copy the rendered step content directly into the profile pane */
+            var $stepContent = $('#dischStep' + n + 'Content');
+            var innerHtml = $stepContent.length ? $stepContent.html() : '';
+            var stepLabelsMap = { 2: 'Initiate Discharge', 3: 'Awaiting Clearance', 4: 'Final Discharge', 5: 'Discharge Complete' };
+            $('#ipdProfilePane-discharge').html(
+                '<div style="border-bottom:1px solid var(--color-border);padding:12px 0 16px;margin-bottom:20px">' +
+                    '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--color-muted-foreground);margin-bottom:8px">Discharge Step</div>' +
+                    '<div style="font-size:15px;font-weight:600;color:var(--midnight-blue)">' + (stepLabelsMap[n] || 'Step ' + n) + '</div>' +
+                '</div>' +
+                '<div>' + innerHtml + '</div>'
+            );
+            lucide.createIcons();
+            return;
+        }
+
+        /* Normal path — show the offcanvas */
         bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('dischargeStepSheet')).show();
         lucide.createIcons();
     }

@@ -25,8 +25,6 @@ Route::middleware(['auth.hms'])->group(function () {
         ->middleware('permission:ipd');
     Route::get('/emergency',      fn() => view('pages.emergency',      ['pageTitle' => 'Emergency']))
         ->middleware('permission:emergency');
-    Route::get('/ot',             fn() => view('pages.ot',             ['pageTitle' => 'Operation Theater']))
-        ->middleware('permission:ot');
     Route::get('/bed-management', fn() => view('pages.bed-management', ['pageTitle' => 'Bed Management']))
         ->middleware('role:superadmin,admin');
 
@@ -95,6 +93,10 @@ Route::middleware(['auth.hms'])->group(function () {
     // ── Superadmin — Role Management ─────────────────────────────────────────
     Route::get('/roles', fn() => view('pages.roles', ['pageTitle' => 'Role Management']))
         ->middleware('permission:role-management.access');
+
+    // ── Form Builder ─────────────────────────────────────────────────────────
+    Route::get('/form-builder', fn() => view('pages.form-builder', ['pageTitle' => 'Form Builder']))
+        ->middleware('permission:form-builder.access');
 
     // ── Configuration sub-pages ───────────────────────────────────────────────
     Route::get('/configuration/opd',             fn() => view('pages.configuration.opd',             ['pageTitle' => 'OPD Configuration']))

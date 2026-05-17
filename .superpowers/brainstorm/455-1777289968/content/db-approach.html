@@ -1,0 +1,64 @@
+<h2>Database Architecture — 3 Approaches</h2>
+<p class="subtitle">How should form configuration be stored? This shapes everything else.</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>4 Fully Normalized Tables</h3>
+      <p>Every layer gets its own table with proper foreign keys.</p>
+      <div style="font-family:monospace;font-size:11px;background:#1e293b;color:#e2e8f0;border-radius:6px;padding:12px;margin:8px 0;line-height:1.8">
+        <span style="color:#60a5fa">form_groups</span> (id, name, context, description, sort_order)<br>
+        <span style="color:#60a5fa">forms</span> (id, form_group_id, name, description, is_active, sort_order)<br>
+        <span style="color:#60a5fa">form_sections</span> (id, form_id, title, sort_order)<br>
+        <span style="color:#60a5fa">form_components</span> (id, form_section_id, type, label, sort_order, <span style="color:#34d399">config JSON</span>)
+      </div>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Cleanest Laravel models</li><li>Each level independently editable</li><li>Proper relationships & eager loading</li><li>Queryable by component type</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>4 migrations, 4 models, 4 controllers</li><li>More API endpoints needed</li></ul></div>
+      </div>
+      <p style="margin-top:8px;font-size:12px;color:#059669;font-weight:600">⭐ Recommended — cleanest, most maintainable, follows your codebase pattern</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>2 Tables — Full JSON Schema</h3>
+      <p>Form stores its entire structure (sections + components) as one JSON blob.</p>
+      <div style="font-family:monospace;font-size:11px;background:#1e293b;color:#e2e8f0;border-radius:6px;padding:12px;margin:8px 0;line-height:1.8">
+        <span style="color:#60a5fa">form_groups</span> (id, name, context, sort_order)<br>
+        <span style="color:#60a5fa">forms</span> (id, form_group_id, name, is_active, <span style="color:#34d399">schema JSON</span>)<br>
+        <br>
+        <span style="color:#94a3b8">// schema = { sections: [{ title, components: [...] }] }</span>
+      </div>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Only 2 tables/models</li><li>Fewest API endpoints</li><li>Easy to version/duplicate forms</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Can't query by component type</li><li>Large JSON blobs get unwieldy</li><li>Harder to validate individual components</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>3 Tables — Sections Normalized, Components as JSON</h3>
+      <p>Upgrades the <em>existing</em> pattern: form_sections gets a foreign key to forms, components stay as JSON array in <code>fields</code>.</p>
+      <div style="font-family:monospace;font-size:11px;background:#1e293b;color:#e2e8f0;border-radius:6px;padding:12px;margin:8px 0;line-height:1.8">
+        <span style="color:#60a5fa">form_groups</span> (id, name, context, sort_order)<br>
+        <span style="color:#60a5fa">forms</span> (id, form_group_id, name, is_active, sort_order)<br>
+        <span style="color:#60a5fa">form_sections</span> (id, form_id, title, sort_order, <span style="color:#34d399">fields JSON</span>)<br>
+        <br>
+        <span style="color:#94a3b8">// Mirrors existing opd_form_sections pattern</span>
+      </div>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Close to existing codebase pattern</li><li>Sections independently manageable</li><li>Simpler than 4 tables</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Components not individually queryable</li><li>JSON fields array grows large for complex forms</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px">Click your choice above, or reply in the terminal. Option A is recommended.</p>

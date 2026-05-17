@@ -124,38 +124,26 @@
 <div class="mini-stats">
     <div class="mini-stat-card">
         <div class="mini-stat-inner">
-            <div>
-                <p class="mini-stat-label">Awaiting Dispensing</p>
-                <h3 class="mini-stat-value" style="color:#e67e22" id="statAwaiting">--</h3>
-            </div>
-            <div class="mini-stat-icon" style="background:rgba(230,126,34,0.1)"><i data-lucide="clock" style="color:#e67e22"></i></div>
+            <p class="mini-stat-label">Awaiting Dispensing</p>
+            <h3 class="mini-stat-value" id="statAwaiting">--</h3>
         </div>
     </div>
     <div class="mini-stat-card">
         <div class="mini-stat-inner">
-            <div>
-                <p class="mini-stat-label">In Progress</p>
-                <h3 class="mini-stat-value" style="color:#3498db" id="statInProgress">--</h3>
-            </div>
-            <div class="mini-stat-icon" style="background:rgba(52,152,219,0.1)"><i data-lucide="loader" style="color:#3498db"></i></div>
+            <p class="mini-stat-label">In Progress</p>
+            <h3 class="mini-stat-value" id="statInProgress">--</h3>
         </div>
     </div>
     <div class="mini-stat-card">
         <div class="mini-stat-inner">
-            <div>
-                <p class="mini-stat-label">Completed Orders</p>
-                <h3 class="mini-stat-value" style="color:#27ae60" id="statReady">--</h3>
-            </div>
-            <div class="mini-stat-icon" style="background:rgba(39,174,96,0.1)"><i data-lucide="check-circle" style="color:#27ae60"></i></div>
+            <p class="mini-stat-label">Completed Orders</p>
+            <h3 class="mini-stat-value" id="statReady">--</h3>
         </div>
     </div>
     <div class="mini-stat-card">
         <div class="mini-stat-inner">
-            <div>
-                <p class="mini-stat-label">Completed Today</p>
-                <h3 class="mini-stat-value" style="color:var(--color-foreground)" id="statCompleted">--</h3>
-            </div>
-            <div class="mini-stat-icon" style="background:rgba(127,255,212,0.15)"><i data-lucide="package-check" style="color:var(--aquamint)"></i></div>
+            <p class="mini-stat-label">Completed Today</p>
+            <h3 class="mini-stat-value" id="statCompleted">--</h3>
         </div>
     </div>
 </div>
