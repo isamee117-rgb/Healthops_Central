@@ -22,8 +22,8 @@ return new class extends Migration
             $table->string('phone')->default('');
             $table->string('secondary_phone')->default('');
             $table->string('email')->default('');
-            $table->text('current_address')->default('');
-            $table->text('permanent_address')->default('');
+            $table->text('current_address')->nullable();
+            $table->text('permanent_address')->nullable();
             $table->string('emergency_contact_name')->default('');
             $table->string('emergency_contact_relationship')->default('');
             $table->string('emergency_contact_phone')->default('');
@@ -43,8 +43,8 @@ return new class extends Migration
             $table->string('certifications')->default('');
             $table->string('special_skills')->default('');
             $table->string('work_experience')->default('');
-            $table->text('notes')->default('');
-            $table->text('internal_notes')->default('');
+            $table->text('notes')->nullable();
+            $table->text('internal_notes')->nullable();
             $table->timestamps();
         });
     }
