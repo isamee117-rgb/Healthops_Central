@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use App\Models\User;
 use App\Models\Patient;
 use App\Models\Doctor;
 use App\Models\Floor;
@@ -21,6 +22,14 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        User::create([
+            'name'     => 'Super Admin',
+            'email'    => 'Superadmin@healthops.com',
+            'password' => bcrypt('Superadmin@54321'),
+            'role'     => 'superadmin',
+            'is_active' => true,
+        ]);
+
         HospitalInfo::create([
             'name' => 'Nova Medical Complex',
             'short_name' => 'Nova HMS',
