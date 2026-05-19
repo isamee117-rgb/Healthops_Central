@@ -16,7 +16,6 @@ class ReturnsExpiryController extends Controller
 {
     public function __construct()
     {
-        $this->seedIfEmpty();
     }
 
     public function dashboard()
@@ -371,7 +370,7 @@ class ReturnsExpiryController extends Controller
         }
     }
 
-    private function seedIfEmpty()
+    private function DEAD_seedIfEmpty()
     {
         if (PatientReturn::count() > 0) return;
 

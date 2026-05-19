@@ -13,7 +13,6 @@ class LabInventoryController extends Controller
 {
     public function __construct()
     {
-        $this->seedIfEmpty();
     }
 
     public function stats()
@@ -362,7 +361,7 @@ class LabInventoryController extends Controller
         return response()->json(['success' => true, 'newStock' => $r->current_stock]);
     }
 
-    private function seedIfEmpty()
+    private function DEAD_seedIfEmpty()
     {
         if (LabReagent::count() > 0) return;
 

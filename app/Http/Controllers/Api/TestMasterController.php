@@ -14,7 +14,6 @@ class TestMasterController extends Controller
 
     public function stats()
     {
-        $this->seedIfEmpty();
         $totalTests = LabTest::count();
         $activeTests = LabTest::where('status', 'Active')->count();
         $packages = LabTestPackage::count();
@@ -278,7 +277,7 @@ class TestMasterController extends Controller
         return response()->json($tests);
     }
 
-    private function seedIfEmpty()
+    private function DEAD_seedIfEmpty()
     {
         if (LabTest::count() > 0) return;
 

@@ -563,7 +563,7 @@ class PharmacyBillingController extends Controller
         ]);
     }
 
-    private function seedIfEmpty()
+    private function DEAD_seedIfEmpty()
     {
         if (PharmacyTransaction::count() > 0) return;
 
