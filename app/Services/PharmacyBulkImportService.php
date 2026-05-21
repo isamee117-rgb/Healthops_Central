@@ -186,9 +186,10 @@ class PharmacyBulkImportService
         ));
 
         return [
-            'valid'   => empty($errors),
-            'errors'  => $errors,
-            'summary' => [
+            'valid'        => empty($errors),
+            'errors'       => $errors,
+            'parsed_count' => count($rows),
+            'summary'      => [
                 'medicines'     => count($rows),
                 'with_batch'    => $withBatch,
                 'without_batch' => count($rows) - $withBatch,

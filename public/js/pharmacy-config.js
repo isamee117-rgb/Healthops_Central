@@ -218,3 +218,246 @@ $(document).ready(function () {
     loadAll();
     loadDeptRouting();
 });
+
+// ── Pharmacy Bulk Import ─────────────────────────────────────────────────────
+
+(function () {
+    'use strict';
+
+    var selectedFile = null;
+
+    // ── State machine ─────────────────────────────────────────────────────────
+
+    var STATES = {
+        IDLE:       'idle',
+        SELECTED:   'selected',
+        VALIDATING: 'validating',
+        ERROR:      'error',
+        CONFIRM:    'confirm',
+        IMPORTING:  'importing',
+    };
+
+    function setState(state, data) {
+        // Hide all state panels
+        $('#bulkStateIdle, #bulkStateFileSelected, #bulkStateValidating, #bulkStateError, #bulkStateConfirm, #bulkStateImporting').hide();
+        // Reset step classes
+        $('#bsStep1, #bsStep2, #bsStep3').removeClass('active done error');
+
+        if (state === STATES.IDLE) {
+            selectedFile = null;
+            $('#bulkStateIdle').show();
+            $('#bsStep1').addClass('active');
+            $('#bulkImportHeader').css('background', '#060740');
+            $('#bulkStepLabel').text('Step 1 of 3');
+        }
+
+        if (state === STATES.SELECTED) {
+            $('#bulkStateFileSelected').show();
+            $('#bulkSelectedFileName').text(data.name);
+            $('#bulkSelectedFileMeta').text('• ' + (data.size / 1024).toFixed(1) + ' KB');
+            $('#bsStep1').addClass('active');
+            $('#bulkImportHeader').css('background', '#060740');
+            $('#bulkStepLabel').text('Step 1 of 3');
+        }
+
+        if (state === STATES.VALIDATING) {
+            $('#bulkStateValidating').show();
+            $('#bsStep1').addClass('done');
+            $('#bsStep2').addClass('active');
+            $('#bulkImportHeader').css('background', '#060740');
+            $('#bulkStepLabel').text('Step 2 of 3');
+        }
+
+        if (state === STATES.ERROR) {
+            $('#bulkStateError').show();
+            $('#bulkErrorFileName').text(data.fileName);
+            $('#bulkErrorBannerTitle').text(data.errors.length + ' error(s) found — kuch bhi save nahi hua');
+            var rows = data.errors.map(function (e) {
+                return '<tr><td>' + e.row + '</td><td class="bulk-err-col">' + esc(e.column) + '</td><td class="bulk-err-msg">' + esc(e.message) + '</td></tr>';
+            }).join('');
+            $('#bulkErrorTableBody').html(rows || '<tr><td colspan="3">No errors</td></tr>');
+            $('#bsStep1').addClass('done');
+            $('#bsStep2').addClass('error');
+            $('#bulkImportHeader').css('background', '#b91c1c');
+            $('#bulkStepLabel').text('Step 2 of 3');
+            lucide.createIcons();
+        }
+
+        if (state === STATES.CONFIRM) {
+            $('#bulkStateConfirm').show();
+            $('#bulkConfirmFileName').text(data.fileName);
+            $('#bsSumMedicines').text(data.summary.medicines);
+            $('#bsSumWithBatch').text(data.summary.with_batch);
+            $('#bsSumNoBatch').text(data.summary.without_batch);
+            $('#bulkConfirmBtnText').text('Confirm Import (' + data.summary.medicines + ' medicines)');
+            var previewRows = (data.preview || []).map(function (r) {
+                var batchBadge = r.has_batch
+                    ? '<span class="bulk-badge-req" style="background:#dcfce7;color:#166534;border-color:#bbf7d0">Yes</span>'
+                    : '<span class="bulk-badge-opt" style="background:#f3f4f6;color:#6b7280;border-color:#e5e7eb">No</span>';
+                return '<tr><td>' + esc(r.medicine_code) + '</td><td>' + esc(r.generic_name) + '</td>'
+                     + '<td>' + esc(r.form) + '</td><td>' + esc(r.category) + '</td>'
+                     + '<td>' + batchBadge + '</td></tr>';
+            }).join('');
+            $('#bulkPreviewTableBody').html(previewRows || '<tr><td colspan="5">No preview</td></tr>');
+            $('#bsStep1').addClass('done');
+            $('#bsStep2').addClass('done');
+            $('#bsStep3').addClass('active');
+            $('#bulkImportHeader').css('background', '#047857');
+            $('#bulkStepLabel').text('Step 3 of 3');
+            lucide.createIcons();
+        }
+
+        if (state === STATES.IMPORTING) {
+            $('#bulkStateImporting').show();
+            $('#bsStep1').addClass('done');
+            $('#bsStep2').addClass('done');
+            $('#bsStep3').addClass('active');
+            $('#bulkImportHeader').css('background', '#047857');
+            $('#bulkStepLabel').text('Step 3 of 3');
+        }
+    }
+
+    function esc(str) {
+        return $('<span>').text(str || '').html();
+    }
+
+    // ── File selection ────────────────────────────────────────────────────────
+
+    function onFileSelected(file) {
+        if (!file) return;
+        var ext = file.name.split('.').pop().toLowerCase();
+        if (ext !== 'xlsx' && ext !== 'csv') {
+            HMS.toast('Sirf .xlsx aur .csv files allowed hain.', 'error');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            HMS.toast('File size 5 MB se zyada hai.', 'error');
+            return;
+        }
+        selectedFile = file;
+        setState(STATES.SELECTED, { name: file.name, size: file.size });
+    }
+
+    $('#bulkBrowseBtn').on('click', function () {
+        $('#bulkFileInput').trigger('click');
+    });
+
+    $('#bulkDropZone').on('click', function (e) {
+        if (!$(e.target).is('#bulkBrowseBtn')) {
+            $('#bulkFileInput').trigger('click');
+        }
+    });
+
+    $('#bulkFileInput').on('change', function () {
+        if (this.files && this.files[0]) {
+            onFileSelected(this.files[0]);
+            // Reset input so same file can be re-selected after re-upload
+            this.value = '';
+        }
+    });
+
+    // Drag & Drop
+    $('#bulkDropZone').on('dragover', function (e) {
+        e.preventDefault();
+        $(this).addClass('drag-over');
+    });
+    $('#bulkDropZone').on('dragleave drop', function (e) {
+        e.preventDefault();
+        $(this).removeClass('drag-over');
+        if (e.type === 'drop' && e.originalEvent.dataTransfer.files.length) {
+            onFileSelected(e.originalEvent.dataTransfer.files[0]);
+        }
+    });
+
+    // Re-upload buttons — all reset to IDLE
+    $('#bulkReuploadBtnSelected, #bulkReuploadBtnError, #bulkReuploadBtnConfirm, #bulkFixReuploadBtn').on('click', function () {
+        setState(STATES.IDLE);
+        $('#bulkFileInput').val('');
+    });
+
+    $('#bulkCancelConfirmBtn').on('click', function () {
+        setState(STATES.IDLE);
+    });
+
+    // ── Validate ──────────────────────────────────────────────────────────────
+
+    $('#bulkValidateBtn').on('click', function () {
+        if (!selectedFile) return;
+        setState(STATES.VALIDATING);
+
+        var formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+
+        $.ajax({
+            url: '/api/pharmacy-bulk-import/validate',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (res) {
+                if (res.valid) {
+                    setState(STATES.CONFIRM, {
+                        fileName: selectedFile.name,
+                        summary: res.summary,
+                        preview: res.preview,
+                    });
+                } else {
+                    setState(STATES.ERROR, {
+                        fileName: selectedFile.name,
+                        errors: res.errors,
+                    });
+                }
+            },
+            error: function (xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.error) || 'Validation request fail ho gayi.';
+                HMS.toast(msg, 'error');
+                setState(STATES.SELECTED, { name: selectedFile.name, size: selectedFile.size });
+            },
+        });
+    });
+
+    // ── Confirm Import ────────────────────────────────────────────────────────
+
+    $('#bulkConfirmImportBtn').on('click', function () {
+        if (!selectedFile) return;
+        setState(STATES.IMPORTING);
+
+        var formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+
+        $.ajax({
+            url: '/api/pharmacy-bulk-import/import',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (res) {
+                var count = res.imported ? res.imported.medicines : 0;
+                var batches = res.imported ? res.imported.batches : 0;
+                HMS.toast(count + ' medicines aur ' + batches + ' batches successfully import ho gaye!', 'success');
+                setState(STATES.IDLE);
+            },
+            error: function (xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.error) || 'Import fail ho gaya.';
+                HMS.toast(msg, 'error');
+                setState(STATES.IDLE);
+            },
+        });
+    });
+
+    // ── Column reference toggle ───────────────────────────────────────────────
+
+    $('#bulkColRefToggle').on('click', function () {
+        var $body = $('#bulkColRefBody');
+        $body.toggleClass('open');
+        $(this).find('i').attr('data-lucide', $body.hasClass('open') ? 'chevron-up' : 'info');
+        lucide.createIcons();
+    });
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+
+    setState(STATES.IDLE);
+
+}());
