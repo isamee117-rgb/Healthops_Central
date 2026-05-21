@@ -195,4 +195,149 @@ class PharmacyBulkImportService
             ], $rows), 0, 10),
         ];
     }
+
+    // ── import ───────────────────────────────────────────────────────────────
+
+    public function import(array $rows): array
+    {
+        $medicineCount = 0;
+        $batchCount = 0;
+
+        \DB::transaction(function () use ($rows, &$medicineCount, &$batchCount) {
+            foreach ($rows as $row) {
+                $medicineId = 'MED-' . \Str::random(9);
+
+                $medicine = \App\Models\Medicine::create([
+                    'medicine_id'        => $medicineId,
+                    'medicine_code'      => trim($row['medicine_code']),
+                    'generic_name'       => trim($row['generic_name']),
+                    'brand_name'         => trim($row['brand_name']),
+                    'strength'           => trim($row['strength'] ?? ''),
+                    'form'               => trim($row['form']),
+                    'category'           => trim($row['category']),
+                    'manufacturer'       => trim($row['manufacturer']),
+                    'purchase_price'     => (float)($row['purchase_price'] ?? 0),
+                    'selling_price'      => (float)($row['selling_price'] ?? 0),
+                    'stock_unit'         => trim($row['stock_unit'] ?? '') ?: 'strips',
+                    'min_stock'          => (int)($row['min_stock'] ?? 0),
+                    'max_stock'          => (int)($row['max_stock'] ?? 0),
+                    'reorder_point'      => (int)($row['reorder_point'] ?? 0),
+                    'eoq'                => (int)($row['eoq'] ?? 0),
+                    'storage_location'   => trim($row['storage_location'] ?? ''),
+                    'storage_conditions' => trim($row['storage_conditions'] ?? ''),
+                    'abc_class'          => trim($row['abc_class'] ?? '') ?: 'C',
+                    'current_stock'      => 0,
+                    'is_active'          => true,
+                ]);
+
+                $medicineCount++;
+
+                if (trim($row['batch_number'] ?? '') !== '') {
+                    $batchId      = 'BAT-' . \Str::random(9);
+                    $qty          = (int)$row['batch_qty'];
+                    $unitPrice    = (float)($row['batch_unit_price'] ?? $row['purchase_price'] ?? 0);
+                    $receivedDate = trim($row['batch_received_date'] ?? '') ?: now()->format('Y-m-d');
+
+                    \App\Models\MedicineBatch::create([
+                        'batch_id'      => $batchId,
+                        'batch_number'  => trim($row['batch_number']),
+                        'medicine_id'   => $medicineId,
+                        'received_date' => $receivedDate,
+                        'expiry_date'   => trim($row['batch_expiry']),
+                        'qty_received'  => $qty,
+                        'current_qty'   => $qty,
+                        'unit_price'    => $unitPrice,
+                        'supplier'      => trim($row['batch_supplier'] ?? ''),
+                        'status'        => 'Active',
+                    ]);
+
+                    \App\Models\StockTransaction::create([
+                        'transaction_id' => 'TXN-' . \Str::random(9),
+                        'medicine_id'    => $medicineId,
+                        'batch_id'       => $batchId,
+                        'type'           => 'import',
+                        'quantity'       => $qty,
+                        'stock_before'   => 0,
+                        'stock_after'    => $qty,
+                        'reason'         => 'Bulk import',
+                        'performed_by'   => 'bulk-import',
+                    ]);
+
+                    $medicine->update(['current_stock' => $qty]);
+                    $batchCount++;
+                }
+            }
+        });
+
+        return ['medicines' => $medicineCount, 'batches' => $batchCount];
+    }
+
+    // ── generateTemplate ─────────────────────────────────────────────────────
+
+    public function generateTemplate(string $format = 'xlsx'): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $headers = [
+            'medicine_code', 'generic_name', 'brand_name', 'strength', 'form',
+            'category', 'manufacturer', 'purchase_price', 'selling_price',
+            'stock_unit', 'min_stock', 'max_stock', 'reorder_point', 'eoq',
+            'storage_location', 'storage_conditions', 'abc_class',
+            'batch_number', 'batch_expiry', 'batch_qty', 'batch_unit_price',
+            'batch_supplier', 'batch_received_date',
+        ];
+
+        $samples = [
+            ['MED-001','Paracetamol','Panadol','500mg','Tablet','Analgesic','GSK',
+             45.00, 60.00, 'strips', 50, 500, 100, 200, 'Shelf A1', 'Room temp', 'C',
+             'BT-2026-001', '2026-12-31', 200, 45.00, 'GSK Pharma', date('Y-m-d')],
+            ['MED-002','Amoxicillin','Amoxil','250mg','Capsule','Antibiotic','Pfizer',
+             80.00, 110.00, 'strips', 30, 300, 80, 150, 'Shelf B2', 'Room temp', 'B',
+             'BT-2026-002', '2026-10-15', 100, 80.00, 'Pfizer Dist', date('Y-m-d')],
+            ['MED-003','Metformin','Glucophage','500mg','Tablet','Antidiabetic','Merck',
+             30.00, 45.00, 'strips', 100, 1000, 200, 400, 'Shelf A3', 'Room temp', 'A',
+             '', '', '', '', '', ''],
+        ];
+
+        if ($format === 'csv') {
+            return response()->streamDownload(function () use ($headers, $samples) {
+                $out = fopen('php://output', 'w');
+                fputcsv($out, $headers);
+                foreach ($samples as $row) {
+                    fputcsv($out, $row);
+                }
+                fclose($out);
+            }, 'pharmacy_inventory_template.csv', ['Content-Type' => 'text/csv']);
+        }
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Medicines');
+
+        foreach ($headers as $colIdx => $header) {
+            $cell = $sheet->getCellByColumnAndRow($colIdx + 1, 1);
+            $cell->setValue($header);
+            $cell->getStyle()->getFont()->setBold(true);
+            $cell->getStyle()->getFill()
+                 ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                 ->getStartColor()->setARGB('FF060740');
+            $cell->getStyle()->getFont()->getColor()->setARGB('FFFFFFFF');
+        }
+
+        foreach ($samples as $rowIdx => $row) {
+            foreach ($row as $colIdx => $value) {
+                $sheet->getCellByColumnAndRow($colIdx + 1, $rowIdx + 2)->setValue($value);
+            }
+        }
+
+        foreach (range(1, count($headers)) as $colIdx) {
+            $sheet->getColumnDimensionByColumn($colIdx)->setAutoSize(true);
+        }
+
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, 'pharmacy_inventory_template.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
 }

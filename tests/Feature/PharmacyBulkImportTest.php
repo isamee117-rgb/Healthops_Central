@@ -264,4 +264,103 @@ class PharmacyBulkImportTest extends TestCase
         $this->assertEquals(1, $result['summary']['with_batch']);
         $this->assertEquals(0, $result['summary']['without_batch']);
     }
+
+    // ── import() tests ───────────────────────────────────────────────────────
+
+    #[Test]
+    public function import_creates_medicine_without_batch(): void
+    {
+        $rows = [[
+            'medicine_code' => 'MED-001', 'generic_name' => 'Paracetamol',
+            'brand_name' => 'Panadol', 'form' => 'Tablet', 'category' => 'Analgesic',
+            'manufacturer' => 'GSK', 'purchase_price' => '45.00', 'selling_price' => '60.00',
+            'strength' => '500mg', 'stock_unit' => 'strips', 'min_stock' => '50',
+            'max_stock' => '500', 'reorder_point' => '100', 'eoq' => '200',
+            'storage_location' => '', 'storage_conditions' => '', 'abc_class' => 'B',
+            'batch_number' => '', 'batch_expiry' => '', 'batch_qty' => '',
+            'batch_unit_price' => '', 'batch_supplier' => '', 'batch_received_date' => '',
+        ]];
+
+        $result = $this->service->import($rows);
+
+        $this->assertEquals(1, $result['medicines']);
+        $this->assertEquals(0, $result['batches']);
+        $this->assertDatabaseHas('medicines', [
+            'medicine_code' => 'MED-001',
+            'generic_name'  => 'Paracetamol',
+            'brand_name'    => 'Panadol',
+            'current_stock' => 0,
+            'abc_class'     => 'B',
+        ]);
+    }
+
+    #[Test]
+    public function import_creates_medicine_with_batch_and_stock_transaction(): void
+    {
+        $rows = [[
+            'medicine_code' => 'MED-002', 'generic_name' => 'Amoxicillin',
+            'brand_name' => 'Amoxil', 'form' => 'Capsule', 'category' => 'Antibiotic',
+            'manufacturer' => 'Pfizer', 'purchase_price' => '80.00', 'selling_price' => '110.00',
+            'strength' => '250mg', 'stock_unit' => 'strips', 'min_stock' => '30',
+            'max_stock' => '300', 'reorder_point' => '80', 'eoq' => '150',
+            'storage_location' => '', 'storage_conditions' => '', 'abc_class' => 'C',
+            'batch_number' => 'BT-001', 'batch_expiry' => '2026-12-31',
+            'batch_qty' => '200', 'batch_unit_price' => '80.00',
+            'batch_supplier' => 'Pfizer Dist', 'batch_received_date' => '2026-05-20',
+        ]];
+
+        $result = $this->service->import($rows);
+
+        $this->assertEquals(1, $result['medicines']);
+        $this->assertEquals(1, $result['batches']);
+
+        $this->assertDatabaseHas('medicines', [
+            'medicine_code' => 'MED-002',
+            'current_stock' => 200,
+        ]);
+        $this->assertDatabaseHas('medicine_batches', [
+            'batch_number' => 'BT-001',
+            'qty_received' => 200,
+            'current_qty'  => 200,
+        ]);
+        $this->assertDatabaseHas('stock_transactions', [
+            'type'         => 'import',
+            'quantity'     => 200,
+            'stock_before' => 0,
+            'stock_after'  => 200,
+        ]);
+    }
+
+    #[Test]
+    public function import_creates_multiple_medicines_atomically(): void
+    {
+        $rows = [
+            [
+                'medicine_code' => 'MED-A', 'generic_name' => 'DrugA',
+                'brand_name' => 'BrandA', 'form' => 'Tablet', 'category' => 'Cat',
+                'manufacturer' => 'Mfr', 'purchase_price' => '10', 'selling_price' => '15',
+                'strength' => '', 'stock_unit' => '', 'min_stock' => '', 'max_stock' => '',
+                'reorder_point' => '', 'eoq' => '', 'storage_location' => '',
+                'storage_conditions' => '', 'abc_class' => '',
+                'batch_number' => '', 'batch_expiry' => '', 'batch_qty' => '',
+                'batch_unit_price' => '', 'batch_supplier' => '', 'batch_received_date' => '',
+            ],
+            [
+                'medicine_code' => 'MED-B', 'generic_name' => 'DrugB',
+                'brand_name' => 'BrandB', 'form' => 'Syrup', 'category' => 'Cat',
+                'manufacturer' => 'Mfr', 'purchase_price' => '20', 'selling_price' => '30',
+                'strength' => '', 'stock_unit' => '', 'min_stock' => '', 'max_stock' => '',
+                'reorder_point' => '', 'eoq' => '', 'storage_location' => '',
+                'storage_conditions' => '', 'abc_class' => '',
+                'batch_number' => '', 'batch_expiry' => '', 'batch_qty' => '',
+                'batch_unit_price' => '', 'batch_supplier' => '', 'batch_received_date' => '',
+            ],
+        ];
+
+        $result = $this->service->import($rows);
+
+        $this->assertEquals(2, $result['medicines']);
+        $this->assertDatabaseHas('medicines', ['medicine_code' => 'MED-A']);
+        $this->assertDatabaseHas('medicines', ['medicine_code' => 'MED-B']);
+    }
 }
