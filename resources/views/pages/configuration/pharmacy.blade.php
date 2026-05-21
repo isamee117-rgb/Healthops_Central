@@ -136,11 +136,11 @@
                 </div>
 
                 <div class="bulk-action-row" style="margin-top:12px">
-                    <a class="bulk-template-btn" id="bulkTemplateXlsx" href="/api/pharmacy-bulk-import/template" target="_blank">
+                    <a class="bulk-template-btn" id="bulkTemplateXlsx" href="{{ url('/api/pharmacy-bulk-import/template') }}" target="_blank">
                         <i data-lucide="download" style="width:14px;height:14px"></i>
                         Template Download (Excel)
                     </a>
-                    <a class="bulk-template-btn" id="bulkTemplateCsv" href="/api/pharmacy-bulk-import/template?format=csv" target="_blank">
+                    <a class="bulk-template-btn" id="bulkTemplateCsv" href="{{ url('/api/pharmacy-bulk-import/template?format=csv') }}" target="_blank">
                         <i data-lucide="download" style="width:14px;height:14px"></i>
                         Template Download (CSV)
                     </a>
