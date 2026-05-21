@@ -26,6 +26,9 @@ class PharmacyBulkImportService
     public function parse(UploadedFile $file): array
     {
         $ext = strtolower($file->getClientOriginalExtension());
+        if (!in_array($ext, ['csv', 'xlsx'])) {
+            throw new \InvalidArgumentException("Unsupported file type: .{$ext}. Only .xlsx and .csv are accepted.");
+        }
         return $ext === 'csv'
             ? $this->parseCsv($file->getRealPath())
             : $this->parseXlsx($file->getRealPath());
@@ -89,6 +92,15 @@ class PharmacyBulkImportService
         $errors = [];
         $seenCodes = [];
 
+        $codes = array_filter(
+            array_column($rows, 'medicine_code'),
+            fn($c) => trim($c) !== ''
+        );
+        $existingCodes = Medicine::whereIn('medicine_code', array_unique(array_values($codes)))
+            ->pluck('medicine_code')
+            ->flip()
+            ->all();
+
         foreach ($rows as $idx => $row) {
             $rowNum = $idx + 2;
 
@@ -111,7 +123,7 @@ class PharmacyBulkImportService
                 }
             }
 
-            if ($code !== '' && Medicine::where('medicine_code', $code)->exists()) {
+            if ($code !== '' && isset($existingCodes[$code])) {
                 $errors[] = [
                     'row'     => $rowNum,
                     'column'  => 'medicine_code',
@@ -138,7 +150,7 @@ class PharmacyBulkImportService
             if ($filledCount > 0 && $filledCount < 3) {
                 $errors[] = [
                     'row'     => $rowNum,
-                    'column'  => 'batch_number',
+                    'column'  => 'batch',
                     'message' => 'batch_number, batch_expiry, and batch_qty must all be provided together',
                 ];
             }
@@ -151,7 +163,7 @@ class PharmacyBulkImportService
                     if (!$parsed || $parsed->format('Y-m-d') !== $val) {
                         throw new \Exception();
                     }
-                } catch (\Exception) {
+                } catch (\Throwable) {
                     $errors[] = [
                         'row'     => $rowNum,
                         'column'  => $dateCol,

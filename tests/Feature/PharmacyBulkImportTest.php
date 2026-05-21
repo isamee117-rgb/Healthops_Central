@@ -2,7 +2,6 @@
 namespace Tests\Feature;
 
 use App\Models\Medicine;
-use App\Models\User;
 use App\Services\PharmacyBulkImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -14,13 +13,11 @@ class PharmacyBulkImportTest extends TestCase
     use RefreshDatabase;
 
     private PharmacyBulkImportService $service;
-    private User $admin;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->service = new PharmacyBulkImportService();
-        $this->admin = User::factory()->create(['role' => 'superadmin', 'is_active' => true]);
     }
 
     private function makeCsvFile(string $content, string $name = 'test.csv'): UploadedFile
