@@ -1,0 +1,270 @@
+<?php
+namespace Tests\Feature;
+
+use App\Models\Medicine;
+use App\Models\User;
+use App\Services\PharmacyBulkImportService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
+
+class PharmacyBulkImportTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private PharmacyBulkImportService $service;
+    private User $admin;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->service = new PharmacyBulkImportService();
+        $this->admin = User::factory()->create(['role' => 'superadmin', 'is_active' => true]);
+    }
+
+    private function makeCsvFile(string $content, string $name = 'test.csv'): UploadedFile
+    {
+        $path = sys_get_temp_dir() . '/' . $name;
+        file_put_contents($path, $content);
+        return new UploadedFile($path, $name, 'text/csv', null, true);
+    }
+
+    private function validCsvRow(array $overrides = []): string
+    {
+        $row = array_merge([
+            'medicine_code' => 'MED-001',
+            'generic_name'  => 'Paracetamol',
+            'brand_name'    => 'Panadol',
+            'form'          => 'Tablet',
+            'category'      => 'Analgesic',
+            'manufacturer'  => 'GSK',
+            'purchase_price' => '45.00',
+            'selling_price'  => '60.00',
+            'strength'       => '500mg',
+            'stock_unit'     => 'strips',
+            'min_stock'      => '50',
+            'max_stock'      => '500',
+            'reorder_point'  => '100',
+            'eoq'            => '200',
+            'storage_location'   => '',
+            'storage_conditions' => '',
+            'abc_class'          => 'C',
+            'batch_number'       => '',
+            'batch_expiry'       => '',
+            'batch_qty'          => '',
+            'batch_unit_price'   => '',
+            'batch_supplier'     => '',
+            'batch_received_date' => '',
+        ], $overrides);
+
+        return implode(',', array_values($row));
+    }
+
+    private function csvHeaders(): string
+    {
+        return 'medicine_code,generic_name,brand_name,form,category,manufacturer,'
+             . 'purchase_price,selling_price,strength,stock_unit,min_stock,max_stock,'
+             . 'reorder_point,eoq,storage_location,storage_conditions,abc_class,'
+             . 'batch_number,batch_expiry,batch_qty,batch_unit_price,batch_supplier,batch_received_date';
+    }
+
+    // ── parse() tests ────────────────────────────────────────────────────────
+
+    #[Test]
+    public function parse_csv_returns_array_of_rows(): void
+    {
+        $csv = $this->csvHeaders() . "\n" . $this->validCsvRow();
+        $file = $this->makeCsvFile($csv);
+
+        $rows = $this->service->parse($file);
+
+        $this->assertCount(1, $rows);
+        $this->assertEquals('MED-001', $rows[0]['medicine_code']);
+        $this->assertEquals('Paracetamol', $rows[0]['generic_name']);
+    }
+
+    #[Test]
+    public function parse_csv_skips_blank_rows(): void
+    {
+        $csv = $this->csvHeaders() . "\n"
+             . $this->validCsvRow() . "\n"
+             . "\n"   // blank row
+             . $this->validCsvRow(['medicine_code' => 'MED-002', 'generic_name' => 'Amoxicillin']);
+        $file = $this->makeCsvFile($csv);
+
+        $rows = $this->service->parse($file);
+
+        $this->assertCount(2, $rows);
+    }
+
+    // ── validate() tests ─────────────────────────────────────────────────────
+
+    #[Test]
+    public function validate_passes_for_valid_data(): void
+    {
+        $rows = [
+            [
+                'medicine_code' => 'MED-001', 'generic_name' => 'Paracetamol',
+                'brand_name' => 'Panadol', 'form' => 'Tablet', 'category' => 'Analgesic',
+                'manufacturer' => 'GSK', 'purchase_price' => '45.00', 'selling_price' => '60.00',
+                'strength' => '', 'stock_unit' => 'strips', 'min_stock' => '0',
+                'max_stock' => '0', 'reorder_point' => '0', 'eoq' => '0',
+                'storage_location' => '', 'storage_conditions' => '', 'abc_class' => 'C',
+                'batch_number' => '', 'batch_expiry' => '', 'batch_qty' => '',
+                'batch_unit_price' => '', 'batch_supplier' => '', 'batch_received_date' => '',
+            ],
+        ];
+
+        $result = $this->service->validate($rows);
+
+        $this->assertTrue($result['valid']);
+        $this->assertEmpty($result['errors']);
+        $this->assertEquals(1, $result['summary']['medicines']);
+        $this->assertEquals(0, $result['summary']['with_batch']);
+        $this->assertEquals(1, $result['summary']['without_batch']);
+    }
+
+    #[Test]
+    public function validate_fails_when_required_field_is_empty(): void
+    {
+        $rows = [
+            [
+                'medicine_code' => 'MED-001', 'generic_name' => '',  // empty!
+                'brand_name' => 'Panadol', 'form' => 'Tablet', 'category' => 'Analgesic',
+                'manufacturer' => 'GSK', 'purchase_price' => '45.00', 'selling_price' => '60.00',
+                'strength' => '', 'stock_unit' => '', 'min_stock' => '', 'max_stock' => '',
+                'reorder_point' => '', 'eoq' => '', 'storage_location' => '',
+                'storage_conditions' => '', 'abc_class' => '',
+                'batch_number' => '', 'batch_expiry' => '', 'batch_qty' => '',
+                'batch_unit_price' => '', 'batch_supplier' => '', 'batch_received_date' => '',
+            ],
+        ];
+
+        $result = $this->service->validate($rows);
+
+        $this->assertFalse($result['valid']);
+        $this->assertCount(1, $result['errors']);
+        $this->assertEquals(2, $result['errors'][0]['row']);
+        $this->assertEquals('generic_name', $result['errors'][0]['column']);
+        $this->assertEquals('Required field is empty', $result['errors'][0]['message']);
+    }
+
+    #[Test]
+    public function validate_fails_when_medicine_code_already_exists_in_db(): void
+    {
+        Medicine::create([
+            'medicine_id'    => 'MED-EXISTING',
+            'medicine_code'  => 'MED-001',
+            'generic_name'   => 'Existing Drug',
+            'brand_name'     => 'ExBrand',
+            'form'           => 'Tablet',
+            'category'       => 'X',
+            'manufacturer'   => 'X',
+            'purchase_price' => 10,
+            'selling_price'  => 15,
+        ]);
+
+        $rows = [[
+            'medicine_code' => 'MED-001', 'generic_name' => 'Paracetamol',
+            'brand_name' => 'Panadol', 'form' => 'Tablet', 'category' => 'Analgesic',
+            'manufacturer' => 'GSK', 'purchase_price' => '45.00', 'selling_price' => '60.00',
+            'strength' => '', 'stock_unit' => '', 'min_stock' => '', 'max_stock' => '',
+            'reorder_point' => '', 'eoq' => '', 'storage_location' => '',
+            'storage_conditions' => '', 'abc_class' => '',
+            'batch_number' => '', 'batch_expiry' => '', 'batch_qty' => '',
+            'batch_unit_price' => '', 'batch_supplier' => '', 'batch_received_date' => '',
+        ]];
+
+        $result = $this->service->validate($rows);
+
+        $this->assertFalse($result['valid']);
+        $this->assertEquals('medicine_code', $result['errors'][0]['column']);
+        $this->assertStringContainsString('already exists in database', $result['errors'][0]['message']);
+    }
+
+    #[Test]
+    public function validate_fails_when_medicine_code_duplicated_within_file(): void
+    {
+        $row = [
+            'medicine_code' => 'MED-001', 'generic_name' => 'Paracetamol',
+            'brand_name' => 'Panadol', 'form' => 'Tablet', 'category' => 'Analgesic',
+            'manufacturer' => 'GSK', 'purchase_price' => '45.00', 'selling_price' => '60.00',
+            'strength' => '', 'stock_unit' => '', 'min_stock' => '', 'max_stock' => '',
+            'reorder_point' => '', 'eoq' => '', 'storage_location' => '',
+            'storage_conditions' => '', 'abc_class' => '',
+            'batch_number' => '', 'batch_expiry' => '', 'batch_qty' => '',
+            'batch_unit_price' => '', 'batch_supplier' => '', 'batch_received_date' => '',
+        ];
+
+        $result = $this->service->validate([$row, $row]); // same row twice
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('Duplicate within file', $result['errors'][0]['message']);
+    }
+
+    #[Test]
+    public function validate_fails_when_batch_columns_partially_filled(): void
+    {
+        $rows = [[
+            'medicine_code' => 'MED-001', 'generic_name' => 'Paracetamol',
+            'brand_name' => 'Panadol', 'form' => 'Tablet', 'category' => 'Analgesic',
+            'manufacturer' => 'GSK', 'purchase_price' => '45.00', 'selling_price' => '60.00',
+            'strength' => '', 'stock_unit' => '', 'min_stock' => '', 'max_stock' => '',
+            'reorder_point' => '', 'eoq' => '', 'storage_location' => '',
+            'storage_conditions' => '', 'abc_class' => '',
+            'batch_number' => 'BT-001', 'batch_expiry' => '', // missing batch_qty!
+            'batch_qty' => '', 'batch_unit_price' => '', 'batch_supplier' => '',
+            'batch_received_date' => '',
+        ]];
+
+        $result = $this->service->validate($rows);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('batch_number, batch_expiry, and batch_qty', $result['errors'][0]['message']);
+    }
+
+    #[Test]
+    public function validate_fails_when_batch_expiry_format_is_wrong(): void
+    {
+        $rows = [[
+            'medicine_code' => 'MED-001', 'generic_name' => 'Paracetamol',
+            'brand_name' => 'Panadol', 'form' => 'Tablet', 'category' => 'Analgesic',
+            'manufacturer' => 'GSK', 'purchase_price' => '45.00', 'selling_price' => '60.00',
+            'strength' => '', 'stock_unit' => '', 'min_stock' => '', 'max_stock' => '',
+            'reorder_point' => '', 'eoq' => '', 'storage_location' => '',
+            'storage_conditions' => '', 'abc_class' => '',
+            'batch_number' => 'BT-001', 'batch_expiry' => '31/12/2026', // wrong format
+            'batch_qty' => '100', 'batch_unit_price' => '', 'batch_supplier' => '',
+            'batch_received_date' => '',
+        ]];
+
+        $result = $this->service->validate($rows);
+
+        $this->assertFalse($result['valid']);
+        $this->assertEquals('batch_expiry', $result['errors'][0]['column']);
+        $this->assertStringContainsString('Invalid date format', $result['errors'][0]['message']);
+    }
+
+    #[Test]
+    public function validate_passes_with_valid_batch_columns(): void
+    {
+        $rows = [[
+            'medicine_code' => 'MED-001', 'generic_name' => 'Paracetamol',
+            'brand_name' => 'Panadol', 'form' => 'Tablet', 'category' => 'Analgesic',
+            'manufacturer' => 'GSK', 'purchase_price' => '45.00', 'selling_price' => '60.00',
+            'strength' => '', 'stock_unit' => '', 'min_stock' => '', 'max_stock' => '',
+            'reorder_point' => '', 'eoq' => '', 'storage_location' => '',
+            'storage_conditions' => '', 'abc_class' => '',
+            'batch_number' => 'BT-001', 'batch_expiry' => '2026-12-31',
+            'batch_qty' => '100', 'batch_unit_price' => '45.00', 'batch_supplier' => 'GSK',
+            'batch_received_date' => '2026-05-20',
+        ]];
+
+        $result = $this->service->validate($rows);
+
+        $this->assertTrue($result['valid']);
+        $this->assertEquals(1, $result['summary']['with_batch']);
+        $this->assertEquals(0, $result['summary']['without_batch']);
+    }
+}
