@@ -2,6 +2,7 @@
 namespace Tests\Feature;
 
 use App\Models\Medicine;
+use App\Models\User;
 use App\Services\PharmacyBulkImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -13,11 +14,13 @@ class PharmacyBulkImportTest extends TestCase
     use RefreshDatabase;
 
     private PharmacyBulkImportService $service;
+    private User $admin;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->service = new PharmacyBulkImportService();
+        $this->admin = User::factory()->create(['role' => 'superadmin', 'is_active' => true]);
     }
 
     private function makeCsvFile(string $content, string $name = 'test.csv'): UploadedFile
@@ -364,5 +367,104 @@ class PharmacyBulkImportTest extends TestCase
         $this->assertEquals(2, $result['medicines']);
         $this->assertDatabaseHas('medicines', ['medicine_code' => 'MED-A']);
         $this->assertDatabaseHas('medicines', ['medicine_code' => 'MED-B']);
+    }
+
+    // ── HTTP endpoint tests ──────────────────────────────────────────────────
+
+    #[Test]
+    public function validate_endpoint_rejects_missing_file(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->postJson('/api/pharmacy-bulk-import/validate', []);
+
+        $response->assertUnprocessable();
+    }
+
+    #[Test]
+    public function validate_endpoint_rejects_wrong_extension(): void
+    {
+        $file = UploadedFile::fake()->create('import.txt', 10, 'text/plain');
+
+        $response = $this->actingAs($this->admin)
+            ->postJson('/api/pharmacy-bulk-import/validate', ['file' => $file]);
+
+        $response->assertUnprocessable();
+    }
+
+    #[Test]
+    public function validate_endpoint_returns_errors_for_invalid_csv(): void
+    {
+        $csv = $this->csvHeaders() . "\n" . $this->validCsvRow(['generic_name' => '']);
+        $file = $this->makeCsvFile($csv);
+
+        $response = $this->actingAs($this->admin)
+            ->postJson('/api/pharmacy-bulk-import/validate', ['file' => $file]);
+
+        $response->assertOk()
+            ->assertJsonPath('valid', false)
+            ->assertJsonStructure(['valid', 'errors' => [['row', 'column', 'message']]]);
+    }
+
+    #[Test]
+    public function validate_endpoint_returns_summary_for_valid_csv(): void
+    {
+        $csv = $this->csvHeaders() . "\n" . $this->validCsvRow();
+        $file = $this->makeCsvFile($csv);
+
+        $response = $this->actingAs($this->admin)
+            ->postJson('/api/pharmacy-bulk-import/validate', ['file' => $file]);
+
+        $response->assertOk()
+            ->assertJsonPath('valid', true)
+            ->assertJsonStructure(['valid', 'summary' => ['medicines', 'with_batch', 'without_batch'], 'preview']);
+    }
+
+    #[Test]
+    public function import_endpoint_creates_medicines(): void
+    {
+        $csv = $this->csvHeaders() . "\n" . $this->validCsvRow();
+        $file = $this->makeCsvFile($csv, 'import.csv');
+
+        $response = $this->actingAs($this->admin)
+            ->postJson('/api/pharmacy-bulk-import/import', ['file' => $file]);
+
+        $response->assertOk()
+            ->assertJsonPath('imported.medicines', 1)
+            ->assertJsonPath('imported.batches', 0);
+
+        $this->assertDatabaseHas('medicines', ['medicine_code' => 'MED-001']);
+    }
+
+    #[Test]
+    public function import_endpoint_rejects_invalid_file(): void
+    {
+        $csv = $this->csvHeaders() . "\n" . $this->validCsvRow(['selling_price' => 'not-a-number']);
+        $file = $this->makeCsvFile($csv, 'bad.csv');
+
+        $response = $this->actingAs($this->admin)
+            ->postJson('/api/pharmacy-bulk-import/import', ['file' => $file]);
+
+        $response->assertStatus(422);
+        $this->assertDatabaseMissing('medicines', ['medicine_code' => 'MED-001']);
+    }
+
+    #[Test]
+    public function template_endpoint_returns_xlsx_download(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->get('/api/pharmacy-bulk-import/template');
+
+        $response->assertOk()
+            ->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+
+    #[Test]
+    public function template_endpoint_returns_csv_download(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->get('/api/pharmacy-bulk-import/template?format=csv');
+
+        $response->assertOk()
+            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
     }
 }

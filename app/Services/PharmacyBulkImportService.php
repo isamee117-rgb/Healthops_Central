@@ -75,7 +75,8 @@ class PharmacyBulkImportService
             }
             $row = [];
             foreach ($headers as $colIdx => $header) {
-                $cell = $sheet->getCellByColumnAndRow($colIdx + 1, $i + 1);
+                $coord = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx + 1) . ($i + 1);
+                $cell = $sheet->getCell($coord);
                 $value = '';
                 if (in_array($header, ['batch_expiry', 'batch_received_date'])
                     && is_numeric($cell->getValue())
@@ -311,7 +312,7 @@ class PharmacyBulkImportService
                     fputcsv($out, $row);
                 }
                 fclose($out);
-            }, 'pharmacy_inventory_template.csv', ['Content-Type' => 'text/csv']);
+            }, 'pharmacy_inventory_template.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
         }
 
         $spreadsheet = new Spreadsheet();
@@ -319,7 +320,8 @@ class PharmacyBulkImportService
         $sheet->setTitle('Medicines');
 
         foreach ($headers as $colIdx => $header) {
-            $cell = $sheet->getCellByColumnAndRow($colIdx + 1, 1);
+            $coord = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx + 1) . '1';
+            $cell = $sheet->getCell($coord);
             $cell->setValue($header);
             $cell->getStyle()->getFont()->setBold(true);
             $cell->getStyle()->getFill()
@@ -329,13 +331,16 @@ class PharmacyBulkImportService
         }
 
         foreach ($samples as $rowIdx => $row) {
+            $rowNum = $rowIdx + 2;
             foreach ($row as $colIdx => $value) {
-                $sheet->getCellByColumnAndRow($colIdx + 1, $rowIdx + 2)->setValue($value);
+                $coord = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx + 1) . $rowNum;
+                $sheet->getCell($coord)->setValue($value);
             }
         }
 
         foreach (range(1, count($headers)) as $colIdx) {
-            $sheet->getColumnDimensionByColumn($colIdx)->setAutoSize(true);
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
+            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
         }
 
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');

@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\PharmacyBillingController;
 use App\Http\Controllers\Api\MedicationOrderController;
 use App\Http\Controllers\Api\DispensingController;
 use App\Http\Controllers\Api\ReturnsExpiryController;
+use App\Http\Controllers\Api\VendorController;
 use App\Http\Controllers\Api\LaboratoryController;
 use App\Http\Controllers\Api\LaboratoryBillingController;
 use App\Http\Controllers\Api\UserController;
@@ -35,6 +36,7 @@ use App\Http\Controllers\Api\FinanceConfigController;
 use App\Http\Controllers\Api\FinanceNumberSeriesController;
 use App\Http\Controllers\Api\OpdConfigController;
 use App\Http\Controllers\Api\PharmacyConfigController;
+use App\Http\Controllers\Api\PharmacyBulkImportController;
 use App\Http\Controllers\Api\OpdNumberSeriesController;
 use App\Http\Controllers\Api\IpdNumberSeriesController;
 use App\Http\Controllers\Api\OpdVitalFieldController;
@@ -213,6 +215,12 @@ Route::get('/stock-alerts/purchase-orders/{poId}', [StockAlertController::class,
 Route::post('/stock-alerts/purchase-orders', [StockAlertController::class, 'createPurchaseOrder']);
 Route::post('/stock-alerts/grn', [StockAlertController::class, 'createGRN']);
 Route::post('/stock-alerts/dispose', [StockAlertController::class, 'dispose']);
+
+Route::get('/vendors', [VendorController::class, 'index']);
+Route::post('/vendors', [VendorController::class, 'store']);
+Route::put('/vendors/{id}', [VendorController::class, 'update']);
+Route::patch('/vendors/{id}/toggle', [VendorController::class, 'toggleStatus']);
+Route::delete('/vendors/{id}', [VendorController::class, 'destroy']);
 
 Route::get('/pharmacy-billing/dashboard', [PharmacyBillingController::class, 'dashboard']);
 Route::get('/pharmacy-billing/revenue', [PharmacyBillingController::class, 'revenueBreakdown']);
@@ -401,6 +409,10 @@ Route::get('/pharmacy-config/{category}', [PharmacyConfigController::class, 'lis
 Route::post('/pharmacy-config', [PharmacyConfigController::class, 'store']);
 Route::put('/pharmacy-config/{id}', [PharmacyConfigController::class, 'update']);
 Route::delete('/pharmacy-config/{id}', [PharmacyConfigController::class, 'destroy']);
+
+Route::get('/pharmacy-bulk-import/template', [PharmacyBulkImportController::class, 'template']);
+Route::post('/pharmacy-bulk-import/validate', [PharmacyBulkImportController::class, 'validate']);
+Route::post('/pharmacy-bulk-import/import',   [PharmacyBulkImportController::class, 'import']);
 
 Route::get('/opd-number-series', [OpdNumberSeriesController::class, 'index']);
 Route::put('/opd-number-series/{seriesKey}', [OpdNumberSeriesController::class, 'update']);
