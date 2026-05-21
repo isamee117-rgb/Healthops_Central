@@ -292,6 +292,8 @@ class PharmacyBulkImportTest extends TestCase
             'current_stock' => 0,
             'abc_class'     => 'B',
         ]);
+        $this->assertDatabaseCount('medicine_batches', 0);
+        $this->assertDatabaseCount('stock_transactions', 0);
     }
 
     #[Test]
@@ -332,7 +334,7 @@ class PharmacyBulkImportTest extends TestCase
     }
 
     #[Test]
-    public function import_creates_multiple_medicines_atomically(): void
+    public function import_creates_multiple_medicines(): void
     {
         $rows = [
             [

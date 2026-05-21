@@ -2,11 +2,17 @@
 namespace App\Services;
 
 use App\Models\Medicine;
+use App\Models\MedicineBatch;
+use App\Models\StockTransaction;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use League\Csv\Reader;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date as XlsDate;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class PharmacyBulkImportService
 {
@@ -203,11 +209,11 @@ class PharmacyBulkImportService
         $medicineCount = 0;
         $batchCount = 0;
 
-        \DB::transaction(function () use ($rows, &$medicineCount, &$batchCount) {
+        DB::transaction(function () use ($rows, &$medicineCount, &$batchCount) {
             foreach ($rows as $row) {
-                $medicineId = 'MED-' . \Str::random(9);
+                $medicineId = 'MED-' . Str::random(9);
 
-                $medicine = \App\Models\Medicine::create([
+                $medicine = Medicine::create([
                     'medicine_id'        => $medicineId,
                     'medicine_code'      => trim($row['medicine_code']),
                     'generic_name'       => trim($row['generic_name']),
@@ -233,12 +239,12 @@ class PharmacyBulkImportService
                 $medicineCount++;
 
                 if (trim($row['batch_number'] ?? '') !== '') {
-                    $batchId      = 'BAT-' . \Str::random(9);
+                    $batchId      = 'BAT-' . Str::random(9);
                     $qty          = (int)$row['batch_qty'];
                     $unitPrice    = (float)($row['batch_unit_price'] ?? $row['purchase_price'] ?? 0);
                     $receivedDate = trim($row['batch_received_date'] ?? '') ?: now()->format('Y-m-d');
 
-                    \App\Models\MedicineBatch::create([
+                    MedicineBatch::create([
                         'batch_id'      => $batchId,
                         'batch_number'  => trim($row['batch_number']),
                         'medicine_id'   => $medicineId,
@@ -251,8 +257,8 @@ class PharmacyBulkImportService
                         'status'        => 'Active',
                     ]);
 
-                    \App\Models\StockTransaction::create([
-                        'transaction_id' => 'TXN-' . \Str::random(9),
+                    StockTransaction::create([
+                        'transaction_id' => 'TXN-' . Str::random(9),
                         'medicine_id'    => $medicineId,
                         'batch_id'       => $batchId,
                         'type'           => 'import',
@@ -308,7 +314,7 @@ class PharmacyBulkImportService
             }, 'pharmacy_inventory_template.csv', ['Content-Type' => 'text/csv']);
         }
 
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Medicines');
 
@@ -317,7 +323,7 @@ class PharmacyBulkImportService
             $cell->setValue($header);
             $cell->getStyle()->getFont()->setBold(true);
             $cell->getStyle()->getFill()
-                 ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                 ->setFillType(Fill::FILL_SOLID)
                  ->getStartColor()->setARGB('FF060740');
             $cell->getStyle()->getFont()->getColor()->setARGB('FFFFFFFF');
         }
@@ -332,7 +338,7 @@ class PharmacyBulkImportService
             $sheet->getColumnDimensionByColumn($colIdx)->setAutoSize(true);
         }
 
-        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
 
         return response()->streamDownload(function () use ($writer) {
             $writer->save('php://output');
