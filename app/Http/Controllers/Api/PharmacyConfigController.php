@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class PharmacyConfigController extends Controller
 {
-    const CATEGORIES = ['rx_unit', 'rx_route', 'rx_frequency'];
+    const CATEGORIES = ['rx_unit', 'rx_route', 'rx_frequency', 'medicine_category'];
     const DEPT_ROUTING_DEPTS = ['IPD', 'ER'];
 
     const DEFAULTS = [
@@ -48,6 +48,34 @@ class PharmacyConfigController extends Controller
             ['name' => 'Q6H (Every 6 Hours)',     'value' => 4],
             ['name' => 'Q8H (Every 8 Hours)',     'value' => 3],
             ['name' => 'Stat (Immediately)',      'value' => 1],
+        ],
+        'medicine_category' => [
+            ['name' => 'Amoebicides',                        'value' => null],
+            ['name' => 'Anaesthetic & Adjuvant',             'value' => null],
+            ['name' => 'Analgesics & Antipyretics',          'value' => null],
+            ['name' => 'Anthelmintic Drugs',                 'value' => null],
+            ['name' => 'Anti Fungal Drugs',                  'value' => null],
+            ['name' => 'Anti Histamines/Anti Allergic',      'value' => null],
+            ['name' => 'Anti Infective Drugs',               'value' => null],
+            ['name' => 'Anti Malarial Drugs',                'value' => null],
+            ['name' => 'Anti Viral Drugs',                   'value' => null],
+            ['name' => 'Antidotes',                          'value' => null],
+            ['name' => 'Antineoplastics/Immunosuppressants', 'value' => null],
+            ['name' => 'Blood Formation/Coagulants',         'value' => null],
+            ['name' => 'Cardio Vascular & Diuretic',         'value' => null],
+            ['name' => 'Disinfectants & Antiseptics',        'value' => null],
+            ['name' => 'Ear Nose & Throat',                  'value' => null],
+            ['name' => 'Gastrointestinal Drugs',             'value' => null],
+            ['name' => 'Hormones/Endocrine',                 'value' => null],
+            ['name' => 'Immunological',                      'value' => null],
+            ['name' => 'Immunological/Biological',           'value' => null],
+            ['name' => 'IV Fluids/Electrolytes',             'value' => null],
+            ['name' => 'Miscellaneous Therapeutics',         'value' => null],
+            ['name' => 'Psychotropics & Anticonvulsants',    'value' => null],
+            ['name' => 'Respiratory Drugs',                  'value' => null],
+            ['name' => 'Sterile Ophthalmic',                 'value' => null],
+            ['name' => 'Topical Drug Preparations',          'value' => null],
+            ['name' => 'Vitamins & Minerals',                'value' => null],
         ],
     ];
 
@@ -164,7 +192,7 @@ class PharmacyConfigController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'category' => 'required|string|in:rx_unit,rx_route,rx_frequency',
+            'category' => 'required|string|in:rx_unit,rx_route,rx_frequency,medicine_category',
             'name'     => 'required|string|max:150',
         ]);
 
