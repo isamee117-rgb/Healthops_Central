@@ -116,12 +116,6 @@ class PharmacyBulkImportService
             ->flip()
             ->all();
 
-        $allCategoryNames = OpdConfigItem::where('category', 'medicine_category')
-            ->pluck('name')
-            ->map(fn($n) => strtolower(trim($n)))
-            ->flip()
-            ->all();
-
         foreach ($rows as $idx => $row) {
             $rowNum = $idx + 2;
 
@@ -132,14 +126,12 @@ class PharmacyBulkImportService
             }
 
             $cat = trim($row['category'] ?? '');
-            if (!empty($allCategoryNames) && $cat !== '') {
-                if (!isset($configuredCategories[strtolower($cat)])) {
-                    $errors[] = [
-                        'row'     => $rowNum,
-                        'column'  => 'category',
-                        'message' => "Invalid category — '{$cat}' is not in the configured list",
-                    ];
-                }
+            if (!empty($configuredCategories) && $cat !== '' && !isset($configuredCategories[strtolower($cat)])) {
+                $errors[] = [
+                    'row'     => $rowNum,
+                    'column'  => 'category',
+                    'message' => "Invalid category — '{$cat}' is not in the configured list",
+                ];
             }
 
             $code = trim($row['medicine_code'] ?? '');

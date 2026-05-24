@@ -514,18 +514,30 @@ class PharmacyBulkImportTest extends TestCase
     #[Test]
     public function validate_fails_when_category_is_inactive(): void
     {
+        // Create an active category to enable validation
+        \App\Models\OpdConfigItem::create([
+            'category'   => 'medicine_category',
+            'name'       => 'Antibiotics',
+            'value'      => null,
+            'is_active'  => true,
+            'sort_order' => 0,
+        ]);
+
+        // Create an inactive category
         \App\Models\OpdConfigItem::create([
             'category'   => 'medicine_category',
             'name'       => 'Analgesics & Antipyretics',
             'value'      => null,
             'is_active'  => false,
-            'sort_order' => 0,
+            'sort_order' => 1,
         ]);
 
+        // Try to use the inactive category
         $csv = $this->csvHeaders() . "\n" . $this->validCsvRow(['category' => 'Analgesics & Antipyretics']);
         $rows = $this->service->parse($this->makeCsvFile($csv));
         $result = $this->service->validate($rows);
 
+        // Should fail because only active categories are allowed
         $this->assertFalse($result['valid']);
         $categoryError = collect($result['errors'])->first(fn($e) => $e['column'] === 'category');
         $this->assertNotNull($categoryError);
