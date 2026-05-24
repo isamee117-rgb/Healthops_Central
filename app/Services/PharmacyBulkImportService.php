@@ -3,6 +3,7 @@ namespace App\Services;
 
 use App\Models\Medicine;
 use App\Models\MedicineBatch;
+use App\Models\OpdConfigItem;
 use App\Models\StockTransaction;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
@@ -108,6 +109,13 @@ class PharmacyBulkImportService
             ->flip()
             ->all();
 
+        $configuredCategories = OpdConfigItem::where('category', 'medicine_category')
+            ->where('is_active', true)
+            ->pluck('name')
+            ->map(fn($n) => strtolower(trim($n)))
+            ->flip()
+            ->all();
+
         foreach ($rows as $idx => $row) {
             $rowNum = $idx + 2;
 
@@ -115,6 +123,15 @@ class PharmacyBulkImportService
                 if (!isset($row[$col]) || trim((string)$row[$col]) === '') {
                     $errors[] = ['row' => $rowNum, 'column' => $col, 'message' => 'Required field is empty'];
                 }
+            }
+
+            $cat = trim($row['category'] ?? '');
+            if (!empty($configuredCategories) && $cat !== '' && !isset($configuredCategories[strtolower($cat)])) {
+                $errors[] = [
+                    'row'     => $rowNum,
+                    'column'  => 'category',
+                    'message' => "Invalid category — '{$cat}' is not in the configured list",
+                ];
             }
 
             $code = trim($row['medicine_code'] ?? '');

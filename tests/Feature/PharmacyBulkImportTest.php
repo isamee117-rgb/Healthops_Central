@@ -467,4 +467,59 @@ class PharmacyBulkImportTest extends TestCase
         $response->assertOk()
             ->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
     }
+
+    // ── category validation tests ────────────────────────────────────────────
+
+    #[Test]
+    public function validate_fails_when_category_not_in_configured_list(): void
+    {
+        \App\Models\OpdConfigItem::create([
+            'category'   => 'medicine_category',
+            'name'       => 'Analgesics & Antipyretics',
+            'value'      => null,
+            'is_active'  => true,
+            'sort_order' => 0,
+        ]);
+
+        $csv = $this->csvHeaders() . "\n" . $this->validCsvRow(['category' => 'InvalidCat']);
+        $rows = $this->service->parse($this->makeCsvFile($csv));
+        $result = $this->service->validate($rows);
+
+        $this->assertFalse($result['valid']);
+        $categoryError = collect($result['errors'])->first(fn($e) => $e['column'] === 'category');
+        $this->assertNotNull($categoryError);
+        $this->assertStringContainsString('InvalidCat', $categoryError['message']);
+    }
+
+    #[Test]
+    public function validate_passes_when_category_matches_configured_list(): void
+    {
+        \App\Models\OpdConfigItem::create([
+            'category'   => 'medicine_category',
+            'name'       => 'Analgesics & Antipyretics',
+            'value'      => null,
+            'is_active'  => true,
+            'sort_order' => 0,
+        ]);
+
+        $csv = $this->csvHeaders() . "\n" . $this->validCsvRow(['category' => 'Analgesics & Antipyretics']);
+        $rows = $this->service->parse($this->makeCsvFile($csv));
+        $result = $this->service->validate($rows);
+
+        $categoryErrors = collect($result['errors'])->filter(fn($e) => $e['column'] === 'category');
+        $this->assertCount(0, $categoryErrors);
+    }
+
+    #[Test]
+    public function validate_skips_category_check_when_no_categories_configured(): void
+    {
+        // No OpdConfigItem rows for medicine_category — graceful degradation
+
+        $csv = $this->csvHeaders() . "\n" . $this->validCsvRow(['category' => 'AnythingAtAll']);
+        $rows = $this->service->parse($this->makeCsvFile($csv));
+        $result = $this->service->validate($rows);
+
+        $categoryErrors = collect($result['errors'])->filter(fn($e) => $e['column'] === 'category');
+        $this->assertCount(0, $categoryErrors);
+    }
 }
