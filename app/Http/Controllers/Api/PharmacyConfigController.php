@@ -192,7 +192,7 @@ class PharmacyConfigController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'category' => 'required|string|in:rx_unit,rx_route,rx_frequency,medicine_category',
+            'category' => 'required|string|in:' . implode(',', self::CATEGORIES),
             'name'     => 'required|string|max:150',
         ]);
 

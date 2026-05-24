@@ -30,9 +30,6 @@ class PharmacyConfigTest extends TestCase
     #[Test]
     public function list_by_category_returns_medicine_category_names(): void
     {
-        // Trigger seeding via index first
-        $this->actingAs($this->admin)->getJson('/api/pharmacy-config');
-
         $response = $this->actingAs($this->admin)->getJson('/api/pharmacy-config/medicine_category');
 
         $response->assertOk();
