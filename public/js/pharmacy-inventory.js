@@ -1,18 +1,10 @@
 $(document).ready(function() {
     var hospitalInfo = { currency: 'PKR' };
     var allMedicines = [];
-    var filteredMedicines = [];
     var currentMedicineId = null;
     var currentMedicineData = null;
     var adjustMedicineId = null;
     var adjustCurrentStock = 0;
-
-    // Pagination state
-    var invPage = 1;
-    var invRowsPer = 10;
-
-    // Active filter values
-    var activeFilters = { category: '', form: '', stockStatus: '', abcClass: '' };
 
     function esc(s) { return $('<span>').text(s || '').html(); }
 
@@ -23,7 +15,6 @@ $(document).ready(function() {
     loadStats();
     loadFilters();
     loadMedicines();
-
     $.get('/api/pharmacy-config/medicine_category', function(cats) {
         var $sel = $('#addMedCategory');
         cats.forEach(function(c) {
@@ -31,7 +22,6 @@ $(document).ready(function() {
         });
     });
 
-    // ── Stats ──────────────────────────────────────────────────────────────────
     function loadStats() {
         $.get('/api/inventory/stats', function(data) {
             $('#statTotalMedicines').text(data.totalMedicines.toLocaleString());
@@ -50,7 +40,6 @@ $(document).ready(function() {
         });
     }
 
-    // ── Filters dropdown population ────────────────────────────────────────────
     function loadFilters() {
         $.get('/api/inventory/filters', function(data) {
             var $cat = $('#filterCategory');
@@ -60,41 +49,36 @@ $(document).ready(function() {
         });
     }
 
-    // ── Load medicines from API ────────────────────────────────────────────────
     function loadMedicines() {
         var params = {};
         var search = $('#invSearch').val();
         if (search) params.search = search;
-        if (activeFilters.category) params.category = activeFilters.category;
-        if (activeFilters.form) params.form = activeFilters.form;
-        if (activeFilters.stockStatus) params.stockStatus = activeFilters.stockStatus;
-        if (activeFilters.abcClass) params.abcClass = activeFilters.abcClass;
+        var cat = $('#filterCategory').val();
+        if (cat) params.category = cat;
+        var form = $('#filterForm').val();
+        if (form) params.form = form;
+        var status = $('#filterStockStatus').val();
+        if (status) params.stockStatus = status;
+        var abc = $('#filterAbc').val();
+        if (abc) params.abcClass = abc;
 
         $.get('/api/inventory/medicines', params, function(data) {
             allMedicines = data;
-            filteredMedicines = data;
-            invPage = 1;
-            renderTable();
-            renderPagination();
+            renderTable(data);
         });
     }
 
-    // ── Render current page slice ──────────────────────────────────────────────
-    function renderTable() {
+    function renderTable(medicines) {
         var $tbody = $('#invTableBody');
         $tbody.empty();
 
-        if (!filteredMedicines || filteredMedicines.length === 0) {
+        if (!medicines || medicines.length === 0) {
             $tbody.append('<tr><td colspan="12" style="padding:40px;text-align:center;color:var(--color-muted-foreground);font-size:14px"><i data-lucide="inbox" style="width:32px;height:32px;display:block;margin:0 auto 8px;opacity:0.4"></i>No medicines found</td></tr>');
             lucide.createIcons();
             return;
         }
 
-        var start = (invPage - 1) * invRowsPer;
-        var end = Math.min(start + invRowsPer, filteredMedicines.length);
-        var pageData = filteredMedicines.slice(start, end);
-
-        pageData.forEach(function(m) {
+        medicines.forEach(function(m) {
             var statusBg, statusColor;
             if (m.stockStatus === 'In Stock') { statusBg = '#DCFCE7'; statusColor = '#166534'; }
             else if (m.stockStatus === 'Low Stock') { statusBg = '#FFF7ED'; statusColor = '#9a3412'; }
@@ -139,208 +123,19 @@ $(document).ready(function() {
         });
 
         lucide.createIcons();
-        applyInvColVis();
     }
 
-    // ── Pagination ─────────────────────────────────────────────────────────────
-    function renderPagination() {
-        var total = filteredMedicines.length;
-        var totalPages = Math.max(1, Math.ceil(total / invRowsPer));
-        var start = total === 0 ? 0 : (invPage - 1) * invRowsPer + 1;
-        var end = Math.min(invPage * invRowsPer, total);
-
-        $('#invPageInfo').text('Showing ' + start + ' – ' + end + ' of ' + total + ' results');
-
-        // Prev / next
-        $('#invPrevPage').prop('disabled', invPage <= 1);
-        $('#invNextPage').prop('disabled', invPage >= totalPages);
-
-        // Page number buttons
-        var $nums = $('#invPageNums').empty();
-        var pages = buildPageRange(invPage, totalPages);
-        pages.forEach(function(p) {
-            if (p === '…') {
-                $nums.append('<span style="display:flex;align-items:center;padding:0 4px;font-size:13px;color:var(--color-muted-foreground)">…</span>');
-            } else {
-                var $btn = $('<button class="opd-page-num' + (p === invPage ? ' active' : '') + '">' + p + '</button>');
-                $btn.on('click', function() { goToInvPage(p); });
-                $nums.append($btn);
-            }
-        });
-
-        lucide.createIcons();
-    }
-
-    function buildPageRange(current, total) {
-        if (total <= 7) {
-            var arr = [];
-            for (var i = 1; i <= total; i++) arr.push(i);
-            return arr;
-        }
-        var pages = [1];
-        if (current > 3) pages.push('…');
-        var lo = Math.max(2, current - 1);
-        var hi = Math.min(total - 1, current + 1);
-        for (var j = lo; j <= hi; j++) pages.push(j);
-        if (current < total - 2) pages.push('…');
-        pages.push(total);
-        return pages;
-    }
-
-    function goToInvPage(p) {
-        invPage = p;
-        renderTable();
-        renderPagination();
-    }
-
-    $('#invPrevPage').on('click', function() { if (invPage > 1) goToInvPage(invPage - 1); });
-    $('#invNextPage').on('click', function() {
-        var totalPages = Math.ceil(filteredMedicines.length / invRowsPer);
-        if (invPage < totalPages) goToInvPage(invPage + 1);
-    });
-
-    // ── Search ─────────────────────────────────────────────────────────────────
     var searchTimer;
     $('#invSearch').on('input', function() {
         clearTimeout(searchTimer);
-        searchTimer = setTimeout(function() {
-            invPage = 1;
-            loadMedicines();
-        }, 300);
+        searchTimer = setTimeout(loadMedicines, 300);
     });
+    $('#filterCategory, #filterForm, #filterStockStatus, #filterAbc').on('change', loadMedicines);
 
-    // ── Filter pane toggle ─────────────────────────────────────────────────────
-    window.toggleInvFilter = function() {
-        var $pane = $('#invFilterPane');
-        var $btn = $('#btnInvFilter');
-        if ($pane.is(':visible')) {
-            $pane.slideUp(150);
-            $btn.removeClass('filter-active');
-        } else {
-            $pane.slideDown(150);
-            $btn.addClass('filter-active');
-            lucide.createIcons();
-        }
-    };
-
-    window.applyInvFilters = function() {
-        activeFilters.category = $('#filterCategory').val();
-        activeFilters.form = $('#filterForm').val();
-        activeFilters.stockStatus = $('#filterStockStatus').val();
-        activeFilters.abcClass = $('#filterAbc').val();
-
-        var count = [activeFilters.category, activeFilters.form, activeFilters.stockStatus, activeFilters.abcClass]
-            .filter(function(v) { return v !== ''; }).length;
-
-        var $badge = $('#invFilterBadge');
-        if (count > 0) {
-            $badge.text(count).show();
-            $('#btnInvFilter').addClass('filter-active');
-        } else {
-            $badge.hide();
-        }
-
-        invPage = 1;
-        loadMedicines();
-    };
-
-    window.resetInvFilters = function() {
-        $('#filterCategory').val('');
-        $('#filterForm').val('');
-        $('#filterStockStatus').val('');
-        $('#filterAbc').val('');
-        activeFilters = { category: '', form: '', stockStatus: '', abcClass: '' };
-        $('#invFilterBadge').hide();
-        invPage = 1;
-        loadMedicines();
-    };
-
-    // ── Rows per page ──────────────────────────────────────────────────────────
-    window.toggleInvRowsMenu = function(e) {
-        e.stopPropagation();
-        $('#invRowsMenu').toggleClass('open');
-    };
-
-    window.setInvRowsPer = function(n) {
-        invRowsPer = n;
-        invPage = 1;
-        $('#invRowsMenu button').removeClass('active');
-        $('#invRowsMenu button').each(function() {
-            if ($(this).text().indexOf(n + ' rows') !== -1) $(this).addClass('active');
-        });
-        $('#invRowsMenu').removeClass('open');
-        renderTable();
-        renderPagination();
-    };
-
-    // ── Column visibility ──────────────────────────────────────────────────────
-    window.toggleInvColVis = function(e) {
-        e.stopPropagation();
-        $('#invColVisMenu').toggleClass('open');
-    };
-
-    window.invColVisSelectAll = function() {
-        $('#invColVisList input[type="checkbox"]').prop('checked', true);
-    };
-
-    window.applyInvColVis = function() {
-        $('#invColVisList input[type="checkbox"]').each(function() {
-            var col = parseInt($(this).data('col'));
-            var visible = $(this).is(':checked');
-            $('#invTable thead th:eq(' + col + ')').toggle(visible);
-            $('#invTable tbody tr').each(function() {
-                $(this).find('td:eq(' + col + ')').toggle(visible);
-            });
-        });
-        $('#invColVisMenu').removeClass('open');
-    };
-
-    // ── Export ─────────────────────────────────────────────────────────────────
-    window.toggleInvExportMenu = function(e) {
-        e.stopPropagation();
-        $('#invExportMenu').toggleClass('open');
-    };
-
-    window.exportInv = function(type) {
-        $('#invExportMenu').removeClass('open');
-        var data = filteredMedicines;
-        if (!data || data.length === 0) { HMS.toast('No data to export', 'warning'); return; }
-
-        if (type === 'csv') {
-            var csv = 'Code,Medicine Name,Generic Name,Form,Category,Manufacturer,Stock,Unit,Stock Status,Selling Price,Purchase Price,Batches,Nearest Expiry\n';
-            data.forEach(function(m) {
-                var nearExp = m.nearestExpiry ? new Date(m.nearestExpiry).toLocaleDateString() : '';
-                csv += [
-                    m.medicineCode, m.brandName + ' ' + (m.strength || ''), m.genericName,
-                    m.form, m.category, m.manufacturer, m.currentStock, m.stockUnit,
-                    m.stockStatus, m.sellingPrice, m.purchasePrice, m.batchCount, nearExp
-                ].map(function(v) { return '"' + String(v || '').replace(/"/g, '""') + '"'; }).join(',') + '\n';
-            });
-            var blob = new Blob([csv], { type: 'text/csv' });
-            var url = URL.createObjectURL(blob);
-            var a = document.createElement('a');
-            a.href = url; a.download = 'inventory.csv'; a.click();
-            URL.revokeObjectURL(url);
-        } else if (type === 'excel') {
-            HMS.toast('Excel export coming soon', 'info');
-        } else if (type === 'pdf') {
-            HMS.toast('PDF export coming soon', 'info');
-        } else if (type === 'print') {
-            window.print();
-        }
-    };
-
-    // ── Close dropdowns on outside click ──────────────────────────────────────
-    $(document).on('click', function(e) {
-        if (!$(e.target).closest('.opd-rows-wrap').length) $('#invRowsMenu').removeClass('open');
-        if (!$(e.target).closest('.opd-col-vis-wrap').length) $('#invColVisMenu').removeClass('open');
-        if (!$(e.target).closest('.opd-export-wrap').length) $('#invExportMenu').removeClass('open');
-    });
-
-    // ── Row interactions ───────────────────────────────────────────────────────
     $(document).on('click', '.inv-row', function(e) {
         if ($(e.target).closest('button').length) return;
-        openMedicineDetail($(this).data('id'));
+        var id = $(this).data('id');
+        openMedicineDetail(id);
     });
 
     $(document).on('click', '.btn-view-med', function(e) {
@@ -348,10 +143,6 @@ $(document).ready(function() {
         openMedicineDetail($(this).data('id'));
     });
 
-    $(document).on('mouseenter', '.inv-row', function() { $(this).css('background', 'var(--color-background)'); });
-    $(document).on('mouseleave', '.inv-row', function() { $(this).css('background', ''); });
-
-    // ── Stock adjust ───────────────────────────────────────────────────────────
     $(document).on('click', '.btn-adjust-stock', function(e) {
         e.stopPropagation();
         adjustMedicineId = $(this).data('id');
@@ -410,11 +201,13 @@ $(document).ready(function() {
                 reason: reason,
                 notes: $('#adjNotes').val()
             }),
-            success: function() {
+            success: function(resp) {
                 bootstrap.Modal.getInstance(document.getElementById('stockAdjustModal')).hide();
                 loadStats();
                 loadMedicines();
-                if (currentMedicineId === adjustMedicineId) openMedicineDetail(adjustMedicineId);
+                if (currentMedicineId === adjustMedicineId) {
+                    openMedicineDetail(adjustMedicineId);
+                }
             },
             error: function(xhr) {
                 HMS.ajaxError(xhr, 'Failed');
@@ -425,68 +218,6 @@ $(document).ready(function() {
         });
     });
 
-    // ── Add Medicine ───────────────────────────────────────────────────────────
-    $('#btnAddMedicine').on('click', function() {
-        $('#addMedicineForm')[0].reset();
-        $('#addMedError').hide();
-        $('#addMedSuccess').hide();
-        var offcanvas = new bootstrap.Offcanvas(document.getElementById('addMedicineSheet'));
-        offcanvas.show();
-        lucide.createIcons();
-    });
-
-    $('#addMedicineForm').on('submit', function(e) {
-        e.preventDefault();
-        $('#addMedError').hide();
-        $('#addMedSuccess').hide();
-
-        var formData = {};
-        $(this).serializeArray().forEach(function(item) { formData[item.name] = item.value; });
-        formData.requires_prescription = formData.requires_prescription === '1';
-        formData.is_active = formData.is_active === '1';
-        if (formData.purchase_price) formData.purchase_price = parseFloat(formData.purchase_price);
-        if (formData.selling_price) formData.selling_price = parseFloat(formData.selling_price);
-        if (formData.reorder_level) formData.reorder_level = parseInt(formData.reorder_level);
-
-        var $btn = $('#btnSaveMedicine');
-        $btn.prop('disabled', true).html('<i data-lucide="loader-2" style="width:16px;height:16px;animation:spin 1s linear infinite"></i> Saving...');
-
-        $.ajax({
-            url: '/api/inventory/medicines',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(formData),
-            success: function(resp) {
-                $('#addMedSuccess').text('Medicine "' + (formData.brand_name || formData.medicine_name) + '" added successfully! (ID: ' + resp.medicineCode + ')').show();
-                $('#addMedicineForm')[0].reset();
-                loadStats();
-                loadMedicines();
-                loadFilters();
-                setTimeout(function() {
-                    bootstrap.Offcanvas.getInstance(document.getElementById('addMedicineSheet')).hide();
-                }, 1500);
-            },
-            error: function(xhr) {
-                var msg = 'Failed to add medicine.';
-                if (xhr.responseJSON) {
-                    if (xhr.responseJSON.errors) {
-                        var errs = [];
-                        $.each(xhr.responseJSON.errors, function(field, messages) { errs.push(messages.join(', ')); });
-                        msg = errs.join('<br>');
-                    } else if (xhr.responseJSON.message) {
-                        msg = xhr.responseJSON.message;
-                    }
-                }
-                $('#addMedError').html(msg).show();
-            },
-            complete: function() {
-                $btn.prop('disabled', false).html('<i data-lucide="save" style="width:16px;height:16px"></i> Save Medicine');
-                lucide.createIcons();
-            }
-        });
-    });
-
-    // ── Medicine Detail Offcanvas ──────────────────────────────────────────────
     function openMedicineDetail(medicineId) {
         currentMedicineId = medicineId;
         var offcanvas = new bootstrap.Offcanvas(document.getElementById('medicineDetailSheet'));
@@ -652,6 +383,8 @@ $(document).ready(function() {
                 var iconName = isIn ? 'arrow-down-circle' : 'arrow-up-circle';
                 var iconColor = isIn ? '#22c55e' : '#ef4444';
                 var qtyLabel = (isIn ? '+' : '') + t.quantity;
+                var typeBg = isIn ? '#DCFCE7' : '#FEF2F2';
+                var typeColor = isIn ? '#166534' : '#991B1B';
 
                 html += '<div style="display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--color-border)">' +
                     '<div style="flex-shrink:0;width:36px;height:36px;border-radius:8px;background:' + (isIn ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)') + ';display:flex;align-items:center;justify-content:center">' +
@@ -724,7 +457,10 @@ $(document).ready(function() {
 
         html += '<div style="padding:16px;background:var(--color-background);border-radius:10px;border:1px solid var(--color-border)">' +
             '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground);margin-bottom:12px;letter-spacing:0.05em">Usage by Department</div>' +
-            deptBar('OPD', 45) + deptBar('IPD', 30) + deptBar('Emergency', 15) + deptBar('Walk-in', 10) +
+            deptBar('OPD', 45) +
+            deptBar('IPD', 30) +
+            deptBar('Emergency', 15) +
+            deptBar('Walk-in', 10) +
         '</div>';
 
         $('#medTabContent').html(html);
@@ -735,12 +471,25 @@ $(document).ready(function() {
                 type: 'line',
                 data: {
                     labels: months,
-                    datasets: [{ label: 'Usage', data: usage, borderColor: '#7FFFD4', backgroundColor: 'rgba(127,255,212,0.1)', fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#7FFFD4' }]
+                    datasets: [{
+                        label: 'Usage',
+                        data: usage,
+                        borderColor: '#7FFFD4',
+                        backgroundColor: 'rgba(127,255,212,0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#7FFFD4',
+                    }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
+                    responsive: true,
+                    maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }, x: { grid: { display: false } } }
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                        x: { grid: { display: false } }
+                    }
                 }
             });
         }
@@ -758,6 +507,7 @@ $(document).ready(function() {
         if (!currentMedicineData) return;
         var data = currentMedicineData;
         var med = data.medicine;
+
         var html = '';
 
         if (data.substitutes && data.substitutes.length > 0) {
@@ -766,9 +516,16 @@ $(document).ready(function() {
                 var priceDiff = med.sellingPrice > 0 ? Math.round(((med.sellingPrice - s.sellingPrice) / med.sellingPrice) * 100) : 0;
                 var priceLabel = priceDiff > 0 ? '<span style="color:#22c55e;font-size:11px;font-weight:600">(' + priceDiff + '% cheaper)</span>' : '';
                 var stLabel = s.currentStock > 0 ? '<span style="color:#166534;font-size:11px">In Stock (' + s.currentStock + ')</span>' : '<span style="color:#991B1B;font-size:11px">Out of Stock</span>';
+
                 html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--color-background);border-radius:8px;border:1px solid var(--color-border);margin-bottom:8px">' +
-                    '<div><div style="font-size:13px;font-weight:600;color:var(--color-foreground)">' + esc(s.brandName) + ' ' + esc(s.strength) + '</div><div style="font-size:11px;color:var(--color-muted-foreground)">' + esc(s.manufacturer) + ' | ' + stLabel + '</div></div>' +
-                    '<div style="text-align:right"><div style="font-size:13px;font-weight:600;font-family:monospace">' + hospitalInfo.currency + ' ' + s.sellingPrice.toLocaleString() + '/' + med.stockUnit.replace(/s$/, '') + '</div>' + priceLabel + '</div>' +
+                    '<div>' +
+                        '<div style="font-size:13px;font-weight:600;color:var(--color-foreground)">' + esc(s.brandName) + ' ' + esc(s.strength) + '</div>' +
+                        '<div style="font-size:11px;color:var(--color-muted-foreground)">' + esc(s.manufacturer) + ' | ' + stLabel + '</div>' +
+                    '</div>' +
+                    '<div style="text-align:right">' +
+                        '<div style="font-size:13px;font-weight:600;font-family:monospace">' + hospitalInfo.currency + ' ' + s.sellingPrice.toLocaleString() + '/' + med.stockUnit.replace(/s$/, '') + '</div>' +
+                        priceLabel +
+                    '</div>' +
                 '</div>';
             });
         } else {
@@ -780,13 +537,103 @@ $(document).ready(function() {
             data.sameCategory.forEach(function(s) {
                 var stLabel = s.currentStock > 0 ? '<span style="color:#166534;font-size:11px">In Stock (' + s.currentStock + ')</span>' : '<span style="color:#991B1B;font-size:11px">Out of Stock</span>';
                 html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--color-background);border-radius:8px;border:1px solid var(--color-border);margin-bottom:8px">' +
-                    '<div><div style="font-size:13px;font-weight:600;color:var(--color-foreground)">' + esc(s.brandName) + ' ' + esc(s.strength) + '</div><div style="font-size:11px;color:var(--color-muted-foreground)">' + esc(s.genericName) + ' | ' + stLabel + '</div></div>' +
+                    '<div>' +
+                        '<div style="font-size:13px;font-weight:600;color:var(--color-foreground)">' + esc(s.brandName) + ' ' + esc(s.strength) + '</div>' +
+                        '<div style="font-size:11px;color:var(--color-muted-foreground)">' + esc(s.genericName) + ' | ' + stLabel + '</div>' +
+                    '</div>' +
                     '<div style="text-align:right;font-size:13px;font-weight:600;font-family:monospace">' + hospitalInfo.currency + ' ' + s.sellingPrice.toLocaleString() + '/' + med.stockUnit.replace(/s$/, '') + '</div>' +
                 '</div>';
             });
         }
 
+        if (data.substitutes && data.substitutes.length > 0) {
+            html += '<div style="margin-top:20px;padding:16px;background:var(--color-background);border-radius:10px;border:1px solid var(--color-border)">' +
+                '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground);margin-bottom:12px;letter-spacing:0.05em">Price Comparison</div>' +
+                '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.04)"><span style="font-size:12px;font-weight:600">' + esc(med.brandName) + ' (Current)</span><span style="font-size:12px;font-family:monospace;font-weight:600">' + hospitalInfo.currency + ' ' + med.sellingPrice.toLocaleString() + '/' + med.stockUnit.replace(/s$/, '') + '</span></div>';
+
+            data.substitutes.forEach(function(s) {
+                var priceDiff = med.sellingPrice > 0 ? Math.round(((med.sellingPrice - s.sellingPrice) / med.sellingPrice) * 100) : 0;
+                var diffLabel = priceDiff > 0 ? ' <span style="color:#22c55e;font-weight:600">(' + priceDiff + '% cheaper)</span>' : (priceDiff < 0 ? ' <span style="color:#ef4444;font-weight:600">(' + Math.abs(priceDiff) + '% more)</span>' : '');
+                html += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.04)"><span style="font-size:12px">' + esc(s.brandName) + '</span><span style="font-size:12px;font-family:monospace">' + hospitalInfo.currency + ' ' + s.sellingPrice.toLocaleString() + '/' + med.stockUnit.replace(/s$/, '') + diffLabel + '</span></div>';
+            });
+
+            html += '</div>';
+        }
+
         $('#medTabContent').html(html);
         lucide.createIcons();
     }
+
+    $('.inv-row').hover(
+        function() { $(this).css('background', 'var(--color-background)'); },
+        function() { $(this).css('background', ''); }
+    );
+
+    $(document).on('mouseenter', '.inv-row', function() { $(this).css('background', 'var(--color-background)'); });
+    $(document).on('mouseleave', '.inv-row', function() { $(this).css('background', ''); });
+
+    $('#btnAddMedicine').on('click', function() {
+        $('#addMedicineForm')[0].reset();
+        $('#addMedError').hide();
+        $('#addMedSuccess').hide();
+        var offcanvas = new bootstrap.Offcanvas(document.getElementById('addMedicineSheet'));
+        offcanvas.show();
+        lucide.createIcons();
+    });
+
+    $('#addMedicineForm').on('submit', function(e) {
+        e.preventDefault();
+        $('#addMedError').hide();
+        $('#addMedSuccess').hide();
+
+        var formData = {};
+        $(this).serializeArray().forEach(function(item) {
+            formData[item.name] = item.value;
+        });
+
+        formData.requires_prescription = formData.requires_prescription === '1';
+        formData.is_active = formData.is_active === '1';
+        if (formData.purchase_price) formData.purchase_price = parseFloat(formData.purchase_price);
+        if (formData.selling_price) formData.selling_price = parseFloat(formData.selling_price);
+        if (formData.reorder_level) formData.reorder_level = parseInt(formData.reorder_level);
+
+        var $btn = $('#btnSaveMedicine');
+        $btn.prop('disabled', true).html('<i data-lucide="loader-2" style="width:16px;height:16px;animation:spin 1s linear infinite"></i> Saving...');
+
+        $.ajax({
+            url: '/api/inventory/medicines',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(resp) {
+                $('#addMedSuccess').text('Medicine "' + (formData.brand_name || formData.medicine_name) + '" added successfully! (ID: ' + resp.medicineCode + ')').show();
+                $('#addMedicineForm')[0].reset();
+                loadStats();
+                loadMedicines();
+                loadFilters();
+                setTimeout(function() {
+                    bootstrap.Offcanvas.getInstance(document.getElementById('addMedicineSheet')).hide();
+                }, 1500);
+            },
+            error: function(xhr) {
+                var msg = 'Failed to add medicine.';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.errors) {
+                        var errs = [];
+                        $.each(xhr.responseJSON.errors, function(field, messages) {
+                            errs.push(messages.join(', '));
+                        });
+                        msg = errs.join('<br>');
+                    } else if (xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                }
+                $('#addMedError').html(msg).show();
+            },
+            complete: function() {
+                $btn.prop('disabled', false).html('<i data-lucide="save" style="width:16px;height:16px"></i> Save Medicine');
+                lucide.createIcons();
+            }
+        });
+    });
 });

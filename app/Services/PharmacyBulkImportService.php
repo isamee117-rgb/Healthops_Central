@@ -112,7 +112,7 @@ class PharmacyBulkImportService
         $configuredCategories = OpdConfigItem::where('category', 'medicine_category')
             ->where('is_active', true)
             ->pluck('name')
-            ->map(fn($n) => strtolower(trim($n)))
+            ->map(fn($n) => trim($n))
             ->flip()
             ->all();
 
@@ -126,7 +126,7 @@ class PharmacyBulkImportService
             }
 
             $cat = trim($row['category'] ?? '');
-            if (!empty($configuredCategories) && $cat !== '' && !isset($configuredCategories[strtolower($cat)])) {
+            if (!empty($configuredCategories) && $cat !== '' && !isset($configuredCategories[$cat])) {
                 $errors[] = [
                     'row'     => $rowNum,
                     'column'  => 'category',
