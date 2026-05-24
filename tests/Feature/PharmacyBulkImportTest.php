@@ -506,8 +506,29 @@ class PharmacyBulkImportTest extends TestCase
         $rows = $this->service->parse($this->makeCsvFile($csv));
         $result = $this->service->validate($rows);
 
+        $this->assertTrue($result['valid']);
         $categoryErrors = collect($result['errors'])->filter(fn($e) => $e['column'] === 'category');
         $this->assertCount(0, $categoryErrors);
+    }
+
+    #[Test]
+    public function validate_fails_when_category_is_inactive(): void
+    {
+        \App\Models\OpdConfigItem::create([
+            'category'   => 'medicine_category',
+            'name'       => 'Analgesics & Antipyretics',
+            'value'      => null,
+            'is_active'  => false,
+            'sort_order' => 0,
+        ]);
+
+        $csv = $this->csvHeaders() . "\n" . $this->validCsvRow(['category' => 'Analgesics & Antipyretics']);
+        $rows = $this->service->parse($this->makeCsvFile($csv));
+        $result = $this->service->validate($rows);
+
+        $this->assertFalse($result['valid']);
+        $categoryError = collect($result['errors'])->first(fn($e) => $e['column'] === 'category');
+        $this->assertNotNull($categoryError);
     }
 
     #[Test]
