@@ -74,6 +74,22 @@
             </div>
         </div>
 
+        <div class="col-md-6 col-xl-4">
+            <div class="card h-100" data-category="medicine_category">
+                <div class="card-header d-flex justify-content-between align-items-center" style="background:var(--midnight-blue);color:#fff;padding:12px 16px">
+                    <h6 class="mb-0" style="font-size:14px;font-weight:600"><i data-lucide="tag" style="width:16px;height:16px;margin-right:6px"></i>Medicine Categories</h6>
+                    <span class="badge bg-light text-dark item-count">0</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="config-add-bar">
+                        <input type="text" class="form-control form-control-sm config-new-input" placeholder="Add new category (e.g. Antidiabetics)..." style="font-size:13px">
+                        <button class="btn btn-sm btn-add-item" title="Add"><i data-lucide="plus" style="width:16px;height:16px"></i></button>
+                    </div>
+                    <div class="config-list" style="max-height:420px;overflow-y:auto"></div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <div class="section-label mt-4">Note</div>
