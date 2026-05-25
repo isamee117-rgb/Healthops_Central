@@ -92,6 +92,61 @@
 
     </div>
 
+    <div class="section-label mt-4">Medicine Form Dropdowns</div>
+    <p class="section-desc">Add, edit, activate or remove the options that appear in the Form, Stock Unit, and Unit of Measurement selects when adding a new medicine to inventory.</p>
+
+    <div class="row g-3" id="medFormConfigContainer">
+
+        <div class="col-md-6 col-xl-4">
+            <div class="card h-100" data-category="medicine_form">
+                <div class="card-header d-flex justify-content-between align-items-center" style="background:var(--midnight-blue);color:#fff;padding:12px 16px">
+                    <h6 class="mb-0" style="font-size:14px;font-weight:600"><i data-lucide="pill" style="width:16px;height:16px;margin-right:6px"></i>Medicine Forms</h6>
+                    <span class="badge bg-light text-dark item-count">0</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="config-add-bar">
+                        <input type="text" class="form-control form-control-sm config-new-input" placeholder="Add new form (e.g. Lozenge)..." style="font-size:13px">
+                        <button class="btn btn-sm btn-add-item" title="Add"><i data-lucide="plus" style="width:16px;height:16px"></i></button>
+                    </div>
+                    <div class="config-list" style="max-height:420px;overflow-y:auto"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+            <div class="card h-100" data-category="medicine_stock_unit">
+                <div class="card-header d-flex justify-content-between align-items-center" style="background:var(--midnight-blue);color:#fff;padding:12px 16px">
+                    <h6 class="mb-0" style="font-size:14px;font-weight:600"><i data-lucide="package" style="width:16px;height:16px;margin-right:6px"></i>Stock Units</h6>
+                    <span class="badge bg-light text-dark item-count">0</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="config-add-bar">
+                        <input type="text" class="form-control form-control-sm config-new-input" placeholder="Add new unit (e.g. Cartridges)..." style="font-size:13px">
+                        <button class="btn btn-sm btn-add-item" title="Add"><i data-lucide="plus" style="width:16px;height:16px"></i></button>
+                    </div>
+                    <div class="config-list" style="max-height:420px;overflow-y:auto"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+            <div class="card h-100" data-category="medicine_uom">
+                <div class="card-header d-flex justify-content-between align-items-center" style="background:var(--midnight-blue);color:#fff;padding:12px 16px">
+                    <h6 class="mb-0" style="font-size:14px;font-weight:600"><i data-lucide="ruler" style="width:16px;height:16px;margin-right:6px"></i>Units of Measurement</h6>
+                    <span class="badge bg-light text-dark item-count">0</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="config-add-bar">
+                        <input type="text" class="form-control form-control-sm config-new-input" placeholder="Add new UoM (e.g. mmol)..." style="font-size:13px">
+                        <button class="btn btn-sm btn-add-item" title="Add"><i data-lucide="plus" style="width:16px;height:16px"></i></button>
+                    </div>
+                    <div class="config-list" style="max-height:420px;overflow-y:auto"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
     <div class="section-label mt-4">Note</div>
     <p class="section-desc">Inactive items are hidden from the prescription form but are preserved here for reference. Changes take effect immediately in new OPD consultations.</p>
 

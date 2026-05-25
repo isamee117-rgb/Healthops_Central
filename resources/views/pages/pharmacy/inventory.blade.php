@@ -122,6 +122,11 @@
             <button class="med-tab-btn" data-tab="substitutes" style="padding:12px 16px;font-size:13px;font-weight:500;background:none;border:none;border-bottom:2px solid transparent;color:var(--color-muted-foreground);cursor:pointer">Substitutes</button>
         </div>
         <div id="medTabContent" style="flex:1;overflow-y:auto;padding:24px"></div>
+        <div style="padding:16px 24px;border-top:1px solid var(--color-border);background:var(--color-background);flex-shrink:0;display:flex;justify-content:flex-end">
+            <button id="btnEditMedicine" style="display:flex;align-items:center;gap:6px;background:var(--aquamint);color:var(--midnight-blue);border:none;border-radius:8px;font-size:13px;font-weight:600;padding:10px 20px;cursor:pointer">
+                <i data-lucide="pencil" style="width:15px;height:15px"></i> Edit Medicine
+            </button>
+        </div>
     </div>
 </div>
 
@@ -228,25 +233,9 @@
                         <input type="text" name="brand_name" required style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;outline:none;background:#fff" placeholder="e.g. Panadol">
                     </div>
                     <div>
-                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Medicine Type *</label>
-                        <select name="medicine_type" required style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Form *</label>
+                        <select name="form" id="addMedForm" required style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
                             <option value="">Select type...</option>
-                            <option value="Tablet">Tablet</option>
-                            <option value="Capsule">Capsule</option>
-                            <option value="Syrup">Syrup</option>
-                            <option value="Injection">Injection</option>
-                            <option value="Inhaler">Inhaler</option>
-                            <option value="Cream">Cream</option>
-                            <option value="Ointment">Ointment</option>
-                            <option value="Drops">Drops</option>
-                            <option value="Powder">Powder</option>
-                            <option value="Suppository">Suppository</option>
-                            <option value="Patch">Patch</option>
-                            <option value="Solution">Solution</option>
-                            <option value="Suspension">Suspension</option>
-                            <option value="Gel">Gel</option>
-                            <option value="Spray">Spray</option>
-                            <option value="Other">Other</option>
                         </select>
                     </div>
                     <div style="grid-column:span 2">
@@ -273,33 +262,8 @@
                     </div>
                     <div>
                         <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Unit of Measurement</label>
-                        <select name="unit_of_measurement" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
+                        <select name="unit_of_measurement" id="addMedUom" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
                             <option value="">Select...</option>
-                            <option value="mg">mg</option>
-                            <option value="ml">ml</option>
-                            <option value="g">g</option>
-                            <option value="mcg">mcg</option>
-                            <option value="IU">IU</option>
-                            <option value="L">L</option>
-                            <option value="units">units</option>
-                        </select>
-                    </div>
-                    <div style="grid-column:span 2">
-                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Form *</label>
-                        <select name="form" required style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
-                            <option value="">Select form...</option>
-                            <option value="Oral">Oral</option>
-                            <option value="Topical">Topical</option>
-                            <option value="IV">IV (Intravenous)</option>
-                            <option value="IM">IM (Intramuscular)</option>
-                            <option value="SC">SC (Subcutaneous)</option>
-                            <option value="Inhalation">Inhalation</option>
-                            <option value="Rectal">Rectal</option>
-                            <option value="Ophthalmic">Ophthalmic</option>
-                            <option value="Otic">Otic</option>
-                            <option value="Nasal">Nasal</option>
-                            <option value="Sublingual">Sublingual</option>
-                            <option value="Transdermal">Transdermal</option>
                         </select>
                     </div>
                 </div>
@@ -316,34 +280,14 @@
                     </div>
                     <div>
                         <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Unit of Purchase</label>
-                        <select name="unit_of_purchase" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
+                        <select name="unit_of_purchase" id="addMedUnitPurchase" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
                             <option value="">Select...</option>
-                            <option value="strips">Strips</option>
-                            <option value="bottles">Bottles</option>
-                            <option value="boxes">Boxes</option>
-                            <option value="vials">Vials</option>
-                            <option value="ampoules">Ampoules</option>
-                            <option value="pieces">Pieces</option>
-                            <option value="packs">Packs</option>
-                            <option value="tubes">Tubes</option>
-                            <option value="sachets">Sachets</option>
-                            <option value="units">Units</option>
                         </select>
                     </div>
                     <div>
                         <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Unit of Sale</label>
-                        <select name="unit_of_sale" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
+                        <select name="unit_of_sale" id="addMedUnitSale" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
                             <option value="">Select...</option>
-                            <option value="strips">Strips</option>
-                            <option value="bottles">Bottles</option>
-                            <option value="boxes">Boxes</option>
-                            <option value="vials">Vials</option>
-                            <option value="ampoules">Ampoules</option>
-                            <option value="pieces">Pieces</option>
-                            <option value="packs">Packs</option>
-                            <option value="tubes">Tubes</option>
-                            <option value="sachets">Sachets</option>
-                            <option value="units">Units</option>
                         </select>
                     </div>
                     <div>
@@ -441,6 +385,194 @@
         </form>
     </div>
 </div>
+{{-- ── Edit Medicine Offcanvas ──────────────────────────────────────────────── --}}
+<div class="offcanvas offcanvas-end" tabindex="-1" id="editMedicineSheet" style="width:700px;border-left:1px solid var(--color-border)">
+    <div class="offcanvas-header" style="padding:20px 24px;border-bottom:1px solid var(--color-border);background:var(--color-background)">
+        <div>
+            <h5 class="offcanvas-title">Edit Medicine</h5>
+            <p id="editMedSubtitle" style="font-size:12px;color:var(--color-muted-foreground);margin:2px 0 0"></p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body" style="padding:24px;overflow-y:auto">
+        <form id="editMedicineForm" autocomplete="off">
+            <input type="hidden" id="editMedId">
+
+            <div style="margin-bottom:24px">
+                <div style="font-size:13px;font-weight:700;color:var(--midnight-blue);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--aquamint);display:inline-block;font-family:'Roobert',sans-serif">
+                    <i data-lucide="info" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"></i> Basic Info
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Brand Name *</label>
+                        <input type="text" id="editMedBrand" name="brand_name" required style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;outline:none;background:#fff">
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Generic Name *</label>
+                        <input type="text" id="editMedGeneric" name="generic_name" required style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;outline:none;background:#fff">
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Form *</label>
+                        <select id="editMedForm" name="form" required style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
+                            <option value="">Select type...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Medicine Code</label>
+                        <input type="text" id="editMedCode" disabled style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;outline:none;background:var(--color-background);color:var(--color-muted-foreground)">
+                    </div>
+                    <div style="grid-column:span 2">
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Category / Therapeutic Class *</label>
+                        <select id="editMedCategory" name="category" required style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
+                            <option value="">Select category...</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom:24px">
+                <div style="font-size:13px;font-weight:700;color:var(--midnight-blue);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--aquamint);display:inline-block;font-family:'Roobert',sans-serif">
+                    <i data-lucide="flask-conical" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"></i> Composition & Dosage
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                    <div style="grid-column:span 2">
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Salt / Composition</label>
+                        <input type="text" id="editMedSalt" name="salt_composition" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;outline:none;background:#fff">
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Strength / Dosage</label>
+                        <input type="text" id="editMedStrength" name="strength" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;outline:none;background:#fff">
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Unit of Measurement</label>
+                        <select id="editMedUom" name="unit_of_measurement" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
+                            <option value="">Select...</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom:24px">
+                <div style="font-size:13px;font-weight:700;color:var(--midnight-blue);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--aquamint);display:inline-block;font-family:'Roobert',sans-serif">
+                    <i data-lucide="package" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"></i> Stock & Inventory
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">HSN Code</label>
+                        <input type="text" id="editMedHsn" name="hsn_code" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;outline:none;background:#fff">
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Unit of Purchase</label>
+                        <select id="editMedUnitPurchase" name="unit_of_purchase" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
+                            <option value="">Select...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Unit of Sale</label>
+                        <select id="editMedUnitSale" name="unit_of_sale" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
+                            <option value="">Select...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Min Stock Level</label>
+                        <input type="number" id="editMedMinStock" name="min_stock" min="0" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;outline:none;background:#fff">
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Max Stock Level</label>
+                        <input type="number" id="editMedMaxStock" name="max_stock" min="0" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;outline:none;background:#fff">
+                    </div>
+                    <div style="grid-column:span 2">
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Shelf Location</label>
+                        <input type="text" id="editMedShelf" name="shelf_location" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;outline:none;background:#fff">
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom:24px">
+                <div style="font-size:13px;font-weight:700;color:var(--midnight-blue);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--aquamint);display:inline-block;font-family:'Roobert',sans-serif">
+                    <i data-lucide="shield-check" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"></i> Regulatory
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                    <div style="grid-column:span 2">
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Manufacturer Name</label>
+                        <input type="text" id="editMedManufacturer" name="manufacturer" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;outline:none;background:#fff">
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Schedule Type</label>
+                        <select id="editMedSchedule" name="schedule_type" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
+                            <option value="">Select...</option>
+                            <option value="OTC">OTC (Over the Counter)</option>
+                            <option value="Schedule H">Schedule H</option>
+                            <option value="Schedule H1">Schedule H1</option>
+                            <option value="Schedule X">Schedule X</option>
+                            <option value="Schedule G">Schedule G</option>
+                            <option value="Narcotic">Narcotic</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Requires Prescription</label>
+                        <select id="editMedRx" name="requires_prescription" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom:24px">
+                <div style="font-size:13px;font-weight:700;color:var(--midnight-blue);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--aquamint);display:inline-block;font-family:'Roobert',sans-serif">
+                    <i data-lucide="banknote" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"></i> Pricing
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Purchase Price *</label>
+                        <input type="number" id="editMedPurchasePrice" name="purchase_price" required min="0" step="0.01" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;outline:none;background:#fff" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Sale Price *</label>
+                        <input type="number" id="editMedSalePrice" name="selling_price" required min="0" step="0.01" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;outline:none;background:#fff" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Tax / GST Category</label>
+                        <select id="editMedTax" name="tax_gst_category" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
+                            <option value="">Select...</option>
+                            <option value="GST 0%">GST 0%</option>
+                            <option value="GST 5%">GST 5%</option>
+                            <option value="GST 12%">GST 12%</option>
+                            <option value="GST 18%">GST 18%</option>
+                            <option value="GST 28%">GST 28%</option>
+                            <option value="Exempt">Exempt</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom:24px">
+                <div style="font-size:13px;font-weight:700;color:var(--midnight-blue);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--aquamint);display:inline-block;font-family:'Roobert',sans-serif">
+                    <i data-lucide="toggle-right" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"></i> Status
+                </div>
+                <div>
+                    <label style="font-size:12px;font-weight:600;color:var(--color-muted-foreground);display:block;margin-bottom:4px">Status</label>
+                    <select id="editMedStatus" name="is_active" style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;background:#fff">
+                        <option value="1">Active</option>
+                        <option value="0">Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="editMedError" style="display:none;padding:12px 16px;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;margin-bottom:16px;color:#991B1B;font-size:13px"></div>
+            <div id="editMedSuccess" style="display:none;padding:12px 16px;background:#DCFCE7;border:1px solid #BBF7D0;border-radius:8px;margin-bottom:16px;color:#166534;font-size:13px"></div>
+
+            <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:8px;border-top:1px solid var(--color-border)">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas" style="border-radius:8px;font-size:13px;padding:10px 24px">Cancel</button>
+                <button type="submit" id="btnUpdateMedicine" style="background:var(--aquamint);color:var(--midnight-blue);border:none;border-radius:8px;font-size:13px;font-weight:600;padding:10px 28px;cursor:pointer;display:flex;align-items:center;gap:6px">
+                    <i data-lucide="save" style="width:16px;height:16px"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')

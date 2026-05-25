@@ -195,6 +195,11 @@
                         </a>
                     </li>
                     <?php endif; ?>
+                    <li>
+                        <a href="<?php echo e(url('/pharmacy/vendors')); ?>" class="<?php echo e(request()->is('pharmacy/vendors') ? 'active' : ''); ?>">
+                            <span class="nav-label">Vendors</span>
+                        </a>
+                    </li>
                 </ul>
             </li>
             <?php endif; ?>

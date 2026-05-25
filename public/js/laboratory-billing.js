@@ -3,6 +3,12 @@ $(document).ready(function() {
     var currentTxnId = null;
     var pendingCollectTxnId = null;
 
+    var allTxns = [];
+    var filteredTxns = [];
+    var txnPage = 1;
+    var txnRowsPer = 10;
+    var txnActiveFilters = { dept: '', status: '', dateFrom: '', dateTo: '' };
+
     function esc(s) { return $('<span>').text(s || '').html(); }
     function fmt(n) { return hospitalInfo.currency + ' ' + Number(n || 0).toLocaleString(); }
 
@@ -14,7 +20,7 @@ $(document).ready(function() {
     loadPendingOPD();
     loadPendingIPD();
 
-    // ===== DASHBOARD =====
+    // ── Dashboard ──────────────────────────────────────────────────────────────
     function loadDashboard() {
         $.get('/api/laboratory-billing/dashboard', function(d) {
             $('#statTodaySales').text(fmt(d.todaySales));
@@ -27,7 +33,7 @@ $(document).ready(function() {
         });
     }
 
-    // ===== REVENUE BREAKDOWN =====
+    // ── Revenue Charts ─────────────────────────────────────────────────────────
     function loadRevenue(period) {
         $.get('/api/laboratory-billing/revenue', { period: period }, function(d) {
             var $dept = $('#revDeptContent').empty();
@@ -78,67 +84,279 @@ $(document).ready(function() {
         loadRevenue($(this).data('period'));
     });
 
-    // ===== TRANSACTIONS TABLE =====
+    // ── Transactions (client-side) ─────────────────────────────────────────────
     function loadTransactions() {
-        var params = {};
-        var search = $('#txnSearch').val();
-        var dept   = $('#txnDeptFilter').val();
-        var status = $('#txnStatusFilter').val();
-        if (search) params.search = search;
-        if (dept)   params.department = dept;
-        if (status) params.paymentStatus = status;
+        $('#txnLoading').show();
+        $('#txnEmpty').addClass('is-hidden');
+        $('#tblTransactions').hide();
+        $('#txnPagination').hide();
 
-        $.get('/api/laboratory-billing/transactions', params, function(data) {
-            var $tb = $('#tbodyTransactions').empty();
-            if (!data || data.length === 0) {
-                $tb.append('<tr><td colspan="10" style="padding:24px;text-align:center;color:var(--color-muted-foreground);font-size:13px">No transactions found</td></tr>');
-                return;
-            }
-
-            var deptColors = { 'OPD': '#3b82f6', 'IPD': '#8b5cf6', 'Emergency': '#ef4444', 'OT': '#f97316', 'Walk-in': '#22c55e' };
-            var deptBg     = { 'OPD': '#DBEAFE', 'IPD': '#EDE9FE', 'Emergency': '#FEE2E2', 'OT': '#FFF7ED', 'Walk-in': '#DCFCE7' };
-            var statusColors = { 'Paid': '#22c55e', 'Pending': '#f97316', 'Partial': '#eab308', 'Voided': '#ef4444' };
-            var statusBg   = { 'Paid': '#DCFCE7', 'Pending': '#FFF7ED', 'Partial': '#FEFCE8', 'Voided': '#FEE2E2' };
-            var reconIcons = {
-                'Matched':  '<span style="color:#22c55e;font-weight:600">&#10003; Matched</span>',
-                'Pending':  '<span style="color:#f97316;font-weight:600">&#9888; Pending</span>',
-                'Mismatch': '<span style="color:#ef4444;font-weight:600">&#10007; Mismatch</span>',
-            };
-
-            data.forEach(function(txn) {
-                var dateStr = '';
-                if (txn.transactionDate) {
-                    var d = new Date(txn.transactionDate);
-                    dateStr = d.toLocaleDateString('en-PK') + ' ' + d.toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' });
-                }
-
-                $tb.append(
-                    '<tr class="txn-row" data-txn-id="' + esc(txn.transactionId) + '" style="border-bottom:1px solid var(--color-border);cursor:pointer;transition:background 0.15s" onmouseover="this.style.background=\'var(--color-background)\'" onmouseout="this.style.background=\'#fff\'">' +
-                        '<td style="padding:10px 14px;font-size:13px;font-weight:600;font-family:monospace;color:var(--aquamint)">' + esc(txn.transactionId) + '</td>' +
-                        '<td style="padding:10px 14px;font-size:12px;color:var(--color-muted-foreground)">' + dateStr + '</td>' +
-                        '<td style="padding:10px 14px"><div style="font-size:13px;font-weight:500">' + esc(txn.patientName) + '</div><div style="font-size:11px;color:var(--color-muted-foreground)">' + esc(txn.mrn) + '</div></td>' +
-                        '<td style="padding:10px 14px;text-align:center"><span style="padding:2px 10px;border-radius:4px;font-size:11px;font-weight:600;background:' + (deptBg[txn.department] || '#f1f5f9') + ';color:' + (deptColors[txn.department] || '#666') + '">' + esc(txn.department) + '</span></td>' +
-                        '<td style="padding:10px 14px;font-size:12px;font-family:monospace;color:var(--color-muted-foreground)">' + esc(txn.orderId) + '</td>' +
-                        '<td style="padding:10px 14px;text-align:right;font-size:13px;font-weight:600;font-family:monospace">' + fmt(txn.totalAmount) + '</td>' +
-                        '<td style="padding:10px 14px;text-align:center;font-size:12px">' + esc(txn.paymentMode) + '</td>' +
-                        '<td style="padding:10px 14px;text-align:center"><span style="padding:2px 10px;border-radius:4px;font-size:11px;font-weight:600;background:' + (statusBg[txn.paymentStatus] || '#f1f5f9') + ';color:' + (statusColors[txn.paymentStatus] || '#666') + '">' + esc(txn.paymentStatus) + '</span></td>' +
-                        '<td style="padding:10px 14px;text-align:center;font-size:12px">' + esc(txn.billedTo) + '</td>' +
-                        '<td style="padding:10px 14px;text-align:center;font-size:12px">' + (reconIcons[txn.reconciliationStatus] || esc(txn.reconciliationStatus)) + '</td>' +
-                    '</tr>'
-                );
-            });
+        $.get('/api/laboratory-billing/transactions', function(data) {
+            allTxns = data || [];
+            applyTxnClientFilters();
+        }).fail(function() {
+            $('#txnLoading').hide();
+            HMS.toast('Failed to load transactions', 'error');
         });
     }
 
-    var searchTimer;
-    $('#txnSearch').on('input', function() { clearTimeout(searchTimer); searchTimer = setTimeout(loadTransactions, 300); });
-    $('#txnDeptFilter, #txnStatusFilter').on('change', loadTransactions);
+    function applyTxnClientFilters() {
+        var search = ($('#txnSearch').val() || '').toLowerCase().trim();
+        var dept = txnActiveFilters.dept;
+        var status = txnActiveFilters.status;
+        var dateFrom = txnActiveFilters.dateFrom ? new Date(txnActiveFilters.dateFrom) : null;
+        var dateTo = txnActiveFilters.dateTo ? new Date(txnActiveFilters.dateTo + 'T23:59:59') : null;
 
+        filteredTxns = allTxns.filter(function(t) {
+            if (search) {
+                var hay = (t.transactionId || '') + ' ' + (t.patientName || '') + ' ' + (t.mrn || '') + ' ' + (t.orderId || '');
+                if (hay.toLowerCase().indexOf(search) === -1) return false;
+            }
+            if (dept && t.department !== dept) return false;
+            if (status && t.paymentStatus !== status) return false;
+            if (dateFrom && t.transactionDate && new Date(t.transactionDate) < dateFrom) return false;
+            if (dateTo && t.transactionDate && new Date(t.transactionDate) > dateTo) return false;
+            return true;
+        });
+
+        txnPage = 1;
+        renderTxnTable();
+        renderTxnPagination();
+        updateTxnFilterBadge();
+    }
+
+    function renderTxnTable() {
+        var $tb = $('#tbodyTransactions').empty();
+        var start = (txnPage - 1) * txnRowsPer;
+        var slice = filteredTxns.slice(start, start + txnRowsPer);
+
+        $('#txnLoading').hide();
+
+        if (filteredTxns.length === 0) {
+            $('#tblTransactions').hide();
+            $('#txnEmpty').removeClass('is-hidden');
+            $('#txnPagination').hide();
+            lucide.createIcons();
+            return;
+        }
+
+        $('#txnEmpty').addClass('is-hidden');
+        $('#tblTransactions').show();
+
+        var deptColors = { 'OPD': '#3b82f6', 'IPD': '#8b5cf6', 'Emergency': '#ef4444', 'OT': '#f97316', 'Walk-in': '#22c55e' };
+        var deptBg = { 'OPD': '#DBEAFE', 'IPD': '#EDE9FE', 'Emergency': '#FEE2E2', 'OT': '#FFF7ED', 'Walk-in': '#DCFCE7' };
+        var statusColors = { 'Paid': '#22c55e', 'Pending': '#f97316', 'Partial': '#eab308', 'Voided': '#ef4444' };
+        var statusBg = { 'Paid': '#DCFCE7', 'Pending': '#FFF7ED', 'Partial': '#FEFCE8', 'Voided': '#FEE2E2' };
+        var reconIcons = { 'Matched': '<span style="color:#22c55e;font-weight:600">&#10003; Matched</span>', 'Pending': '<span style="color:#f97316;font-weight:600">&#9888; Pending</span>', 'Mismatch': '<span style="color:#ef4444;font-weight:600">&#10007; Mismatch</span>' };
+
+        slice.forEach(function(txn) {
+            var dateStr = '';
+            if (txn.transactionDate) {
+                var d = new Date(txn.transactionDate);
+                dateStr = d.toLocaleDateString('en-PK') + ' ' + d.toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' });
+            }
+            $tb.append(
+                '<tr class="txn-row" data-txn-id="' + esc(txn.transactionId) + '" style="border-bottom:1px solid var(--color-border);cursor:pointer;transition:background 0.15s" onmouseover="this.style.background=\'var(--color-background)\'" onmouseout="this.style.background=\'#fff\'">' +
+                    '<td style="padding:10px 14px;font-size:13px;font-weight:600;font-family:monospace;color:var(--aquamint)">' + esc(txn.transactionId) + '</td>' +
+                    '<td style="padding:10px 14px;font-size:12px;color:var(--color-muted-foreground)">' + dateStr + '</td>' +
+                    '<td style="padding:10px 14px"><div style="font-size:13px;font-weight:500">' + esc(txn.patientName) + '</div><div style="font-size:11px;color:var(--color-muted-foreground)">' + esc(txn.mrn) + '</div></td>' +
+                    '<td style="padding:10px 14px;text-align:center"><span style="padding:2px 10px;border-radius:4px;font-size:11px;font-weight:600;background:' + (deptBg[txn.department] || '#f1f5f9') + ';color:' + (deptColors[txn.department] || '#666') + '">' + esc(txn.department) + '</span></td>' +
+                    '<td style="padding:10px 14px;font-size:12px;font-family:monospace;color:var(--color-muted-foreground)">' + esc(txn.orderId) + '</td>' +
+                    '<td style="padding:10px 14px;text-align:right;font-size:13px;font-weight:600;font-family:monospace">' + fmt(txn.totalAmount) + '</td>' +
+                    '<td style="padding:10px 14px;text-align:center;font-size:12px">' + esc(txn.paymentMode) + '</td>' +
+                    '<td style="padding:10px 14px;text-align:center"><span style="padding:2px 10px;border-radius:4px;font-size:11px;font-weight:600;background:' + (statusBg[txn.paymentStatus] || '#f1f5f9') + ';color:' + (statusColors[txn.paymentStatus] || '#666') + '">' + esc(txn.paymentStatus) + '</span></td>' +
+                    '<td style="padding:10px 14px;text-align:center;font-size:12px">' + esc(txn.billedTo) + '</td>' +
+                    '<td style="padding:10px 14px;text-align:center;font-size:12px">' + (reconIcons[txn.reconciliationStatus] || esc(txn.reconciliationStatus)) + '</td>' +
+                '</tr>'
+            );
+        });
+
+        lucide.createIcons();
+    }
+
+    function renderTxnPagination() {
+        var total = filteredTxns.length;
+        var totalPages = Math.max(1, Math.ceil(total / txnRowsPer));
+        var start = total === 0 ? 0 : (txnPage - 1) * txnRowsPer + 1;
+        var end = Math.min(txnPage * txnRowsPer, total);
+
+        $('#txnPageInfo').text('Showing ' + start + '–' + end + ' of ' + total + ' results');
+        $('#txnPrevPage').prop('disabled', txnPage <= 1);
+        $('#txnNextPage').prop('disabled', txnPage >= totalPages);
+
+        var nums = buildTxnPageRange(txnPage, totalPages);
+        var $nums = $('#txnPageNums').empty();
+        nums.forEach(function(p) {
+            if (p === '...') {
+                $nums.append('<span style="padding:0 4px;color:var(--color-muted-foreground);font-size:13px">…</span>');
+            } else {
+                $nums.append('<button class="opd-page-num' + (p === txnPage ? ' active' : '') + '" onclick="goToTxnPage(' + p + ')">' + p + '</button>');
+            }
+        });
+
+        $('#txnPagination').toggle(total > 0);
+        lucide.createIcons();
+    }
+
+    function buildTxnPageRange(current, total) {
+        if (total <= 7) {
+            var arr = [];
+            for (var i = 1; i <= total; i++) arr.push(i);
+            return arr;
+        }
+        var pages = [1];
+        if (current > 3) pages.push('...');
+        for (var i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
+        if (current < total - 2) pages.push('...');
+        pages.push(total);
+        return pages;
+    }
+
+    window.goToTxnPage = function(p) {
+        var totalPages = Math.max(1, Math.ceil(filteredTxns.length / txnRowsPer));
+        txnPage = Math.max(1, Math.min(p, totalPages));
+        renderTxnTable();
+        renderTxnPagination();
+    };
+
+    $('#txnPrevPage').on('click', function() { goToTxnPage(txnPage - 1); });
+    $('#txnNextPage').on('click', function() { goToTxnPage(txnPage + 1); });
+
+    var searchTimer;
+    $('#txnSearch').on('input', function() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(applyTxnClientFilters, 200);
+    });
+
+    // ── Toolbar window functions ───────────────────────────────────────────────
+    window.toggleTxnFilter = function() {
+        var $pane = $('#txnFilterPane');
+        var $btn = $('#btnTxnFilter');
+        if ($pane.is(':visible')) {
+            $pane.hide();
+            $btn.removeClass('active');
+        } else {
+            $pane.show();
+            $btn.addClass('active');
+            lucide.createIcons();
+        }
+    };
+
+    window.applyTxnFilters = function() {
+        txnActiveFilters.dept = $('#txnDeptFilter').val();
+        txnActiveFilters.status = $('#txnStatusFilter').val();
+        txnActiveFilters.dateFrom = $('#txnDateFrom').val();
+        txnActiveFilters.dateTo = $('#txnDateTo').val();
+        applyTxnClientFilters();
+    };
+
+    window.resetTxnFilters = function() {
+        $('#txnDeptFilter').val('');
+        $('#txnStatusFilter').val('');
+        $('#txnDateFrom').val('');
+        $('#txnDateTo').val('');
+        txnActiveFilters = { dept: '', status: '', dateFrom: '', dateTo: '' };
+        applyTxnClientFilters();
+    };
+
+    function updateTxnFilterBadge() {
+        var count = 0;
+        if (txnActiveFilters.dept) count++;
+        if (txnActiveFilters.status) count++;
+        if (txnActiveFilters.dateFrom) count++;
+        if (txnActiveFilters.dateTo) count++;
+        var $badge = $('#txnFilterBadge');
+        if (count > 0) {
+            $badge.text(count).show();
+            $('#btnTxnFilter').addClass('filter-active');
+        } else {
+            $badge.hide();
+            $('#btnTxnFilter').removeClass('filter-active');
+        }
+    }
+
+    window.toggleTxnRowsMenu = function(e) {
+        e.stopPropagation();
+        $('#txnRowsMenu').toggleClass('open');
+        $('#txnColVisMenu').removeClass('open');
+        $('#txnExportMenu').removeClass('open');
+    };
+
+    window.setTxnRowsPer = function(n) {
+        txnRowsPer = n;
+        txnPage = 1;
+        $('#txnRowsMenu button').removeClass('active');
+        $('#txnRowsMenu button').each(function() {
+            if ($(this).text().indexOf(n + ' ') !== -1) $(this).addClass('active');
+        });
+        $('#txnRowsMenu').removeClass('open');
+        renderTxnTable();
+        renderTxnPagination();
+    };
+
+    window.toggleTxnColVis = function(e) {
+        e.stopPropagation();
+        $('#txnColVisMenu').toggleClass('open');
+        $('#txnRowsMenu').removeClass('open');
+        $('#txnExportMenu').removeClass('open');
+    };
+
+    window.txnColVisSelectAll = function() {
+        $('#txnColVisList input[type="checkbox"]').prop('checked', true);
+    };
+
+    window.applyTxnColVis = function() {
+        $('#txnColVisList input[type="checkbox"]').each(function() {
+            var col = parseInt($(this).data('col'));
+            var visible = $(this).is(':checked');
+            $('#tblTransactions thead tr th:nth-child(' + (col + 1) + ')').toggle(visible);
+            $('#tbodyTransactions tr').each(function() {
+                $(this).find('td:nth-child(' + (col + 1) + ')').toggle(visible);
+            });
+        });
+        $('#txnColVisMenu').removeClass('open');
+    };
+
+    window.toggleTxnExportMenu = function(e) {
+        e.stopPropagation();
+        $('#txnExportMenu').toggleClass('open');
+        $('#txnRowsMenu').removeClass('open');
+        $('#txnColVisMenu').removeClass('open');
+    };
+
+    window.exportTxn = function(type) {
+        $('#txnExportMenu').removeClass('open');
+        if (type === 'print') { window.print(); return; }
+        if (filteredTxns.length === 0) { HMS.toast('No data to export', 'warning'); return; }
+        if (type === 'csv') {
+            var headers = ['Transaction ID', 'Date/Time', 'Patient Name', 'MRN', 'Department', 'Order ID', 'Total', 'Payment Mode', 'Status', 'Billed To', 'Reconciliation'];
+            var rows = filteredTxns.map(function(t) {
+                return [t.transactionId, t.transactionDate, t.patientName, t.mrn, t.department, t.orderId, t.totalAmount, t.paymentMode, t.paymentStatus, t.billedTo, t.reconciliationStatus];
+            });
+            var csv = [headers].concat(rows).map(function(r) {
+                return r.map(function(v) { return '"' + String(v || '').replace(/"/g, '""') + '"'; }).join(',');
+            }).join('\n');
+            var blob = new Blob([csv], { type: 'text/csv' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'laboratory-billing-transactions.csv';
+            a.click();
+        } else if (type === 'pdf') {
+            HMS.toast('PDF export coming soon', 'info');
+        }
+    };
+
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.opd-rows-wrap').length) $('#txnRowsMenu').removeClass('open');
+        if (!$(e.target).closest('.opd-col-vis-wrap').length) $('#txnColVisMenu').removeClass('open');
+        if (!$(e.target).closest('.opd-export-wrap').length) $('#txnExportMenu').removeClass('open');
+    });
+
+    // ── Transaction Detail ─────────────────────────────────────────────────────
     $(document).on('click', '.txn-row', function() {
         openTxnDetail($(this).data('txn-id'));
     });
 
-    // ===== TRANSACTION DETAIL OFFCANVAS =====
     function openTxnDetail(txnId) {
         currentTxnId = txnId;
         $.get('/api/laboratory-billing/transactions/' + txnId, function(txn) {
@@ -152,20 +370,9 @@ $(document).ready(function() {
 
             var itemsHtml = '';
             if (txn.items && txn.items.length > 0) {
-                itemsHtml = '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px">' +
-                    '<thead><tr style="background:var(--color-background)">' +
-                        '<th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground)">Test Name</th>' +
-                        '<th style="padding:6px 10px;text-align:center;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground)">Qty</th>' +
-                        '<th style="padding:6px 10px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground)">Unit Price</th>' +
-                        '<th style="padding:6px 10px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground)">Total</th>' +
-                    '</tr></thead><tbody>';
+                itemsHtml = '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px"><thead><tr style="background:var(--color-background)"><th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground)">Test Name</th><th style="padding:6px 10px;text-align:center;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground)">Qty</th><th style="padding:6px 10px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground)">Unit Price</th><th style="padding:6px 10px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground)">Total</th></tr></thead><tbody>';
                 txn.items.forEach(function(item) {
-                    itemsHtml += '<tr style="border-bottom:1px solid var(--color-border)">' +
-                        '<td style="padding:6px 10px">' + esc(item.name) + '</td>' +
-                        '<td style="padding:6px 10px;text-align:center">' + (item.qty || 1) + '</td>' +
-                        '<td style="padding:6px 10px;text-align:right;font-family:monospace">' + fmt(item.unitPrice) + '</td>' +
-                        '<td style="padding:6px 10px;text-align:right;font-family:monospace;font-weight:600">' + fmt(item.total) + '</td>' +
-                    '</tr>';
+                    itemsHtml += '<tr style="border-bottom:1px solid var(--color-border)"><td style="padding:6px 10px">' + esc(item.name) + '</td><td style="padding:6px 10px;text-align:center">' + (item.qty || 1) + '</td><td style="padding:6px 10px;text-align:right;font-family:monospace">' + fmt(item.unitPrice) + '</td><td style="padding:6px 10px;text-align:right;font-family:monospace;font-weight:600">' + fmt(item.total) + '</td></tr>';
                 });
                 itemsHtml += '</tbody></table>';
             } else {
@@ -173,24 +380,17 @@ $(document).ready(function() {
             }
 
             var reconColor = txn.reconciliationStatus === 'Matched' ? '#22c55e' : (txn.reconciliationStatus === 'Mismatch' ? '#ef4444' : '#f97316');
-            var reconIcon  = txn.reconciliationStatus === 'Matched' ? '&#10003;' : (txn.reconciliationStatus === 'Mismatch' ? '&#10007;' : '&#9888;');
+            var reconIcon = txn.reconciliationStatus === 'Matched' ? '&#10003;' : (txn.reconciliationStatus === 'Mismatch' ? '&#10007;' : '&#9888;');
 
             var html =
-                '<div style="margin-bottom:20px">' +
-                    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">' +
-                        '<div><span style="color:var(--color-muted-foreground)">Patient:</span> <strong>' + esc(txn.patientName) + '</strong> (' + esc(txn.mrn) + ')</div>' +
-                        '<div><span style="color:var(--color-muted-foreground)">Order ID:</span> <strong>' + esc(txn.orderId) + '</strong></div>' +
-                        '<div><span style="color:var(--color-muted-foreground)">Date/Time:</span> <strong>' + dateStr + '</strong></div>' +
-                        '<div><span style="color:var(--color-muted-foreground)">Department:</span> <strong>' + esc(txn.department) + '</strong></div>' +
-                        '<div><span style="color:var(--color-muted-foreground)">Ordered By:</span> <strong>' + esc(txn.orderedBy) + '</strong></div>' +
-                    '</div>' +
-                '</div>' +
-
-                '<div style="margin-bottom:20px">' +
-                    '<div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground);margin-bottom:8px;letter-spacing:0.05em">Lab Tests Performed</div>' +
-                    itemsHtml +
-                '</div>' +
-
+                '<div style="margin-bottom:20px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">' +
+                    '<div><span style="color:var(--color-muted-foreground)">Patient:</span> <strong>' + esc(txn.patientName) + '</strong> (' + esc(txn.mrn) + ')</div>' +
+                    '<div><span style="color:var(--color-muted-foreground)">Order ID:</span> <strong>' + esc(txn.orderId) + '</strong></div>' +
+                    '<div><span style="color:var(--color-muted-foreground)">Date/Time:</span> <strong>' + dateStr + '</strong></div>' +
+                    '<div><span style="color:var(--color-muted-foreground)">Department:</span> <strong>' + esc(txn.department) + '</strong></div>' +
+                    '<div><span style="color:var(--color-muted-foreground)">Ordered By:</span> <strong>' + esc(txn.orderedBy) + '</strong></div>' +
+                '</div></div>' +
+                '<div style="margin-bottom:20px"><div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground);margin-bottom:8px;letter-spacing:0.05em">Lab Tests Performed</div>' + itemsHtml + '</div>' +
                 '<div style="padding:16px;background:var(--color-background);border-radius:10px;border:1px solid var(--color-border);margin-bottom:20px">' +
                     '<div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground);margin-bottom:12px;letter-spacing:0.05em">Financial Breakdown</div>' +
                     '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span>Subtotal:</span><span style="font-family:monospace">' + fmt(txn.subtotal) + '</span></div>' +
@@ -198,18 +398,15 @@ $(document).ready(function() {
                     '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span>Tax:</span><span style="font-family:monospace">' + fmt(txn.tax) + '</span></div>' +
                     '<div style="border-top:1px solid var(--color-border);margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;font-size:15px;font-weight:700"><span>TOTAL:</span><span style="color:var(--aquamint)">' + fmt(txn.totalAmount) + '</span></div>' +
                 '</div>' +
-
                 '<div style="padding:16px;background:var(--color-background);border-radius:10px;border:1px solid var(--color-border);margin-bottom:20px">' +
                     '<div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground);margin-bottom:12px;letter-spacing:0.05em">Payment Information</div>' +
                     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">' +
                         '<div><span style="color:var(--color-muted-foreground)">Payment Category:</span> <strong>' + esc(txn.billedTo) + '</strong></div>' +
                         '<div><span style="color:var(--color-muted-foreground)">Payment Mode:</span> <strong>' + esc(txn.paymentMode) + '</strong></div>' +
-                        '<div><span style="color:var(--color-muted-foreground)">Payment Date:</span> <strong>' + dateStr + '</strong></div>' +
                         '<div><span style="color:var(--color-muted-foreground)">Receipt Number:</span> <strong>' + esc(txn.receiptNumber) + '</strong></div>' +
                         '<div><span style="color:var(--color-muted-foreground)">Processed By:</span> <strong>' + esc(txn.processedBy) + '</strong></div>' +
                     '</div>' +
                 '</div>' +
-
                 '<div style="padding:16px;background:var(--color-background);border-radius:10px;border:1px solid var(--color-border);margin-bottom:20px">' +
                     '<div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground);margin-bottom:12px;letter-spacing:0.05em">Billing Integration</div>' +
                     '<div style="font-size:13px;line-height:2">' +
@@ -218,7 +415,6 @@ $(document).ready(function() {
                         '<div><span style="color:var(--color-muted-foreground)">Billing Reference:</span> <strong>' + esc(txn.billingReference) + '</strong></div>' +
                     '</div>' +
                 '</div>' +
-
                 '<div style="padding:16px;border-radius:10px;border:2px solid ' + reconColor + ';background:' + reconColor + '15">' +
                     '<div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground);margin-bottom:8px;letter-spacing:0.05em">Reconciliation</div>' +
                     '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Lab Record:</span><span style="font-family:monospace;font-weight:600">' + fmt(txn.totalAmount) + '</span></div>' +
@@ -245,11 +441,7 @@ $(document).ready(function() {
 
             var itemsHtml = '';
             if (txn.items && txn.items.length > 0) {
-                itemsHtml = '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px">' +
-                    '<thead><tr style="background:var(--color-background)">' +
-                        '<th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground)">Test Name</th>' +
-                        '<th style="padding:6px 10px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground)">Price</th>' +
-                    '</tr></thead><tbody>';
+                itemsHtml = '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px"><thead><tr style="background:var(--color-background)"><th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground)">Test Name</th><th style="padding:6px 10px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground)">Price</th></tr></thead><tbody>';
                 txn.items.forEach(function(item) {
                     itemsHtml += '<tr style="border-bottom:1px solid var(--color-border)"><td style="padding:6px 10px">' + esc(item.name) + '</td><td style="padding:6px 10px;text-align:right;font-family:monospace;font-weight:600">' + fmt(item.total) + '</td></tr>';
                 });
@@ -259,17 +451,15 @@ $(document).ready(function() {
             }
 
             var html =
-                '<div style="margin-bottom:20px">' +
-                    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">' +
-                        '<div><span style="color:var(--color-muted-foreground)">Patient:</span> <strong>' + esc(txn.patientName) + '</strong> (' + esc(txn.mrn) + ')</div>' +
-                        '<div><span style="color:var(--color-muted-foreground)">Order ID:</span> <strong>' + esc(txn.orderId) + '</strong></div>' +
-                        '<div><span style="color:var(--color-muted-foreground)">Date/Time:</span> <strong>' + dateStr + '</strong></div>' +
-                        '<div><span style="color:var(--color-muted-foreground)">Department:</span> <strong>' + esc(txn.department) + '</strong></div>' +
-                        '<div><span style="color:var(--color-muted-foreground)">Ordered By:</span> <strong>' + esc(txn.orderedBy) + '</strong></div>' +
-                        '<div><span style="color:var(--color-muted-foreground)">Processed By:</span> <strong>' + esc(txn.processedBy) + '</strong></div>' +
-                        '<div><span style="color:var(--color-muted-foreground)">IPD Ref:</span> <strong>' + esc(txn.billingReference) + '</strong></div>' +
-                    '</div>' +
-                '</div>' +
+                '<div style="margin-bottom:20px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">' +
+                    '<div><span style="color:var(--color-muted-foreground)">Patient:</span> <strong>' + esc(txn.patientName) + '</strong> (' + esc(txn.mrn) + ')</div>' +
+                    '<div><span style="color:var(--color-muted-foreground)">Order ID:</span> <strong>' + esc(txn.orderId) + '</strong></div>' +
+                    '<div><span style="color:var(--color-muted-foreground)">Date/Time:</span> <strong>' + dateStr + '</strong></div>' +
+                    '<div><span style="color:var(--color-muted-foreground)">Department:</span> <strong>' + esc(txn.department) + '</strong></div>' +
+                    '<div><span style="color:var(--color-muted-foreground)">Ordered By:</span> <strong>' + esc(txn.orderedBy) + '</strong></div>' +
+                    '<div><span style="color:var(--color-muted-foreground)">Processed By:</span> <strong>' + esc(txn.processedBy) + '</strong></div>' +
+                    '<div><span style="color:var(--color-muted-foreground)">IPD Ref:</span> <strong>' + esc(txn.billingReference) + '</strong></div>' +
+                '</div></div>' +
                 '<div style="margin-bottom:20px"><div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground);margin-bottom:8px;letter-spacing:0.05em">Lab Tests</div>' + itemsHtml + '</div>' +
                 '<div style="padding:16px;background:var(--color-background);border-radius:10px;border:1px solid var(--color-border);margin-bottom:20px">' +
                     '<div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground);margin-bottom:12px;letter-spacing:0.05em">Financial Breakdown</div>' +
@@ -290,12 +480,10 @@ $(document).ready(function() {
             $('#txnDetailBody').html(html);
             new bootstrap.Offcanvas(document.getElementById('txnDetailSheet')).show();
             lucide.createIcons();
-        }).fail(function() {
-            HMS.toast('Could not load order details.', 'error');
-        });
+        }).fail(function() { HMS.toast('Could not load order details.', 'error'); });
     }
 
-    // ===== VOID & RECONCILE =====
+    // ── Void & Reconcile ───────────────────────────────────────────────────────
     $(document).on('click', '.btn-void-txn', function() {
         if (!currentTxnId) return;
         if (!confirm('Are you sure you want to void this transaction?')) return;
@@ -303,11 +491,12 @@ $(document).ready(function() {
             url: '/api/laboratory-billing/void',
             method: 'POST',
             contentType: 'application/json',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             data: JSON.stringify({ transactionId: currentTxnId }),
             success: function() {
                 bootstrap.Offcanvas.getInstance(document.getElementById('txnDetailSheet')).hide();
-                loadDashboard(); loadTransactions();
+                HMS.toast('Transaction voided successfully', 'success');
+                loadDashboard();
+                loadTransactions();
             },
             error: function(xhr) { HMS.ajaxError(xhr, 'Failed'); }
         });
@@ -319,17 +508,17 @@ $(document).ready(function() {
             url: '/api/laboratory-billing/reconcile',
             method: 'POST',
             contentType: 'application/json',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             data: JSON.stringify({ transactionId: currentTxnId, status: 'Matched' }),
             success: function() {
                 bootstrap.Offcanvas.getInstance(document.getElementById('txnDetailSheet')).hide();
+                HMS.toast('Transaction marked as reconciled', 'success');
                 loadTransactions();
             },
             error: function(xhr) { HMS.ajaxError(xhr, 'Failed'); }
         });
     });
 
-    // ===== OPD/WALK-IN PENDING =====
+    // ── OPD/Walk-in Pending ────────────────────────────────────────────────────
     function loadPendingOPD() {
         $.get('/api/laboratory-billing/pending-opd', function(d) {
             $('#pendingOpdTotal').text('Total: ' + fmt(d.totalPending));
@@ -365,18 +554,20 @@ $(document).ready(function() {
             url: '/api/laboratory-billing/collect-payment',
             method: 'POST',
             contentType: 'application/json',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             data: JSON.stringify({ transactionId: pendingCollectTxnId, paymentMode: mode }),
             success: function() {
                 $('#collectPayModal').hide();
                 pendingCollectTxnId = null;
-                loadDashboard(); loadTransactions(); loadPendingOPD();
+                HMS.toast('Payment collected successfully', 'success');
+                loadDashboard();
+                loadTransactions();
+                loadPendingOPD();
             },
             error: function(xhr) { HMS.ajaxError(xhr, 'Failed'); }
         });
     });
 
-    // ===== IPD PENDING =====
+    // ── IPD Pending ────────────────────────────────────────────────────────────
     function loadPendingIPD() {
         $.get('/api/laboratory-billing/pending-ipd', function(d) {
             $('#pendingIpdTotal').text('Total: ' + fmt(d.totalRunning));
@@ -408,7 +599,7 @@ $(document).ready(function() {
         }
     });
 
-    // ===== CASH RECONCILIATION BUTTON =====
+    // ── Cash Reconciliation ────────────────────────────────────────────────────
     $('#btnCashRecon').on('click', function() {
         HMS.toast('Cash Reconciliation for Laboratory — feature coming soon.', 'info');
     });

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bulk Uploader — Validation States</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6fb; color: #111827; padding: 24px; }
+
+  h2 { font-size: 18px; font-weight: 700; color: #060740; margin-bottom: 6px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 24px; }
+
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width:900px){ .split { grid-template-columns: 1fr; } }
+
+  .state-label { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .state-label.error { color: #b91c1c; }
+  .state-label.success { color: #047857; }
+
+  .bulk-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(6,7,64,.10); }
+  .bulk-card.error-state { border: 2px solid #ef4444; }
+  .bulk-card.success-state { border: 2px solid #10b981; }
+
+  .bulk-card-header { color: #fff; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; }
+  .bulk-card-header.error { background: #b91c1c; }
+  .bulk-card-header.success { background: #047857; }
+  .bulk-card-title { font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .bulk-card-body { padding: 18px; }
+
+  /* Steps */
+  .steps { display: flex; align-items: center; margin-bottom: 16px; }
+  .step { display: flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; color: #9ca3af; }
+  .step.active { color: #060740; }
+  .step.done { color: #10b981; }
+  .step.error { color: #b91c1c; }
+  .step-circle { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #d1d5db; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; flex-shrink: 0; }
+  .step.active .step-circle { border-color: #060740; background: #060740; color: #fff; }
+  .step.done .step-circle { border-color: #10b981; background: #10b981; color: #fff; }
+  .step.error .step-circle { border-color: #ef4444; background: #ef4444; color: #fff; }
+  .step-line { flex: 1; height: 1px; background: #e5e7eb; margin: 0 5px; min-width: 20px; }
+
+  /* File info bar */
+  .file-bar { display: flex; align-items: center; justify-content: space-between; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 14px; margin-bottom: 14px; }
+  .file-name { font-size: 13px; font-weight: 600; color: #374151; display: flex; align-items: center; gap: 7px; }
+  .file-meta { font-size: 11.5px; color: #9ca3af; }
+  .reupload-btn { font-size: 12px; color: #6b7280; background: none; border: 1px solid #e5e7eb; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+
+  /* Error banner */
+  .error-banner { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; display: flex; align-items: flex-start; gap: 10px; }
+  .error-icon { font-size: 18px; flex-shrink: 0; }
+  .error-text h4 { font-size: 13px; font-weight: 700; color: #b91c1c; margin-bottom: 2px; }
+  .error-text p { font-size: 12.5px; color: #7f1d1d; }
+
+  /* Success banner */
+  .success-banner { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; display: flex; align-items: flex-start; gap: 10px; }
+  .success-icon { font-size: 18px; flex-shrink: 0; }
+  .success-text h4 { font-size: 13px; font-weight: 700; color: #047857; margin-bottom: 2px; }
+  .success-text p { font-size: 12.5px; color: #064e3b; }
+
+  /* Error table */
+  .err-table-wrap { border: 1px solid #fca5a5; border-radius: 8px; overflow: hidden; margin-bottom: 14px; max-height: 200px; overflow-y: auto; }
+  .err-table { width: 100%; border-collapse: collapse; }
+  .err-table th { background: #fef2f2; font-size: 11px; font-weight: 700; color: #b91c1c; text-transform: uppercase; padding: 7px 12px; text-align: left; border-bottom: 1px solid #fca5a5; position: sticky; top: 0; }
+  .err-table td { font-size: 12.5px; color: #374151; padding: 7px 12px; border-bottom: 1px solid #fee2e2; font-family: monospace; }
+  .err-table tr:last-child td { border-bottom: none; }
+  .err-table tr:hover td { background: #fff7f7; }
+  .err-col { font-weight: 600; color: #b91c1c; }
+  .err-msg { color: #7f1d1d; font-family: sans-serif; font-size: 12px; }
+
+  /* Summary grid */
+  .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .summary-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; text-align: center; }
+  .summary-number { font-size: 24px; font-weight: 800; color: #060740; }
+  .summary-label { font-size: 11px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-top: 2px; }
+
+  /* Action buttons */
+  .action-row { display: flex; gap: 10px; justify-content: flex-end; }
+  .btn-cancel { padding: 8px 18px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #374151; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-primary { padding: 8px 22px; border: none; border-radius: 8px; background: #060740; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 7px; }
+  .btn-primary.green { background: #047857; }
+
+  /* Preview table */
+  .preview-wrap { border: 1px solid #d1fae5; border-radius: 8px; overflow: hidden; margin-bottom: 16px; max-height: 200px; overflow-y: auto; }
+  .preview-table { width: 100%; border-collapse: collapse; }
+  .preview-table th { background: #ecfdf5; font-size: 11px; font-weight: 700; color: #047857; text-transform: uppercase; padding: 7px 12px; text-align: left; border-bottom: 1px solid #d1fae5; position: sticky; top: 0; }
+  .preview-table td { font-size: 12px; color: #374151; padding: 6px 12px; border-bottom: 1px solid #f0fdf4; font-family: monospace; }
+  .preview-table tr:last-child td { border-bottom: none; }
+  .badge-yes { background: #dcfce7; color: #166534; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 700; font-family: sans-serif; }
+  .badge-no { background: #f3f4f6; color: #6b7280; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 700; font-family: sans-serif; }
+</style>
+</head>
+<body>
+
+<h2>Bulk Uploader — Validation States</h2>
+<p class="subtitle">Left: Validation fail hone par (Step 2 error) &nbsp;|&nbsp; Right: Validation pass hone par (Step 3 confirm)</p>
+
+<div class="split">
+
+  <!-- ── STATE: VALIDATION FAILED ── -->
+  <div>
+    <div class="state-label error">❌ State 2A — Validation Failed</div>
+    <div class="bulk-card error-state">
+      <div class="bulk-card-header error">
+        <div class="bulk-card-title">📦 Import Inventory — Validation Failed</div>
+        <span style="font-size:12px;opacity:.8">Step 2 of 3</span>
+      </div>
+      <div class="bulk-card-body">
+
+        <div class="steps">
+          <div class="step done"><div class="step-circle">✓</div> Upload</div>
+          <div class="step-line"></div>
+          <div class="step error"><div class="step-circle">!</div> Validate</div>
+          <div class="step-line"></div>
+          <div class="step"><div class="step-circle">3</div> Import</div>
+        </div>
+
+        <div class="file-bar">
+          <div class="file-name">📄 pharmacy_inventory_may2026.xlsx <span class="file-meta">• 48 rows • 2.1MB</span></div>
+          <button class="reupload-btn">↩ Re-upload</button>
+        </div>
+
+        <div class="error-banner">
+          <div class="error-icon">🚫</div>
+          <div class="error-text">
+            <h4>Import failed — 3 errors found</h4>
+            <p>Nahin rows save hue. Neeche diye errors fix karein aur file dobara upload karein.</p>
+          </div>
+        </div>
+
+        <div class="err-table-wrap">
+          <table class="err-table">
+            <tr><th>Row #</th><th>Column</th><th>Error</th></tr>
+            <tr><td>5</td><td class="err-col">medicine_code</td><td class="err-msg">Duplicate — MED-0023 already exists in database</td></tr>
+            <tr><td>12</td><td class="err-col">selling_price</td><td class="err-msg">Required field is empty</td></tr>
+            <tr><td>19</td><td class="err-col">batch_expiry</td><td class="err-msg">Invalid date format — use YYYY-MM-DD (got: 31/12/2026)</td></tr>
+          </table>
+        </div>
+
+        <div class="action-row">
+          <button class="btn-cancel">✕ Cancel</button>
+          <button class="btn-primary" style="background:#b91c1c">↩ Fix & Re-upload</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STATE: VALIDATION PASSED ── -->
+  <div>
+    <div class="state-label success">✅ State 2B — Validation Passed → Confirm Import</div>
+    <div class="bulk-card success-state">
+      <div class="bulk-card-header success">
+        <div class="bulk-card-title">📦 Import Inventory — Ready to Import</div>
+        <span style="font-size:12px;opacity:.8">Step 3 of 3</span>
+      </div>
+      <div class="bulk-card-body">
+
+        <div class="steps">
+          <div class="step done"><div class="step-circle">✓</div> Upload</div>
+          <div class="step-line"></div>
+          <div class="step done"><div class="step-circle">✓</div> Validate</div>
+          <div class="step-line"></div>
+          <div class="step active"><div class="step-circle">3</div> Import</div>
+        </div>
+
+        <div class="file-bar">
+          <div class="file-name">📄 pharmacy_inventory_may2026.xlsx <span class="file-meta">• 48 rows • 2.1MB</span></div>
+          <button class="reupload-btn">↩ Re-upload</button>
+        </div>
+
+        <div class="success-banner">
+          <div class="success-icon">✅</div>
+          <div class="success-text">
+            <h4>Validation passed — ready to import</h4>
+            <p>Sab rows valid hain. Neeche summary check karein aur Confirm Import click karein.</p>
+          </div>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="summary-number">48</div>
+            <div class="summary-label">Medicines</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-number">31</div>
+            <div class="summary-label">Batches</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-number">17</div>
+            <div class="summary-label">No Batch</div>
+          </div>
+        </div>
+
+        <div class="preview-wrap">
+          <table class="preview-table">
+            <tr><th>Code</th><th>Generic Name</th><th>Form</th><th>Category</th><th>Batch?</th></tr>
+            <tr><td>MED-001</td><td>Paracetamol</td><td>Tablet</td><td>Analgesic</td><td><span class="badge-yes">Yes</span></td></tr>
+            <tr><td>MED-002</td><td>Amoxicillin</td><td>Capsule</td><td>Antibiotic</td><td><span class="badge-yes">Yes</span></td></tr>
+            <tr><td>MED-003</td><td>Metformin</td><td>Tablet</td><td>Antidiabetic</td><td><span class="badge-no">No</span></td></tr>
+            <tr><td>MED-004</td><td>Atorvastatin</td><td>Tablet</td><td>Cardiac</td><td><span class="badge-yes">Yes</span></td></tr>
+            <tr><td>MED-005</td><td>Omeprazole</td><td>Capsule</td><td>GI</td><td><span class="badge-no">No</span></td></tr>
+          </table>
+        </div>
+
+        <div class="action-row">
+          <button class="btn-cancel">✕ Cancel</button>
+          <button class="btn-primary green">✓ Confirm Import (48 medicines)</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

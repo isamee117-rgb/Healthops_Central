@@ -63,8 +63,8 @@ class StockAlertController extends Controller
             ->selectRaw('SUM(medicine_batches.current_qty * medicines.purchase_price) as loss')
             ->value('loss') ?? 0;
 
-        $pendingPOs = PurchaseOrder::whereIn('status', ['Draft', 'Sent'])->count();
-        $pendingPOValue = PurchaseOrder::whereIn('status', ['Draft', 'Sent'])->sum('total');
+        $pendingPOs = PurchaseOrder::where('status', 'Pending')->count();
+        $pendingPOValue = PurchaseOrder::where('status', 'Pending')->sum('total');
 
         return response()->json([
             'outOfStockCount' => $outOfStockCount,
@@ -92,7 +92,7 @@ class StockAlertController extends Controller
 
             $avgDaily = max(1, round($m->min_stock / 7));
             $pendingPO = PurchaseOrderItem::where('medicine_id', $m->medicine_id)
-                ->whereHas('purchaseOrder', fn($q) => $q->whereIn('status', ['Draft', 'Sent']))
+                ->whereHas('purchaseOrder', fn($q) => $q->where('status', 'Pending'))
                 ->sum('quantity');
 
             $priority = $avgDaily > 20 ? 'URGENT' : ($avgDaily > 10 ? 'HIGH' : 'MEDIUM');
@@ -351,7 +351,7 @@ class StockAlertController extends Controller
             'advancePayment' => 'nullable|numeric',
             'deliveryInstructions' => 'nullable|string',
             'notes' => 'nullable|string',
-            'status' => 'nullable|string|in:Draft,Sent',
+            'status' => 'nullable|string|in:Pending,Completed',
         ]);
 
         $poId = $this->generateYearId(PurchaseOrder::class, 'po_id', 'PO');
@@ -376,7 +376,7 @@ class StockAlertController extends Controller
             'advance_payment' => $request->advancePayment ?? 0,
             'delivery_instructions' => $request->deliveryInstructions,
             'notes' => $request->notes,
-            'status' => $request->status ?? 'Draft',
+            'status' => 'Pending',
             'created_by' => 'Admin',
         ]);
 
@@ -422,16 +422,26 @@ class StockAlertController extends Controller
             'notes' => $po->notes,
             'status' => $po->status,
             'createdBy' => $po->created_by,
-            'items' => $po->items->map(fn($i) => [
-                'medicineId' => $i->medicine_id,
-                'medicineName' => $i->medicine ? $i->medicine->brand_name . ' ' . $i->medicine->strength : 'Unknown',
-                'currentStock' => $i->medicine ? $i->medicine->current_stock : 0,
-                'stockUnit' => $i->medicine ? $i->medicine->stock_unit : '',
-                'quantity' => $i->quantity,
-                'unitPrice' => (float)$i->unit_price,
-                'total' => (float)$i->total,
-                'receivedQty' => $i->received_qty,
-            ]),
+            'items' => $po->items->map(function ($i) use ($po) {
+                $grn = GoodsReceivedNote::where('po_id', $po->po_id)->first();
+                $grnItem = $grn
+                    ? GrnItem::where('grn_id', $grn->grn_id)->where('medicine_id', $i->medicine_id)->first()
+                    : null;
+
+                return [
+                    'medicineId'      => $i->medicine_id,
+                    'medicineName'    => $i->medicine ? $i->medicine->brand_name . ' ' . $i->medicine->strength : 'Unknown',
+                    'currentStock'    => $i->medicine ? $i->medicine->current_stock : 0,
+                    'stockUnit'       => $i->medicine ? $i->medicine->stock_unit : '',
+                    'quantity'        => $i->quantity,
+                    'unitPrice'       => (float)$i->unit_price,
+                    'total'           => (float)$i->total,
+                    'receivedQty'     => $i->received_qty,
+                    'batchNumber'     => $grnItem?->batch_number ?? '',
+                    'manufacturingDate' => $grnItem?->manufacturing_date?->format('Y-m-d') ?? '',
+                    'expiryDate'      => $grnItem?->expiry_date?->format('Y-m-d') ?? '',
+                ];
+            }),
         ]);
     }
 
@@ -535,7 +545,7 @@ class StockAlertController extends Controller
                     break;
                 }
             }
-            $po->update(['status' => $allReceived ? 'Completed' : 'Partial']);
+            $po->update(['status' => $allReceived ? 'Completed' : 'Pending']);
 
             DB::commit();
 

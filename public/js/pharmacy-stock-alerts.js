@@ -5,99 +5,305 @@ $(document).ready(function() {
     var poItems = [];
     var currentGrnPo = null;
 
+    // PO table state
+    var allPOs = [];
+    var filteredPOs = [];
+    var poPage = 1;
+    var poRowsPer = 10;
+    var poTabStatus = '';
+    var poActiveFilters = { status: '', orderType: '', dateFrom: '', dateTo: '' };
+
     function esc(s) { return $('<span>').text(s || '').html(); }
     function fmt(n) { return hospitalInfo.currency + ' ' + Number(n || 0).toLocaleString(); }
 
     $.get('/api/config/hospital-info', function(d) { if (d && d.currency) hospitalInfo.currency = d.currency; });
 
-    loadMainPOTable('');
+    loadMainPOTable();
 
-    function loadMainPOTable(statusFilter) {
-        var params = {};
-        if (statusFilter) params.status = statusFilter;
+    // ── Load PO data ───────────────────────────────────────────────────────────
+    function loadMainPOTable() {
         $('#poMainLoading').show();
-        $('#poMainEmpty').hide();
+        $('#poMainEmpty').addClass('is-hidden');
+        $('#tblMainPO').hide();
         $('#tbodyMainPO').empty();
+        $('#poPagination').hide();
 
-        $.get('/api/stock-alerts/purchase-orders', params, function(data) {
+        $.get('/api/stock-alerts/purchase-orders', function(data) {
             $('#poMainLoading').hide();
-            var $tb = $('#tbodyMainPO').empty();
+            allPOs = data;
 
             var totalCount = data.length;
-            var draftCount = 0, sentCount = 0, partialCount = 0, completedCount = 0;
+            var pendingCount = 0, completedCount = 0;
             data.forEach(function(po) {
-                if (po.status === 'Draft') draftCount++;
-                else if (po.status === 'Sent') sentCount++;
-                else if (po.status === 'Partial') partialCount++;
-                else if (po.status === 'Completed') completedCount++;
+                if (po.status === 'Completed') completedCount++;
+                else pendingCount++;
             });
+            $('#dashTotalPOs').text(totalCount);
+            $('#dashPendingPOs').text(pendingCount);
+            $('#dashCompletedPOs').text(completedCount);
 
-            if (!statusFilter) {
-                $('#dashTotalPOs').text(totalCount);
-                $('#dashDraftPOs').text(draftCount);
-                $('#dashSentPOs').text(sentCount);
-                $('#dashPartialPOs').text(partialCount);
-                $('#dashCompletedPOs').text(completedCount);
-            }
-
-            if (data.length === 0) {
-                $('#poMainEmpty').show();
-                $('#tblMainPO').hide();
-                lucide.createIcons();
-                return;
-            }
-
-            $('#tblMainPO').show();
-            $('#poMainEmpty').hide();
-
-            data.forEach(function(po) {
-                var stBg = '#E0E7FF', stColor = '#3730a3';
-                if (po.status === 'Draft') { stBg = '#F1F5F9'; stColor = '#475569'; }
-                else if (po.status === 'Sent') { stBg = '#DBEAFE'; stColor = '#1e40af'; }
-                else if (po.status === 'Partial') { stBg = '#FFF7ED'; stColor = '#9a3412'; }
-                else if (po.status === 'Completed') { stBg = '#DCFCE7'; stColor = '#166534'; }
-
-                var canReceive = (po.status === 'Sent' || po.status === 'Partial');
-
-                var actionHtml = '';
-                if (canReceive) {
-                    actionHtml = '<button class="btn-receive-po" data-po-id="' + esc(po.poId) + '" style="padding:4px 12px;background:var(--aquamint);border:none;border-radius:6px;font-size:11px;font-weight:600;color:var(--midnight-blue);cursor:pointer">Receive</button>';
-                } else if (po.status === 'Completed') {
-                    actionHtml = '<span style="font-size:11px;color:#166534;font-weight:500">Done</span>';
-                } else {
-                    actionHtml = '<span style="font-size:11px;color:var(--color-muted-foreground)">-</span>';
-                }
-
-                $tb.append(
-                    '<tr class="po-row" data-po-id="' + esc(po.poId) + '" style="border-bottom:1px solid var(--color-border);cursor:pointer;transition:background 0.15s" onmouseover="this.style.background=\'var(--color-background)\'" onmouseout="this.style.background=\'#fff\'">' +
-                        '<td style="padding:10px 16px;font-size:13px;font-weight:700;font-family:monospace">' + esc(po.poId) + '</td>' +
-                        '<td style="padding:10px 16px;font-size:13px;font-weight:500">' + esc(po.supplierName) + '</td>' +
-                        '<td style="padding:10px 16px;font-size:13px;color:var(--color-muted-foreground)">' + esc(po.poDate) + '</td>' +
-                        '<td style="padding:10px 16px;font-size:13px;color:var(--color-muted-foreground)">' + esc(po.expectedDelivery || '-') + '</td>' +
-                        '<td style="padding:10px 16px;text-align:center;font-size:13px">' + po.totalItems + ' <span style="font-size:11px;color:var(--color-muted-foreground)">(' + po.totalQty + ' units)</span></td>' +
-                        '<td style="padding:10px 16px;text-align:right;font-size:13px;font-weight:600;font-family:monospace">' + fmt(po.total) + '</td>' +
-                        '<td style="padding:10px 16px;text-align:center"><span style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:600;background:' + stBg + ';color:' + stColor + '">' + esc(po.status) + '</span></td>' +
-                        '<td style="padding:10px 16px;text-align:center">' + actionHtml + '</td>' +
-                    '</tr>'
-                );
-            });
-            lucide.createIcons();
+            applyPOClientFilters();
         }).fail(function() {
             $('#poMainLoading').hide();
-            $('#poMainEmpty').show().html('<div style="padding:40px;text-align:center;color:var(--color-muted-foreground);font-size:14px">Failed to load purchase orders</div>');
+            $('#poMainEmpty').removeClass('is-hidden').html('<div style="padding:40px;text-align:center;color:var(--color-muted-foreground);font-size:14px">Failed to load purchase orders</div>');
         });
     }
 
-    $(document).on('click', '.po-main-filter-btn', function() {
-        $('.po-main-filter-btn').removeClass('active').css({ background: '#fff', color: 'var(--color-foreground)' });
-        $(this).addClass('active').css({ background: 'var(--aquamint)', color: 'var(--midnight-blue)' });
-        loadMainPOTable($(this).data('status'));
+    // ── Client-side filter + search ────────────────────────────────────────────
+    function applyPOClientFilters() {
+        var search = ($('#poSearch').val() || '').toLowerCase();
+        var status = poTabStatus || poActiveFilters.status;
+        var orderType = poActiveFilters.orderType;
+        var dateFrom = poActiveFilters.dateFrom ? new Date(poActiveFilters.dateFrom) : null;
+        var dateTo = poActiveFilters.dateTo ? new Date(poActiveFilters.dateTo) : null;
+
+        filteredPOs = allPOs.filter(function(po) {
+            if (search && (po.poId || '').toLowerCase().indexOf(search) === -1 && (po.supplierName || '').toLowerCase().indexOf(search) === -1) return false;
+            if (status && po.status !== status) return false;
+            if (orderType && po.orderType !== orderType) return false;
+            if (dateFrom && po.poDate && new Date(po.poDate) < dateFrom) return false;
+            if (dateTo && po.poDate && new Date(po.poDate) > dateTo) return false;
+            return true;
+        });
+
+        poPage = 1;
+        renderPOTable();
+        renderPOPagination();
+    }
+
+    // ── Render page slice ──────────────────────────────────────────────────────
+    function renderPOTable() {
+        var $tb = $('#tbodyMainPO').empty();
+
+        if (filteredPOs.length === 0) {
+            $('#tblMainPO').hide();
+            $('#poMainEmpty').removeClass('is-hidden');
+            $('#poPagination').hide();
+            lucide.createIcons();
+            return;
+        }
+
+        $('#poMainEmpty').addClass('is-hidden');
+        $('#tblMainPO').show();
+        $('#poPagination').show();
+
+        var start = (poPage - 1) * poRowsPer;
+        var end = Math.min(start + poRowsPer, filteredPOs.length);
+        var pageData = filteredPOs.slice(start, end);
+
+        pageData.forEach(function(po) {
+            var isPending = (po.status === 'Pending' || po.status === 'Draft' || po.status === 'Sent' || po.status === 'Partial');
+            var stBg = '#FFF7ED', stColor = '#9a3412';
+            if (po.status === 'Completed') { stBg = '#DCFCE7'; stColor = '#166534'; }
+
+            var actionHtml = isPending
+                ? '<button class="btn-receive-po" data-po-id="' + esc(po.poId) + '" style="padding:4px 12px;background:var(--aquamint);border:none;border-radius:6px;font-size:11px;font-weight:600;color:var(--midnight-blue);cursor:pointer">Receive</button>'
+                : '<span style="font-size:11px;color:#166534;font-weight:500">Done</span>';
+
+            $tb.append(
+                '<tr class="po-row" data-po-id="' + esc(po.poId) + '" style="border-bottom:1px solid var(--color-border);cursor:pointer;transition:background 0.15s" onmouseover="this.style.background=\'var(--color-background)\'" onmouseout="this.style.background=\'#fff\'">' +
+                    '<td style="padding:10px 16px;font-size:13px;font-weight:700;font-family:monospace">' + esc(po.poId) + '</td>' +
+                    '<td style="padding:10px 16px;font-size:13px;font-weight:500">' + esc(po.supplierName) + '</td>' +
+                    '<td style="padding:10px 16px;font-size:13px;color:var(--color-muted-foreground)">' + esc(po.poDate) + '</td>' +
+                    '<td style="padding:10px 16px;font-size:13px;color:var(--color-muted-foreground)">' + esc(po.expectedDelivery || '-') + '</td>' +
+                    '<td style="padding:10px 16px;text-align:center;font-size:13px">' + po.totalItems + ' <span style="font-size:11px;color:var(--color-muted-foreground)">(' + po.totalQty + ' units)</span></td>' +
+                    '<td style="padding:10px 16px;text-align:right;font-size:13px;font-weight:600;font-family:monospace">' + fmt(po.total) + '</td>' +
+                    '<td style="padding:10px 16px;text-align:center"><span style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:600;background:' + stBg + ';color:' + stColor + '">' + esc(po.status) + '</span></td>' +
+                    '<td style="padding:10px 16px;text-align:center">' + actionHtml + '</td>' +
+                '</tr>'
+            );
+        });
+
+        lucide.createIcons();
+        applyPOColVis();
+    }
+
+    // ── Pagination ─────────────────────────────────────────────────────────────
+    function renderPOPagination() {
+        var total = filteredPOs.length;
+        var totalPages = Math.max(1, Math.ceil(total / poRowsPer));
+        var start = total === 0 ? 0 : (poPage - 1) * poRowsPer + 1;
+        var end = Math.min(poPage * poRowsPer, total);
+
+        $('#poPageInfo').text('Showing ' + start + ' – ' + end + ' of ' + total + ' results');
+        $('#poPrevPage').prop('disabled', poPage <= 1);
+        $('#poNextPage').prop('disabled', poPage >= totalPages);
+
+        var $nums = $('#poPageNums').empty();
+        buildPageRange(poPage, totalPages).forEach(function(p) {
+            if (p === '…') {
+                $nums.append('<span style="display:flex;align-items:center;padding:0 4px;font-size:13px;color:var(--color-muted-foreground)">…</span>');
+            } else {
+                var $btn = $('<button class="opd-page-num' + (p === poPage ? ' active' : '') + '">' + p + '</button>');
+                $btn.on('click', function() { goToPOPage(p); });
+                $nums.append($btn);
+            }
+        });
+
+        lucide.createIcons();
+    }
+
+    function buildPageRange(current, total) {
+        if (total <= 7) { var a = []; for (var i = 1; i <= total; i++) a.push(i); return a; }
+        var pages = [1];
+        if (current > 3) pages.push('…');
+        var lo = Math.max(2, current - 1);
+        var hi = Math.min(total - 1, current + 1);
+        for (var j = lo; j <= hi; j++) pages.push(j);
+        if (current < total - 2) pages.push('…');
+        pages.push(total);
+        return pages;
+    }
+
+    function goToPOPage(p) {
+        poPage = p;
+        renderPOTable();
+        renderPOPagination();
+    }
+
+    $('#poPrevPage').on('click', function() { if (poPage > 1) goToPOPage(poPage - 1); });
+    $('#poNextPage').on('click', function() {
+        if (poPage < Math.ceil(filteredPOs.length / poRowsPer)) goToPOPage(poPage + 1);
     });
 
+    // ── Search ─────────────────────────────────────────────────────────────────
+    var poSearchTimer;
+    $('#poSearch').on('input', function() {
+        clearTimeout(poSearchTimer);
+        poSearchTimer = setTimeout(applyPOClientFilters, 250);
+    });
+
+    // ── Status quick-tabs ──────────────────────────────────────────────────────
+    $(document).on('click', '.po-tab-btn', function() {
+        $('.po-tab-btn').css({ background: '#fff', color: 'var(--color-foreground)' });
+        $(this).css({ background: '#060740', color: '#7FFFD4' });
+        poTabStatus = $(this).data('status');
+        poActiveFilters.status = '';
+        $('#poStatusFilter').val('');
+        applyPOClientFilters();
+    });
+
+    // ── Filter pane ────────────────────────────────────────────────────────────
+    window.togglePOFilter = function() {
+        var $pane = $('#poFilterPane');
+        var $btn = $('#btnPOFilter');
+        if ($pane.is(':visible')) {
+            $pane.slideUp(150);
+            $btn.removeClass('filter-active');
+        } else {
+            $pane.slideDown(150);
+            $btn.addClass('filter-active');
+            lucide.createIcons();
+        }
+    };
+
+    window.applyPOFilters = function() {
+        poTabStatus = '';
+        $('.po-tab-btn').css({ background: '#fff', color: 'var(--color-foreground)' });
+        $('.po-tab-btn[data-status=""]').css({ background: '#060740', color: '#7FFFD4' });
+
+        poActiveFilters.status = $('#poStatusFilter').val();
+        poActiveFilters.orderType = $('#poTypeFilter').val();
+        poActiveFilters.dateFrom = $('#poDateFrom').val();
+        poActiveFilters.dateTo = $('#poDateTo').val();
+
+        var count = [poActiveFilters.status, poActiveFilters.orderType, poActiveFilters.dateFrom, poActiveFilters.dateTo]
+            .filter(function(v) { return v !== ''; }).length;
+
+        var $badge = $('#poFilterBadge');
+        if (count > 0) { $badge.text(count).show(); $('#btnPOFilter').addClass('filter-active'); }
+        else { $badge.hide(); }
+
+        applyPOClientFilters();
+    };
+
+    window.resetPOFilters = function() {
+        $('#poStatusFilter, #poTypeFilter').val('');
+        $('#poDateFrom, #poDateTo').val('');
+        poActiveFilters = { status: '', orderType: '', dateFrom: '', dateTo: '' };
+        $('#poFilterBadge').hide();
+        applyPOClientFilters();
+    };
+
+    // ── Rows per page ──────────────────────────────────────────────────────────
+    window.togglePORowsMenu = function(e) {
+        e.stopPropagation();
+        $('#poRowsMenu').toggleClass('open');
+    };
+
+    window.setPORowsPer = function(n) {
+        poRowsPer = n;
+        poPage = 1;
+        $('#poRowsMenu button').removeClass('active');
+        $('#poRowsMenu button').each(function() {
+            if ($(this).text().indexOf(n + ' rows') !== -1) $(this).addClass('active');
+        });
+        $('#poRowsMenu').removeClass('open');
+        renderPOTable();
+        renderPOPagination();
+    };
+
+    // ── Column visibility ──────────────────────────────────────────────────────
+    window.togglePOColVis = function(e) {
+        e.stopPropagation();
+        $('#poColVisMenu').toggleClass('open');
+    };
+
+    window.poColVisSelectAll = function() {
+        $('#poColVisList input[type="checkbox"]').prop('checked', true);
+    };
+
+    window.applyPOColVis = function() {
+        $('#poColVisList input[type="checkbox"]').each(function() {
+            var col = parseInt($(this).data('col'));
+            var visible = $(this).is(':checked');
+            $('#tblMainPO thead th:eq(' + col + ')').toggle(visible);
+            $('#tblMainPO tbody tr').each(function() {
+                $(this).find('td:eq(' + col + ')').toggle(visible);
+            });
+        });
+        $('#poColVisMenu').removeClass('open');
+    };
+
+    // ── Export ─────────────────────────────────────────────────────────────────
+    window.togglePOExportMenu = function(e) {
+        e.stopPropagation();
+        $('#poExportMenu').toggleClass('open');
+    };
+
+    window.exportPO = function(type) {
+        $('#poExportMenu').removeClass('open');
+        if (!filteredPOs || filteredPOs.length === 0) { HMS.toast('No data to export', 'warning'); return; }
+
+        if (type === 'csv') {
+            var csv = 'PO Number,Supplier,Date,Expected Delivery,Items,Total Qty,Total,Status\n';
+            filteredPOs.forEach(function(po) {
+                csv += [po.poId, po.supplierName, po.poDate, po.expectedDelivery || '', po.totalItems, po.totalQty, po.total, po.status]
+                    .map(function(v) { return '"' + String(v || '').replace(/"/g, '""') + '"'; }).join(',') + '\n';
+            });
+            var blob = new Blob([csv], { type: 'text/csv' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url; a.download = 'purchase-orders.csv'; a.click();
+            URL.revokeObjectURL(url);
+        } else if (type === 'pdf') {
+            HMS.toast('PDF export coming soon', 'info');
+        } else if (type === 'print') {
+            window.print();
+        }
+    };
+
+    // ── Close dropdowns on outside click ──────────────────────────────────────
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.opd-rows-wrap').length) $('#poRowsMenu').removeClass('open');
+        if (!$(e.target).closest('.opd-col-vis-wrap').length) $('#poColVisMenu').removeClass('open');
+        if (!$(e.target).closest('.opd-export-wrap').length) $('#poExportMenu').removeClass('open');
+    });
+
+    // ── PO row click → view ────────────────────────────────────────────────────
     $(document).on('click', '.po-row', function(e) {
         if ($(e.target).closest('button').length) return;
-        var poId = $(this).data('po-id');
-        openPOView(poId);
+        openPOView($(this).data('po-id'));
     });
 
     function openPOView(poId) {
@@ -113,11 +319,8 @@ $(document).ready(function() {
             $('#poViewSub').text(po.poId + ' | ' + po.supplierName);
             $('#poViewId').text(po.poId);
 
-            var stBg = '#E0E7FF', stColor = '#3730a3';
-            if (po.status === 'Draft') { stBg = '#F1F5F9'; stColor = '#475569'; }
-            else if (po.status === 'Sent') { stBg = '#DBEAFE'; stColor = '#1e40af'; }
-            else if (po.status === 'Partial') { stBg = '#FFF7ED'; stColor = '#9a3412'; }
-            else if (po.status === 'Completed') { stBg = '#DCFCE7'; stColor = '#166534'; }
+            var stBg = '#FFF7ED', stColor = '#9a3412';
+            if (po.status === 'Completed') { stBg = '#DCFCE7'; stColor = '#166534'; }
             $('#poViewStatus').text(po.status).css({ background: stBg, color: stColor });
             $('#poViewOrderType').text(po.orderType);
 
@@ -155,33 +358,18 @@ $(document).ready(function() {
             $('#poViewCreditDays').text(po.creditDays || '-');
 
             var showNotes = false;
-            if (po.deliveryInstructions) {
-                $('#poViewDeliveryInstrWrap').show();
-                $('#poViewDeliveryInstr').text(po.deliveryInstructions);
-                showNotes = true;
-            } else {
-                $('#poViewDeliveryInstrWrap').hide();
-            }
-            if (po.notes) {
-                $('#poViewNotesWrap').show();
-                $('#poViewNotes').text(po.notes);
-                showNotes = true;
-            } else {
-                $('#poViewNotesWrap').hide();
-            }
+            if (po.deliveryInstructions) { $('#poViewDeliveryInstrWrap').show(); $('#poViewDeliveryInstr').text(po.deliveryInstructions); showNotes = true; }
+            else { $('#poViewDeliveryInstrWrap').hide(); }
+            if (po.notes) { $('#poViewNotesWrap').show(); $('#poViewNotes').text(po.notes); showNotes = true; }
+            else { $('#poViewNotesWrap').hide(); }
             $('#poViewNotesSection').toggle(showNotes);
 
             var $actions = $('#poViewActions').empty();
-            var canReceive = (po.status === 'Sent' || po.status === 'Partial');
-            if (canReceive) {
-                $actions.append(
-                    '<button class="btn-view-receive-po" data-po-id="' + esc(po.poId) + '" style="padding:8px 20px;background:var(--aquamint);border:none;border-radius:8px;font-size:13px;font-weight:600;color:var(--midnight-blue);cursor:pointer;display:flex;align-items:center;gap:6px"><i data-lucide="package-check" style="width:15px;height:15px"></i> Receive Stock (GRN)</button>'
-                );
-            }
-            if (po.status === 'Completed') {
+            if (po.status !== 'Completed') {
+                $actions.append('<button class="btn-view-receive-po" data-po-id="' + esc(po.poId) + '" style="padding:8px 20px;background:var(--aquamint);border:none;border-radius:8px;font-size:13px;font-weight:600;color:var(--midnight-blue);cursor:pointer;display:flex;align-items:center;gap:6px"><i data-lucide="package-check" style="width:15px;height:15px"></i> Receive Stock (GRN)</button>');
+            } else if (po.status === 'Completed') {
                 $actions.append('<span style="padding:8px 20px;font-size:13px;font-weight:600;color:#166534;display:flex;align-items:center;gap:6px"><i data-lucide="check-circle" style="width:15px;height:15px"></i> Order Completed</span>');
             }
-
             lucide.createIcons();
         }).fail(function() {
             $('#poViewLoading').html('<div style="color:#ef4444">Failed to load purchase order details</div>');
@@ -194,12 +382,42 @@ $(document).ready(function() {
         setTimeout(function() { openGRN(poId); }, 300);
     });
 
+    // ── Stock Alerts offcanvas ─────────────────────────────────────────────────
     $('#btnViewAlerts').on('click', function() {
         loadDashboard();
         loadAllSections();
         var offcanvas = new bootstrap.Offcanvas(document.getElementById('alertsSheet'));
         offcanvas.show();
         lucide.createIcons();
+    });
+
+    // Alert search — filters table rows across all sections
+    var alertSearchTimer;
+    $('#alertSearch').on('input', function() {
+        clearTimeout(alertSearchTimer);
+        var q = $(this).val().toLowerCase();
+        alertSearchTimer = setTimeout(function() {
+            $('#alertSections tbody tr').each(function() {
+                var text = $(this).text().toLowerCase();
+                if (!q || text.indexOf(q) > -1) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+            // expand sections that have visible rows
+            if (q) {
+                $('#alertSections .alert-section').each(function() {
+                    var hasVisible = $(this).find('tbody tr:visible').length > 0;
+                    var $body = $(this).find('.alert-section-body');
+                    var $chev = $(this).find('.section-chevron');
+                    if (hasVisible) {
+                        $body.slideDown(150);
+                        $chev.css('transform', 'rotate(180deg)');
+                    }
+                });
+            }
+        }, 200);
     });
 
     function loadDashboard() {
@@ -351,6 +569,7 @@ $(document).ready(function() {
         });
     }
 
+    // Accordion toggle
     $(document).on('click', '.alert-section-header', function() {
         var $body = $(this).closest('.alert-section').find('.alert-section-body');
         var $chev = $(this).find('.section-chevron');
@@ -363,6 +582,7 @@ $(document).ready(function() {
         }
     });
 
+    // ── Create PO ──────────────────────────────────────────────────────────────
     $('#btnCreatePO').on('click', function() { openPOForm(); });
 
     $(document).on('click', '.btn-create-po-for', function() {
@@ -395,9 +615,7 @@ $(document).ready(function() {
 
         loadSuppliers(function() {
             if (preItems && preItems.length > 0) {
-                preItems.forEach(function(pi) {
-                    addPOItem(pi.medicineId, pi.name, pi.price, pi.qty);
-                });
+                preItems.forEach(function(pi) { addPOItem(pi.medicineId, pi.name, pi.price, pi.qty); });
             }
         });
 
@@ -410,9 +628,7 @@ $(document).ready(function() {
         $.get('/api/stock-alerts/suppliers', function(data) {
             allSuppliers = data;
             var $sel = $('#poSupplier').empty().append('<option value="">Select Supplier...</option>');
-            data.forEach(function(s) {
-                $sel.append('<option value="' + esc(s.supplierId) + '">' + esc(s.name) + '</option>');
-            });
+            data.forEach(function(s) { $sel.append('<option value="' + esc(s.supplierId) + '">' + esc(s.name) + '</option>'); });
             if (cb) cb();
         });
     }
@@ -426,7 +642,6 @@ $(document).ready(function() {
             $('#supEmail').text(sup.email || '-');
             $('#supLeadTime').text(sup.leadTimeDays + ' days');
             $('#supplierInfo').show();
-
             var delivery = new Date();
             delivery.setDate(delivery.getDate() + sup.leadTimeDays);
             $('#poExpectedDelivery').val(delivery.toISOString().split('T')[0]);
@@ -437,35 +652,22 @@ $(document).ready(function() {
 
     $('#btnAddMedicine').on('click', function() {
         loadMedicinesFromInventory();
-        var modal = new bootstrap.Modal(document.getElementById('addMedicineModal'));
-        modal.show();
+        new bootstrap.Modal(document.getElementById('addMedicineModal')).show();
     });
 
     function loadMedicinesFromInventory() {
         $.get('/api/inventory/medicines', function(resp) {
             var medicines = Array.isArray(resp) ? resp : (resp.medicines || []);
             allMedicines = medicines.map(function(m) {
-                return {
-                    medicineId: m.medicineId,
-                    name: m.name || (m.brandName + ' ' + (m.strength || '')).trim(),
-                    genericName: m.genericName || '',
-                    purchasePrice: parseFloat(m.purchasePrice || 0),
-                    currentStock: parseInt(m.currentStock || 0),
-                    stockUnit: m.stockUnit || 'units'
-                };
+                return { medicineId: m.medicineId, name: m.name || (m.brandName + ' ' + (m.strength || '')).trim(), genericName: m.genericName || '', purchasePrice: parseFloat(m.purchasePrice || 0), currentStock: parseInt(m.currentStock || 0), stockUnit: m.stockUnit || 'units' };
             });
             renderMedicineSearch('');
         }).fail(function() {
-            $.get('/api/stock-alerts/medicines-list', function(data) {
-                allMedicines = data;
-                renderMedicineSearch('');
-            });
+            $.get('/api/stock-alerts/medicines-list', function(data) { allMedicines = data; renderMedicineSearch(''); });
         });
     }
 
-    $('#medSearchInput').on('input', function() {
-        renderMedicineSearch($(this).val());
-    });
+    $('#medSearchInput').on('input', function() { renderMedicineSearch($(this).val()); });
 
     function renderMedicineSearch(search) {
         var $results = $('#medSearchResults').empty();
@@ -476,12 +678,7 @@ $(document).ready(function() {
                 return (m.name || '').toLowerCase().indexOf(s) > -1 || (m.genericName || '').toLowerCase().indexOf(s) > -1;
             });
         }
-
-        if (filtered.length === 0) {
-            $results.html('<div style="padding:20px;text-align:center;color:var(--color-muted-foreground);font-size:13px">No medicines found</div>');
-            return;
-        }
-
+        if (filtered.length === 0) { $results.html('<div style="padding:20px;text-align:center;color:var(--color-muted-foreground);font-size:13px">No medicines found</div>'); return; }
         filtered.forEach(function(m) {
             var alreadyAdded = poItems.some(function(p) { return p.medicineId === m.medicineId; });
             $results.append(
@@ -494,22 +691,14 @@ $(document).ready(function() {
     }
 
     $(document).on('click', '.med-search-item', function() {
-        var id = $(this).data('id');
-        var name = $(this).data('name');
-        var price = parseFloat($(this).data('price'));
-        addPOItem(id, name, price, 100);
+        addPOItem($(this).data('id'), $(this).data('name'), parseFloat($(this).data('price')), 100);
         bootstrap.Modal.getInstance(document.getElementById('addMedicineModal')).hide();
     });
 
     function addPOItem(medicineId, name, unitPrice, qty) {
-        var existing = poItems.find(function(p) { return p.medicineId === medicineId; });
-        if (existing) return;
-
+        if (poItems.find(function(p) { return p.medicineId === medicineId; })) return;
         var med = allMedicines.find(function(m) { return m.medicineId === medicineId; });
-        var currentStock = med ? med.currentStock : 0;
-        var stockUnit = med ? med.stockUnit : '';
-
-        poItems.push({ medicineId: medicineId, name: name, unitPrice: unitPrice, qty: qty, currentStock: currentStock, stockUnit: stockUnit });
+        poItems.push({ medicineId: medicineId, name: name, unitPrice: unitPrice, qty: qty, currentStock: med ? med.currentStock : 0, stockUnit: med ? med.stockUnit : '' });
         renderPOItems();
     }
 
@@ -537,38 +726,20 @@ $(document).ready(function() {
         updatePOSummary();
     }
 
-    $(document).on('input', '.po-item-qty', function() {
-        var idx = $(this).data('idx');
-        poItems[idx].qty = parseInt($(this).val()) || 0;
-        renderPOItems();
-    });
-
-    $(document).on('input', '.po-item-price', function() {
-        var idx = $(this).data('idx');
-        poItems[idx].unitPrice = parseFloat($(this).val()) || 0;
-        renderPOItems();
-    });
-
-    $(document).on('click', '.btn-remove-po-item', function() {
-        var idx = $(this).data('idx');
-        poItems.splice(idx, 1);
-        renderPOItems();
-    });
+    $(document).on('input', '.po-item-qty', function() { poItems[$(this).data('idx')].qty = parseInt($(this).val()) || 0; renderPOItems(); });
+    $(document).on('input', '.po-item-price', function() { poItems[$(this).data('idx')].unitPrice = parseFloat($(this).val()) || 0; renderPOItems(); });
+    $(document).on('click', '.btn-remove-po-item', function() { poItems.splice($(this).data('idx'), 1); renderPOItems(); });
 
     function updatePOSummary() {
-        var totalItems = poItems.length;
         var totalQty = 0, subtotal = 0;
-        poItems.forEach(function(item) {
-            totalQty += item.qty;
-            subtotal += item.qty * item.unitPrice;
-        });
-        $('#poTotalItems').text(totalItems);
+        poItems.forEach(function(item) { totalQty += item.qty; subtotal += item.qty * item.unitPrice; });
+        $('#poTotalItems').text(poItems.length);
         $('#poTotalQty').text(totalQty.toLocaleString() + ' items');
         $('#poSubtotal').text(fmt(subtotal));
         $('#poTotal').text(fmt(subtotal));
     }
 
-    function submitPO(status) {
+    function submitPO() {
         if (!$('#poSupplier').val()) { HMS.toast('Please select a supplier', 'warning'); return; }
         if (poItems.length === 0) { HMS.toast('Please add at least one medicine', 'warning'); return; }
 
@@ -582,11 +753,11 @@ $(document).ready(function() {
             advancePayment: parseFloat($('#poAdvance').val()) || 0,
             deliveryInstructions: $('#poDeliveryInstructions').val(),
             notes: $('#poNotes').val(),
-            status: status,
+            status: 'Pending',
         };
 
-        var $btns = $('#btnSaveDraft, #btnSendPO');
-        $btns.prop('disabled', true);
+        var $btn = $('#btnCreatePOSubmit');
+        $btn.prop('disabled', true).text('Creating...');
 
         $.ajax({
             url: '/api/stock-alerts/purchase-orders',
@@ -596,33 +767,26 @@ $(document).ready(function() {
             success: function(resp) {
                 bootstrap.Offcanvas.getInstance(document.getElementById('poFormSheet')).hide();
                 HMS.toast('Purchase Order ' + resp.poId + ' created successfully!', 'success');
-                loadMainPOTable('');
+                loadMainPOTable();
             },
-            error: function(xhr) {
-                HMS.ajaxError(xhr, 'Failed');
-            },
-            complete: function() { $btns.prop('disabled', false); }
+            error: function(xhr) { HMS.ajaxError(xhr, 'Failed'); },
+            complete: function() { $btn.prop('disabled', false).html('<i data-lucide="file-plus" style="width:15px;height:15px"></i> Create Purchase Order'); lucide.createIcons(); }
         });
     }
 
-    $('#btnSaveDraft').on('click', function() { submitPO('Draft'); });
-    $('#btnSendPO').on('click', function() { submitPO('Sent'); });
+    $('#btnCreatePOSubmit').on('click', function() { submitPO(); });
 
-    $(document).on('click', '.btn-receive-po', function() {
-        var poId = $(this).data('po-id');
-        openGRN(poId);
-    });
+    $(document).on('click', '.btn-receive-po', function() { openGRN($(this).data('po-id')); });
 
     function openGRN(poId) {
         $.get('/api/stock-alerts/purchase-orders/' + poId, function(po) {
             currentGrnPo = po;
             $('#grnPoRef').text('PO Number: ' + po.poId + ' | Supplier: ' + po.supplierName);
-
             var $container = $('#grnItemsContainer').empty();
+
             po.items.forEach(function(item, idx) {
                 var remaining = item.quantity - item.receivedQty;
                 if (remaining <= 0) return;
-
                 $container.append(
                     '<div class="grn-item-block" data-idx="' + idx + '" style="padding:16px;background:var(--color-background);border-radius:10px;border:1px solid var(--color-border);margin-bottom:16px">' +
                         '<div style="font-size:14px;font-weight:700;color:var(--color-foreground);margin-bottom:12px">' + esc(item.medicineName) + '</div>' +
@@ -653,9 +817,7 @@ $(document).ready(function() {
 
             updateGRNSummary();
             $('#grnDate').text(new Date().toLocaleString('en-PK'));
-
-            var offcanvas = new bootstrap.Offcanvas(document.getElementById('grnSheet'));
-            offcanvas.show();
+            new bootstrap.Offcanvas(document.getElementById('grnSheet')).show();
             lucide.createIcons();
         });
     }
@@ -670,10 +832,7 @@ $(document).ready(function() {
             if (remaining <= 0) return;
             var rQty = parseInt($('.grn-received-qty[data-idx="' + idx + '"]').val()) || 0;
             var price = parseFloat($('.grn-price[data-idx="' + idx + '"]').val()) || 0;
-            if (rQty > 0) {
-                totalItems++;
-                totalValue += rQty * price;
-            }
+            if (rQty > 0) { totalItems++; totalValue += rQty * price; }
         });
         $('#grnTotalItems').text(totalItems);
         $('#grnTotalValue').text(fmt(totalValue));
@@ -681,7 +840,6 @@ $(document).ready(function() {
 
     $('#btnCompleteGRN').on('click', function() {
         if (!currentGrnPo) return;
-
         var items = [];
         var hasError = false;
 
@@ -690,27 +848,12 @@ $(document).ready(function() {
             if (remaining <= 0) return;
             var rQty = parseInt($('.grn-received-qty[data-idx="' + idx + '"]').val()) || 0;
             if (rQty <= 0) return;
-
             var expiry = $('.grn-expiry-date[data-idx="' + idx + '"]').val();
             var batch = $('.grn-batch[data-idx="' + idx + '"]').val();
             if (!expiry || !batch) { hasError = true; return; }
-
             var qcChecks = {};
-            $('.grn-qc[data-idx="' + idx + '"]').each(function() {
-                qcChecks[$(this).data('check')] = $(this).is(':checked');
-            });
-
-            items.push({
-                medicineId: item.medicineId,
-                expectedQty: remaining,
-                receivedQty: rQty,
-                batchNumber: batch,
-                manufacturingDate: $('.grn-mfg-date[data-idx="' + idx + '"]').val() || null,
-                expiryDate: expiry,
-                unitPrice: parseFloat($('.grn-price[data-idx="' + idx + '"]').val()) || item.unitPrice,
-                qualityChecks: qcChecks,
-                remarks: $('.grn-remarks[data-idx="' + idx + '"]').val() || '',
-            });
+            $('.grn-qc[data-idx="' + idx + '"]').each(function() { qcChecks[$(this).data('check')] = $(this).is(':checked'); });
+            items.push({ medicineId: item.medicineId, expectedQty: remaining, receivedQty: rQty, batchNumber: batch, manufacturingDate: $('.grn-mfg-date[data-idx="' + idx + '"]').val() || null, expiryDate: expiry, unitPrice: parseFloat($('.grn-price[data-idx="' + idx + '"]').val()) || item.unitPrice, qualityChecks: qcChecks, remarks: $('.grn-remarks[data-idx="' + idx + '"]').val() || '' });
         });
 
         if (hasError) { HMS.toast('Please fill batch number and expiry date for all items', 'warning'); return; }
@@ -727,11 +870,9 @@ $(document).ready(function() {
             success: function(resp) {
                 bootstrap.Offcanvas.getInstance(document.getElementById('grnSheet')).hide();
                 HMS.toast('GRN ' + resp.grnId + ' completed! Stock updated successfully.', 'success');
-                loadMainPOTable('');
+                loadMainPOTable();
             },
-            error: function(xhr) {
-                HMS.ajaxError(xhr, 'Failed');
-            },
+            error: function(xhr) { HMS.ajaxError(xhr, 'Failed'); },
             complete: function() { $btn.prop('disabled', false).text('Complete GRN & Update Stock'); }
         });
     });
@@ -741,22 +882,15 @@ $(document).ready(function() {
         var name = $(this).data('name');
         var qty = $(this).data('qty');
         if (!confirm('Dispose ' + qty + ' units of ' + name + '? This will remove the stock permanently.')) return;
-
         var $btn = $(this);
         $btn.prop('disabled', true).text('...');
-
         $.ajax({
             url: '/api/stock-alerts/dispose',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({ batchId: batchId }),
-            success: function() {
-                loadDashboard();
-                loadExpired();
-            },
-            error: function(xhr) {
-                HMS.ajaxError(xhr, 'Failed');
-            },
+            success: function() { loadDashboard(); loadExpired(); },
+            error: function(xhr) { HMS.ajaxError(xhr, 'Failed'); },
             complete: function() { $btn.prop('disabled', false).text('Dispose'); }
         });
     });

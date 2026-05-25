@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bulk Uploader — Design Mockup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6fb; color: #111827; }
+
+  .page-shell { display: flex; min-height: 100vh; }
+  .sidebar { width: 220px; background: #060740; color: #fff; flex-shrink: 0; padding: 16px 0; }
+  .sidebar-logo { padding: 8px 20px 20px; font-size: 15px; font-weight: 700; color: #7FFFD4; letter-spacing: .02em; }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; font-size: 13px; color: rgba(255,255,255,.65); cursor: pointer; }
+  .sidebar-item.active { color: #fff; background: rgba(127,255,212,.12); border-left: 3px solid #7FFFD4; padding-left: 17px; }
+
+  .main { flex: 1; padding: 24px 32px; overflow-y: auto; }
+
+  .module-header { margin-bottom: 6px; }
+  .module-header h1 { font-size: 20px; font-weight: 700; color: #060740; display: flex; align-items: center; gap: 8px; }
+  .module-subtitle { font-size: 13px; color: #6b7280; margin-top: 3px; margin-bottom: 20px; }
+
+  .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #6b7280; margin: 24px 0 6px; }
+  .section-desc { font-size: 13px; color: #6b7280; margin-bottom: 14px; }
+
+  /* ── Existing sections (greyed out to show context) ── */
+  .existing-section { opacity: .45; pointer-events: none; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+  .card-header { background: #060740; color: #fff; padding: 11px 16px; font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .card-body-placeholder { padding: 18px; }
+  .mock-row { height: 36px; background: #f3f4f6; border-radius: 6px; margin-bottom: 8px; }
+  .mock-row:last-child { margin-bottom: 0; }
+
+  /* ── NEW: Bulk Import Card ── */
+  .bulk-card { background: #fff; border: 2px solid #060740; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(6,7,64,.10); }
+  .bulk-card-header { background: #060740; color: #fff; padding: 13px 18px; display: flex; align-items: center; justify-content: space-between; }
+  .bulk-card-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .bulk-card-title .pill { background: #7FFFD4; color: #060740; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; letter-spacing: .04em; text-transform: uppercase; }
+  .bulk-card-body { padding: 20px; }
+
+  /* Steps indicator */
+  .steps { display: flex; align-items: center; gap: 0; margin-bottom: 20px; }
+  .step { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #9ca3af; }
+  .step.active { color: #060740; }
+  .step.done { color: #10b981; }
+  .step-circle { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #d1d5db; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; }
+  .step.active .step-circle { border-color: #060740; background: #060740; color: #fff; }
+  .step.done .step-circle { border-color: #10b981; background: #10b981; color: #fff; }
+  .step-line { flex: 1; height: 1px; background: #e5e7eb; margin: 0 6px; min-width: 30px; }
+
+  /* Drop zone */
+  .drop-zone { border: 2px dashed #d1d5db; border-radius: 10px; padding: 36px 24px; text-align: center; background: #fafafa; transition: border-color .2s, background .2s; cursor: pointer; }
+  .drop-zone:hover { border-color: #060740; background: rgba(6,7,64,.03); }
+  .drop-icon { font-size: 36px; margin-bottom: 10px; }
+  .drop-title { font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 4px; }
+  .drop-sub { font-size: 13px; color: #6b7280; }
+  .drop-formats { display: inline-flex; gap: 6px; margin-top: 10px; }
+  .fmt-badge { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 5px; padding: 3px 9px; font-size: 11px; font-weight: 600; color: #374151; }
+  .browse-btn { display: inline-block; margin-top: 14px; padding: 8px 20px; background: #060740; color: #fff; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+  /* Actions row */
+  .bulk-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; flex-wrap: wrap; gap: 10px; }
+  .template-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #060740; text-decoration: none; border: 1px solid #d1d5db; border-radius: 8px; padding: 7px 14px; background: #fff; cursor: pointer; }
+  .template-link:hover { background: #f9fafb; }
+  .template-icon { font-size: 15px; }
+  .info-note { font-size: 12px; color: #9ca3af; display: flex; align-items: center; gap: 5px; }
+
+  /* Column info table */
+  .col-info { margin-top: 18px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+  .col-info-header { background: #f9fafb; padding: 10px 14px; font-size: 11.5px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 6px; }
+  .col-info table { width: 100%; border-collapse: collapse; }
+  .col-info th { background: #f3f4f6; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: .04em; padding: 7px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+  .col-info td { font-size: 12.5px; color: #374151; padding: 7px 12px; border-bottom: 1px solid #f3f4f6; font-family: monospace; }
+  .col-info tr:last-child td { border-bottom: none; }
+  .badge-req { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 700; font-family: sans-serif; }
+  .badge-opt { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 700; font-family: sans-serif; }
+
+  .new-label { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: #7FFFD4; background: rgba(127,255,212,.15); border: 1px solid rgba(127,255,212,.4); border-radius: 5px; padding: 2px 8px; text-transform: uppercase; letter-spacing: .04em; }
+</style>
+</head>
+<body>
+<div class="page-shell">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">🏥 HealthOps</div>
+    <div class="sidebar-item">Dashboard</div>
+    <div class="sidebar-item">Pharmacy</div>
+    <div class="sidebar-item active">⚙ Configuration</div>
+    <div class="sidebar-item">Laboratory</div>
+    <div class="sidebar-item">OPD</div>
+    <div class="sidebar-item">IPD</div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main">
+    <div class="module-header">
+      <h1>💊 Pharmacy Configuration</h1>
+      <p class="module-subtitle">Manage configurable dropdown lists used in OPD prescription writing</p>
+    </div>
+
+    <!-- Existing: Department Routing (greyed) -->
+    <div class="existing-section">
+      <div class="section-label">Department Order Routing</div>
+      <p class="section-desc">Control which departments can send medication orders to the Pharmacy queue.</p>
+      <div class="card mb-3" style="max-width:420px">
+        <div class="card-header">🔀 Departments</div>
+        <div class="card-body-placeholder">
+          <div class="mock-row"></div>
+          <div class="mock-row"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Existing: Prescription Dropdowns (greyed) -->
+    <div class="existing-section" style="margin-bottom:24px">
+      <div class="section-label">Prescription Dropdowns</div>
+      <p class="section-desc">Add, edit, activate or remove the options that appear in the prescription form.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <div class="card"><div class="card-header">⚖ Units</div><div class="card-body-placeholder"><div class="mock-row"></div><div class="mock-row"></div><div class="mock-row"></div></div></div>
+        <div class="card"><div class="card-header">🗺 Routes</div><div class="card-body-placeholder"><div class="mock-row"></div><div class="mock-row"></div><div class="mock-row"></div></div></div>
+        <div class="card"><div class="card-header">🕐 Frequencies</div><div class="card-body-placeholder"><div class="mock-row"></div><div class="mock-row"></div><div class="mock-row"></div></div></div>
+      </div>
+    </div>
+
+    <!-- ══ NEW: Bulk Inventory Import Card ══ -->
+    <div class="section-label" style="display:flex;align-items:center;gap:10px">
+      Bulk Inventory Import
+      <span class="new-label">✨ New</span>
+    </div>
+    <p class="section-desc">Upload medicines aur unke initial batches ek hi Excel/CSV file mein. Validation fail hone par kuch bhi save nahi hoga.</p>
+
+    <div class="bulk-card">
+      <div class="bulk-card-header">
+        <div class="bulk-card-title">
+          📦 Import Inventory
+          <span class="pill">All-or-nothing validation</span>
+        </div>
+        <span style="font-size:12px;color:rgba(255,255,255,.6)">Step 1 of 3</span>
+      </div>
+
+      <div class="bulk-card-body">
+
+        <!-- Steps -->
+        <div class="steps">
+          <div class="step active">
+            <div class="step-circle">1</div>
+            Upload File
+          </div>
+          <div class="step-line"></div>
+          <div class="step">
+            <div class="step-circle">2</div>
+            Validate
+          </div>
+          <div class="step-line"></div>
+          <div class="step">
+            <div class="step-circle">3</div>
+            Import
+          </div>
+        </div>
+
+        <!-- Drop zone -->
+        <div class="drop-zone">
+          <div class="drop-icon">📂</div>
+          <div class="drop-title">File yahan drag & drop karen</div>
+          <div class="drop-sub">ya neeche click kar ke browse karen</div>
+          <div class="drop-formats">
+            <span class="fmt-badge">.xlsx</span>
+            <span class="fmt-badge">.csv</span>
+          </div>
+          <div class="browse-btn">📁 Browse File</div>
+        </div>
+
+        <!-- Bottom actions -->
+        <div class="bulk-actions">
+          <div class="template-link">
+            <span class="template-icon">📥</span>
+            Template Download karen
+            <span style="font-size:11px;color:#6b7280">(Excel + CSV)</span>
+          </div>
+          <div class="info-note">ℹ Max file size: 5MB — Max rows: 500</div>
+        </div>
+
+        <!-- Column reference table -->
+        <div class="col-info">
+          <div class="col-info-header">📋 Template Columns Reference</div>
+          <table>
+            <tr>
+              <th>Column</th>
+              <th>Type</th>
+              <th>Required?</th>
+              <th>Example</th>
+            </tr>
+            <tr><td>medicine_code</td><td>text</td><td><span class="badge-req">Required</span></td><td>MED-001</td></tr>
+            <tr><td>generic_name</td><td>text</td><td><span class="badge-req">Required</span></td><td>Paracetamol</td></tr>
+            <tr><td>brand_name</td><td>text</td><td><span class="badge-req">Required</span></td><td>Panadol</td></tr>
+            <tr><td>form</td><td>text</td><td><span class="badge-req">Required</span></td><td>Tablet</td></tr>
+            <tr><td>category</td><td>text</td><td><span class="badge-req">Required</span></td><td>Analgesic</td></tr>
+            <tr><td>strength</td><td>text</td><td><span class="badge-opt">Optional</span></td><td>500mg</td></tr>
+            <tr><td>manufacturer</td><td>text</td><td><span class="badge-req">Required</span></td><td>GSK</td></tr>
+            <tr><td>purchase_price</td><td>number</td><td><span class="badge-req">Required</span></td><td>45.00</td></tr>
+            <tr><td>selling_price</td><td>number</td><td><span class="badge-req">Required</span></td><td>60.00</td></tr>
+            <tr><td>min_stock / max_stock</td><td>integer</td><td><span class="badge-opt">Optional</span></td><td>50 / 500</td></tr>
+            <tr><td>batch_number</td><td>text</td><td><span class="badge-opt">Optional</span></td><td>BT-2024-001</td></tr>
+            <tr><td>batch_expiry</td><td>date (YYYY-MM-DD)</td><td><span class="badge-opt">Optional</span></td><td>2026-12-31</td></tr>
+            <tr><td>batch_qty</td><td>integer</td><td><span class="badge-opt">Optional</span></td><td>200</td></tr>
+            <tr><td>batch_unit_price</td><td>number</td><td><span class="badge-opt">Optional</span></td><td>45.00</td></tr>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

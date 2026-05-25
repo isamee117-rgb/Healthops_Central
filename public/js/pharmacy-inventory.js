@@ -16,10 +16,30 @@ $(document).ready(function() {
     loadFilters();
     loadMedicines();
     $.get('/api/pharmacy-config/medicine_category', function(cats) {
-        var $sel = $('#addMedCategory');
-        cats.forEach(function(c) {
-            $sel.append('<option value="' + esc(c) + '">' + esc(c) + '</option>');
-        });
+        var html = '';
+        cats.forEach(function(c) { html += '<option value="' + esc(c) + '">' + esc(c) + '</option>'; });
+        $('#addMedCategory').append(html);
+        $('#editMedCategory').append(html);
+    });
+
+    $.get('/api/pharmacy-config/medicine_form', function(forms) {
+        var html = '';
+        forms.forEach(function(f) { html += '<option value="' + esc(f) + '">' + esc(f) + '</option>'; });
+        $('#addMedForm').append(html);
+        $('#editMedForm').append(html);
+    });
+
+    $.get('/api/pharmacy-config/medicine_uom', function(uoms) {
+        var html = '';
+        uoms.forEach(function(u) { html += '<option value="' + esc(u) + '">' + esc(u) + '</option>'; });
+        $('#addMedUom').append(html);
+        $('#editMedUom').append(html);
+    });
+
+    $.get('/api/pharmacy-config/medicine_stock_unit', function(units) {
+        var html = '';
+        units.forEach(function(u) { html += '<option value="' + esc(u) + '">' + esc(u) + '</option>'; });
+        $('#addMedUnitPurchase, #addMedUnitSale, #editMedUnitPurchase, #editMedUnitSale').append(html);
     });
 
     function loadStats() {
@@ -563,6 +583,96 @@ $(document).ready(function() {
         $('#medTabContent').html(html);
         lucide.createIcons();
     }
+
+    $('#btnEditMedicine').on('click', function() {
+        if (!currentMedicineData) return;
+        var med = currentMedicineData.medicine;
+
+        $('#editMedId').val(med.medicineId);
+        $('#editMedCode').val(med.medicineCode);
+        $('#editMedBrand').val(med.brandName);
+        $('#editMedGeneric').val(med.genericName);
+        $('#editMedForm').val(med.form);
+        $('#editMedCategory').val(med.category);
+        $('#editMedSalt').val(med.saltComposition || '');
+        $('#editMedStrength').val(med.strength || '');
+        $('#editMedUom').val(med.unitOfMeasurement || '');
+        $('#editMedHsn').val(med.hsnCode || '');
+        $('#editMedUnitPurchase').val(med.unitOfPurchase || '');
+        $('#editMedUnitSale').val(med.unitOfSale || '');
+        $('#editMedMinStock').val(med.minStock);
+        $('#editMedMaxStock').val(med.maxStock);
+        $('#editMedShelf').val(med.shelfLocation || '');
+        $('#editMedManufacturer').val(med.manufacturer || '');
+        $('#editMedSchedule').val(med.scheduleType || '');
+        $('#editMedRx').val(med.requiresPrescription ? '1' : '0');
+        $('#editMedPurchasePrice').val(med.purchasePrice);
+        $('#editMedSalePrice').val(med.sellingPrice);
+        $('#editMedTax').val(med.taxGstCategory || '');
+        $('#editMedStatus').val(med.isActive ? '1' : '0');
+        $('#editMedSubtitle').text(med.medicineCode + ' | ' + med.genericName);
+        $('#editMedError, #editMedSuccess').hide();
+
+        bootstrap.Offcanvas.getInstance(document.getElementById('medicineDetailSheet')).hide();
+        var editCanvas = new bootstrap.Offcanvas(document.getElementById('editMedicineSheet'));
+        editCanvas.show();
+        lucide.createIcons();
+    });
+
+    $('#editMedicineForm').on('submit', function(e) {
+        e.preventDefault();
+        $('#editMedError, #editMedSuccess').hide();
+
+        var medicineId = $('#editMedId').val();
+        if (!medicineId) { HMS.toast('Medicine ID missing — please reopen the edit form', 'error'); return; }
+
+        var formData = {};
+        $(this).serializeArray().forEach(function(item) {
+            formData[item.name] = item.value;
+        });
+
+        formData.requires_prescription = formData.requires_prescription === '1';
+        formData.is_active             = formData.is_active === '1';
+        formData.purchase_price        = parseFloat(formData.purchase_price) || 0;
+        formData.selling_price         = parseFloat(formData.selling_price)  || 0;
+
+        if (formData.min_stock === '' || formData.min_stock === undefined) {
+            delete formData.min_stock;
+        } else {
+            formData.min_stock = parseInt(formData.min_stock, 10);
+        }
+        if (formData.max_stock === '' || formData.max_stock === undefined) {
+            delete formData.max_stock;
+        } else {
+            formData.max_stock = parseInt(formData.max_stock, 10);
+        }
+
+        var $btn = $('#btnUpdateMedicine');
+        $btn.prop('disabled', true).html('<i data-lucide="loader-2" style="width:16px;height:16px"></i> Saving...');
+
+        $.ajax({
+            url: '/api/inventory/medicines/' + medicineId + '/update',
+            method: 'POST',
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            data: JSON.stringify(formData),
+            success: function() {
+                HMS.toast('Medicine updated successfully', 'success');
+                var oc = bootstrap.Offcanvas.getInstance(document.getElementById('editMedicineSheet'));
+                if (oc) oc.hide();
+                loadMedicines();
+                loadStats();
+                loadFilters();
+            },
+            error: function(xhr) {
+                HMS.ajaxError(xhr, 'Failed to update medicine');
+            },
+            complete: function() {
+                $btn.prop('disabled', false).html('<i data-lucide="save" style="width:16px;height:16px"></i> Save Changes');
+                lucide.createIcons();
+            }
+        });
+    });
 
     $('.inv-row').hover(
         function() { $(this).css('background', 'var(--color-background)'); },

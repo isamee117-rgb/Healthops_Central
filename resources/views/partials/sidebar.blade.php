@@ -195,6 +195,11 @@
                         </a>
                     </li>
                     @endif
+                    <li>
+                        <a href="{{ url('/pharmacy/vendors') }}" class="{{ request()->is('pharmacy/vendors') ? 'active' : '' }}">
+                            <span class="nav-label">Vendors</span>
+                        </a>
+                    </li>
                 </ul>
             </li>
             @endif

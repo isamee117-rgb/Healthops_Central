@@ -47,6 +47,7 @@ Route::middleware(['auth.hms'])->group(function () {
         ->middleware('permission:pharmacy.billing.access');
     Route::get('/pharmacy/returns', fn() => view('pages.pharmacy.returns', ['pageTitle' => 'Returns & Expiry Management']))
         ->middleware('permission:pharmacy.returns.access');
+    Route::get('/pharmacy/vendors', fn() => view('pages.pharmacy.vendors', ['pageTitle' => 'Vendors']));
 
     // ── Laboratory ────────────────────────────────────────────────────────────
     Route::get('/laboratory/test-orders', fn() => view('pages.laboratory.test-orders', ['pageTitle' => 'Test Orders Queue']))

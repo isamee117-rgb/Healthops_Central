@@ -201,6 +201,7 @@ Route::get('/inventory/batches/{medicineId}', [InventoryController::class, 'batc
 Route::get('/inventory/transactions/{medicineId}', [InventoryController::class, 'transactions']);
 Route::post('/inventory/adjust', [InventoryController::class, 'adjust']);
 Route::post('/inventory/medicines', [InventoryController::class, 'store']);
+Route::post('/inventory/medicines/{medicineId}/update', [InventoryController::class, 'update']);
 
 Route::get('/stock-alerts/dashboard', [StockAlertController::class, 'dashboard']);
 Route::get('/stock-alerts/out-of-stock', [StockAlertController::class, 'outOfStock']);

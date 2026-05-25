@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class PharmacyConfigController extends Controller
 {
-    const CATEGORIES = ['rx_unit', 'rx_route', 'rx_frequency', 'medicine_category'];
+    const CATEGORIES = ['rx_unit', 'rx_route', 'rx_frequency', 'medicine_category', 'medicine_form', 'medicine_stock_unit', 'medicine_uom'];
     const DEPT_ROUTING_DEPTS = ['IPD', 'ER'];
 
     const DEFAULTS = [
@@ -76,6 +76,58 @@ class PharmacyConfigController extends Controller
             ['name' => 'Sterile Ophthalmic',                 'value' => null],
             ['name' => 'Topical Drug Preparations',          'value' => null],
             ['name' => 'Vitamins & Minerals',                'value' => null],
+        ],
+        'medicine_form' => [
+            ['name' => 'Cream',                    'value' => null],
+            ['name' => 'Dry Suspension',           'value' => null],
+            ['name' => 'Ear Drops',                'value' => null],
+            ['name' => 'Ear/Nasal Drops',          'value' => null],
+            ['name' => 'Enema',                    'value' => null],
+            ['name' => 'Eye drops',                'value' => null],
+            ['name' => 'Eye Oint',                 'value' => null],
+            ['name' => 'Gel',                      'value' => null],
+            ['name' => 'IM/Oral Inj.',             'value' => null],
+            ['name' => 'Infusion',                 'value' => null],
+            ['name' => 'Inhaler',                  'value' => null],
+            ['name' => 'Inj.',                     'value' => null],
+            ['name' => 'IV Infusion',              'value' => null],
+            ['name' => 'Liquid for Inhalation',    'value' => null],
+            ['name' => 'Lotion',                   'value' => null],
+            ['name' => 'Nasal Drops',              'value' => null],
+            ['name' => 'Nasal Spray',              'value' => null],
+            ['name' => 'Oint',                     'value' => null],
+            ['name' => 'Ointment',                 'value' => null],
+            ['name' => 'Oral Drops',               'value' => null],
+            ['name' => 'PCV 13',                   'value' => null],
+            ['name' => 'Rota',                     'value' => null],
+            ['name' => 'Sachet',                   'value' => null],
+            ['name' => 'Solution',                 'value' => null],
+            ['name' => 'Spray/Inhaler',            'value' => null],
+            ['name' => 'Suspension',               'value' => null],
+            ['name' => 'Syrup',                    'value' => null],
+            ['name' => 'Tab.',                     'value' => null],
+            ['name' => 'Vaginal Tab.',             'value' => null],
+        ],
+        'medicine_stock_unit' => [
+            ['name' => 'Strips',    'value' => null],
+            ['name' => 'Bottles',   'value' => null],
+            ['name' => 'Boxes',     'value' => null],
+            ['name' => 'Vials',     'value' => null],
+            ['name' => 'Ampoules',  'value' => null],
+            ['name' => 'Pieces',    'value' => null],
+            ['name' => 'Packs',     'value' => null],
+            ['name' => 'Tubes',     'value' => null],
+            ['name' => 'Sachets',   'value' => null],
+            ['name' => 'Units',     'value' => null],
+        ],
+        'medicine_uom' => [
+            ['name' => 'mg',    'value' => null],
+            ['name' => 'ml',    'value' => null],
+            ['name' => 'g',     'value' => null],
+            ['name' => 'mcg',   'value' => null],
+            ['name' => 'IU',    'value' => null],
+            ['name' => 'L',     'value' => null],
+            ['name' => 'units', 'value' => null],
         ],
     ];
 

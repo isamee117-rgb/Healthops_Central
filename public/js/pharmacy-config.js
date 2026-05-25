@@ -64,7 +64,7 @@ $(document).ready(function () {
     }
 
     function renderAll() {
-        $('#pharmConfigContainer .card[data-category]').each(function () {
+        $('#pharmConfigContainer .card[data-category], #medFormConfigContainer .card[data-category]').each(function () {
             var category = $(this).data('category');
             var items = configData[category] || [];
             renderList($(this), items, category);

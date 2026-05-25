@@ -1,0 +1,44 @@
+<h2>Bulk Uploader — UI Approach</h2>
+<p class="subtitle">Pharmacy Config page mein Bulk Uploader kaise dikhega? Teen options hain.</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Inline Card Section (Recommended)</h3>
+      <p>Config page par ek alag card section add ho "Bulk Inventory Import" title ke saath. File drop-zone, template download, aur validate/import buttons sab is card mein honge. Steps inline dikhenge (idle → file selected → validating → results).</p>
+      <div class="pros-cons" style="margin-top:10px">
+        <div class="pros"><h4>Pros</h4><ul><li>Har cheez ek jagah — modal nahi kholna</li><li>Validation errors clearly dikhti hain</li><li>Config page se consistent feel</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Config page thodi lambi ho jaayegi</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Modal Wizard (Step-by-step)</h3>
+      <p>Config page par ek "Import Inventory" button ho. Click karne par ek large modal khule jisme 3 steps hon: (1) Upload File, (2) Validation Results, (3) Confirm Import. Clean, focused experience.</p>
+      <div class="pros-cons" style="margin-top:10px">
+        <div class="pros"><h4>Pros</h4><ul><li>Page clean rahti hai</li><li>Step-by-step guidance</li><li>Focus on import task</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Modal mein zyada data (error table) dikhana awkward</li><li>Extra click</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Separate Dedicated Page</h3>
+      <p>Config page par sirf "Import Inventory" link ho. Yeh ek alag /configuration/pharmacy/bulk-import page par le jaaye jahan poora uploader ho — file zone, column mapping, validation table, aur import confirmation.</p>
+      <div class="pros-cons" style="margin-top:10px">
+        <div class="pros"><h4>Pros</h4><ul><li>Full page space available — bari tables dikhana easy</li><li>Bookmarkable URL</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Naya route, naya view — zyada kaam</li><li>Config page se alag feel</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px">Click to select your preferred approach, then reply in the terminal.</p>

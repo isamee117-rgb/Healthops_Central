@@ -161,12 +161,23 @@ class InventoryController extends Controller
             'medicine' => [
                 'medicineId' => $m->medicine_id,
                 'medicineCode' => $m->medicine_code,
+                'medicineName' => $m->medicine_name,
                 'genericName' => $m->generic_name,
                 'brandName' => $m->brand_name,
                 'strength' => $m->strength,
+                'saltComposition' => $m->salt_composition,
+                'unitOfMeasurement' => $m->unit_of_measurement,
                 'form' => $m->form,
                 'category' => $m->category,
                 'manufacturer' => $m->manufacturer,
+                'hsnCode' => $m->hsn_code,
+                'unitOfPurchase' => $m->unit_of_purchase,
+                'unitOfSale' => $m->unit_of_sale,
+                'shelfLocation' => $m->shelf_location,
+                'scheduleType' => $m->schedule_type,
+                'requiresPrescription' => (bool)$m->requires_prescription,
+                'taxGstCategory' => $m->tax_gst_category,
+                'isActive' => (bool)$m->is_active,
                 'currentStock' => $m->current_stock,
                 'stockUnit' => $m->stock_unit,
                 'available' => max(0, $available),
@@ -375,6 +386,63 @@ class InventoryController extends Controller
             'medicineCode' => $medicine->medicine_code,
             'message' => 'Medicine added successfully',
         ], 201);
+    }
+
+    public function update(Request $request, $medicineId)
+    {
+        $medicine = Medicine::where('medicine_id', $medicineId)->first();
+        if (!$medicine) return response()->json(['error' => 'Medicine not found'], 404);
+
+        $request->validate([
+            'generic_name'         => 'required|string|max:255',
+            'brand_name'           => 'required|string|max:255',
+            'form'                 => 'required|string|max:100',
+            'category'             => 'required|string|max:100',
+            'salt_composition'     => 'nullable|string',
+            'strength'             => 'nullable|string|max:100',
+            'unit_of_measurement'  => 'nullable|string|max:50',
+            'hsn_code'             => 'nullable|string|max:50',
+            'unit_of_purchase'     => 'nullable|string|max:50',
+            'unit_of_sale'         => 'nullable|string|max:50',
+            'min_stock'            => 'nullable|integer|min:0',
+            'max_stock'            => 'nullable|integer|min:0',
+            'shelf_location'       => 'nullable|string|max:255',
+            'manufacturer'         => 'nullable|string|max:255',
+            'schedule_type'        => 'nullable|string|max:50',
+            'requires_prescription'=> 'boolean',
+            'purchase_price'       => 'required|numeric|min:0',
+            'selling_price'        => 'required|numeric|min:0',
+            'tax_gst_category'     => 'nullable|string|max:50',
+            'is_active'            => 'boolean',
+        ]);
+
+        $medicine->update([
+            'medicine_name'         => trim($request->brand_name . ($request->strength ? ' ' . $request->strength : '')),
+            'generic_name'          => $request->generic_name,
+            'brand_name'            => $request->brand_name,
+            'form'                  => $request->form,
+            'category'              => $request->category,
+            'salt_composition'      => $request->salt_composition,
+            'strength'              => $request->strength,
+            'unit_of_measurement'   => $request->unit_of_measurement,
+            'hsn_code'              => $request->hsn_code,
+            'unit_of_purchase'      => $request->unit_of_purchase,
+            'unit_of_sale'          => $request->unit_of_sale,
+            'stock_unit'            => $request->unit_of_sale ?: ($request->unit_of_purchase ?: $medicine->stock_unit),
+            'min_stock'             => $request->min_stock ?? $medicine->min_stock,
+            'max_stock'             => $request->max_stock ?? $medicine->max_stock,
+            'reorder_point'         => $request->min_stock ?? $medicine->reorder_point,
+            'shelf_location'        => $request->shelf_location,
+            'manufacturer'          => $request->manufacturer,
+            'schedule_type'         => $request->schedule_type,
+            'requires_prescription' => $request->boolean('requires_prescription'),
+            'purchase_price'        => $request->purchase_price,
+            'selling_price'         => $request->selling_price,
+            'tax_gst_category'      => $request->tax_gst_category,
+            'is_active'             => $request->boolean('is_active', true),
+        ]);
+
+        return response()->json(['success' => true, 'medicineId' => $medicine->medicine_id]);
     }
 
     public function filters()

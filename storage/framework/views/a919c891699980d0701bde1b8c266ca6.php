@@ -10,38 +10,26 @@
     <div class="mini-stats" id="summaryStats">
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">Income (This Month)</p>
-                    <h3 class="mini-stat-value" style="color:#16a34a" id="statIncome">PKR 0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(22,163,74,0.05)"><i data-lucide="trending-up" style="color:#16a34a"></i></div>
+                <p class="mini-stat-label">Income (This Month)</p>
+                <h3 class="mini-stat-value" id="statIncome">PKR 0</h3>
             </div>
         </div>
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">Expense (This Month)</p>
-                    <h3 class="mini-stat-value" style="color:#dc2626" id="statExpense">PKR 0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(220,38,38,0.05)"><i data-lucide="trending-down" style="color:#dc2626"></i></div>
+                <p class="mini-stat-label">Expense (This Month)</p>
+                <h3 class="mini-stat-value" id="statExpense">PKR 0</h3>
             </div>
         </div>
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">Net Profit / Loss</p>
-                    <h3 class="mini-stat-value" style="color:#2563eb" id="statNet">PKR 0</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(37,99,235,0.05)"><i data-lucide="bar-chart-3" style="color:#2563eb"></i></div>
+                <p class="mini-stat-label">Net Profit / Loss</p>
+                <h3 class="mini-stat-value" id="statNet">PKR 0</h3>
             </div>
         </div>
         <div class="mini-stat-card">
             <div class="mini-stat-inner">
-                <div>
-                    <p class="mini-stat-label">Budget Used</p>
-                    <h3 class="mini-stat-value" style="color:#ea580c" id="statBudget">0%</h3>
-                </div>
-                <div class="mini-stat-icon" style="background:rgba(234,88,12,0.05)"><i data-lucide="pie-chart" style="color:#ea580c"></i></div>
+                <p class="mini-stat-label">Budget Used</p>
+                <h3 class="mini-stat-value" id="statBudget">0%</h3>
             </div>
         </div>
     </div>
