@@ -104,17 +104,19 @@ class PermissionSeeder extends Seeder
 
         foreach ($modules as $mod) {
             $order++;
-            $perm = Permission::create([
-                'name'           => $mod['label'] . ' Access',
-                'slug'           => $mod['module'] . '.access',
-                'description'    => 'Access to ' . $mod['label'],
-                'module'         => $mod['module'],
-                'parent_module'  => $mod['parent_module'],
-                'level'          => $mod['parent_module'] ? 'tab' : 'page',
-                'action_type'    => null,
-                'is_dangerous'   => false,
-                'display_order'  => $order,
-            ]);
+            $perm = Permission::updateOrCreate(
+                ['slug' => $mod['module'] . '.access'],
+                [
+                    'name'           => $mod['label'] . ' Access',
+                    'description'    => 'Access to ' . $mod['label'],
+                    'module'         => $mod['module'],
+                    'parent_module'  => $mod['parent_module'],
+                    'level'          => $mod['parent_module'] ? 'tab' : 'page',
+                    'action_type'    => null,
+                    'is_dangerous'   => false,
+                    'display_order'  => $order,
+                ]
+            );
 
             $allPermissionIds[] = $perm->id;
 
@@ -129,32 +131,38 @@ class PermissionSeeder extends Seeder
             }
         }
 
-        $superadminRole = Role::create([
-            'name' => 'Superadmin',
-            'slug' => 'superadmin',
-            'description' => 'Full system access with all permissions',
-            'type' => 'system',
-            'is_active' => true,
-        ]);
-        $superadminRole->permissions()->attach($allPermissionIds);
+        $superadminRole = Role::firstOrCreate(
+            ['slug' => 'superadmin'],
+            [
+                'name' => 'Superadmin',
+                'description' => 'Full system access with all permissions',
+                'type' => 'system',
+                'is_active' => true,
+            ]
+        );
+        $superadminRole->permissions()->syncWithoutDetaching($allPermissionIds);
 
-        $adminRole = Role::create([
-            'name' => 'Admin',
-            'slug' => 'admin',
-            'description' => 'Administrative access to most modules except role management',
-            'type' => 'system',
-            'is_active' => true,
-        ]);
-        $adminRole->permissions()->attach($adminPermissionIds);
+        $adminRole = Role::firstOrCreate(
+            ['slug' => 'admin'],
+            [
+                'name' => 'Admin',
+                'description' => 'Administrative access to most modules except role management',
+                'type' => 'system',
+                'is_active' => true,
+            ]
+        );
+        $adminRole->permissions()->syncWithoutDetaching($adminPermissionIds);
 
-        $userRole = Role::create([
-            'name' => 'User',
-            'slug' => 'user',
-            'description' => 'Basic access to dashboard only',
-            'type' => 'system',
-            'is_active' => true,
-        ]);
-        $userRole->permissions()->attach($userPermissionIds);
+        $userRole = Role::firstOrCreate(
+            ['slug' => 'user'],
+            [
+                'name' => 'User',
+                'description' => 'Basic access to dashboard only',
+                'type' => 'system',
+                'is_active' => true,
+            ]
+        );
+        $userRole->permissions()->syncWithoutDetaching($userPermissionIds);
 
         $superadminUser = User::where('role', 'superadmin')->first();
         if ($superadminUser) {
