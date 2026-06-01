@@ -4800,9 +4800,9 @@ $(document).ready(function() {
             var svgMail  = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>';
             var svgGlobe = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20A14.5 14.5 0 0 0 12 2"/><path d="M2 12h20"/></svg>';
             var contactParts = [];
-            if (lh.lh_show_phone   === '1' && pr.contact_phone)   contactParts.push(svgPhone + esc(pr.contact_phone));
-            if (lh.lh_show_email   === '1' && pr.contact_email)   contactParts.push(svgMail  + esc(pr.contact_email));
-            if (lh.lh_show_website === '1' && pr.contact_website) contactParts.push(svgGlobe + esc(pr.contact_website));
+            if (pr.contact_phone)   contactParts.push('Tel: ' + esc(pr.contact_phone));
+            if (pr.contact_email)   contactParts.push('Email: ' + esc(pr.contact_email));
+            if (pr.contact_website) contactParts.push('Web: ' + esc(pr.contact_website));
 
             var footerLines = [ft.footer_line1, ft.footer_line2, ft.footer_line3].filter(Boolean);
             var metaParts = [];
@@ -4814,179 +4814,260 @@ $(document).ready(function() {
 
             // ── Helpers ──
             function e(v) { return (v || '').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-            function infoCell(label, val, borderRight, rowBg) {
-                return '<td style="padding:7px 12px;background:' + (rowBg||'#fff') + ';' + (borderRight ? 'border-right:1px solid #e8edf2;' : '') + '">'
-                     + '<div style="font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:3px">' + e(label) + '</div>'
-                     + '<div style="font-size:10px;font-weight:600;color:#0f172a;line-height:1.2">' + e(val) + '</div>'
-                     + '</td>';
+            function sectionRow(title) {
+                return '<tr><td colspan="10" style="background:#000;color:#fff;font-weight:700;font-size:11px;padding:6px 10px;letter-spacing:0.3px">' + title + '</td></tr>';
             }
-            function sectionLabel(title) {
-                return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
-                     + '<div style="width:3px;height:14px;background:' + color + ';border-radius:2px;flex-shrink:0"></div>'
-                     + '<span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#1e293b">' + title + '</span>'
-                     + '</div>';
+            function dataRow2(label, val) {
+                return '<tr>'
+                     + '<td style="padding:5px 10px;background:#f0f0f0;font-size:10px;color:#333;width:35%;border:1px solid #aaa;font-weight:600">' + label + '</td>'
+                     + '<td style="padding:5px 10px;font-size:11px;color:#000;border:1px solid #aaa">' + val + '</td>'
+                     + '</tr>';
             }
 
-            // ── Logo ──
+            // -- Logo --
             var logoHtml = '';
             if (lh.lh_show_logo !== '0') {
-                logoHtml = '<div style="width:' + logoSize + ';height:' + logoSize + ';background:linear-gradient(135deg,#f1f5f9,#e2e8f0);border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #e2e8f0;flex-shrink:0">'
-                         + (logoPath ? '<img src="' + logoPath + '" style="max-width:100%;max-height:100%;object-fit:contain">' : '<span style="font-size:9px;color:#94a3b8">Logo</span>')
+                logoHtml = '<div style="width:' + logoSize + ';height:' + logoSize + ';background:#f5f5f5;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">'
+                         + (logoPath ? '<img src="' + logoPath + '" style="max-width:100%;max-height:100%;object-fit:contain">' : '<span style="font-size:9px;color:#999">Logo</span>')
                          + '</div>';
             }
 
-            // ── Patient info rows ──
+            // -- Patient info table --
             var consultDate = new Date(visit.consultationDate).toLocaleDateString('en-GB');
-            var ptRows = [
-                [['PATIENT NAME', e(visit.patientName), true],  ['MRN', e(visit.mrn), true],             ['VISIT ID', e(visit.visitId), true],        ['DATE', consultDate, false]],
-                [['DOCTOR', e(consultDoctor), true],             ['DEPARTMENT', e(consultDept), true],    ['VISIT TYPE', e(visit.visitType||'OPD'), true], ['REFERRED BY', e(visit.referredBy||'Self'), false]],
-                [['PHONE NO.', e(patient ? (patient.phone||patient.mobile||'-') : '-'), true],
-                 ['CNIC', e(patient ? (patient.cnic||patient.nationalId||'-') : '-'), true],
-                 ['AGE', e(patient ? (patient.age ? patient.age+' Years' : '-') : '-'), true],
-                 ['GENDER', e(patient ? (patient.gender||'-') : '-'), false]],
-            ];
-            var ptGridHtml = '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,0.06)">'
-                + '<div style="height:3px;background:' + color + '"></div>'
-                + '<table style="width:100%;table-layout:fixed;border-collapse:collapse">';
-            ptRows.forEach(function(row, ri) {
-                var rowBg = ri % 2 === 1 ? '#f8fafc' : '#fff';
-                ptGridHtml += '<tr' + (ri < ptRows.length - 1 ? ' style="border-bottom:1px solid #e8edf2"' : '') + '>';
-                row.forEach(function(cell) { ptGridHtml += infoCell(cell[0], cell[1], cell[2], rowBg); });
-                ptGridHtml += '</tr>';
-            });
-            ptGridHtml += '</table></div>';
+            var ptInfoHtml = '<table style="width:100%;border-collapse:collapse;border:1px solid #888;margin-bottom:10px">'
+                + sectionRow('Application Information')
+                + dataRow2('Visit ID', e(visit.visitId))
+                + dataRow2('Patient Name', e(visit.patientName))
+                + dataRow2('MRN', e(visit.mrn))
+                + dataRow2('Date', consultDate)
+                + sectionRow('Doctor / Visit Information')
+                + dataRow2('Doctor', e(consultDoctor))
+                + dataRow2('Department', e(consultDept))
+                + dataRow2('Visit Type', e(visit.visitType || 'OPD'))
+                + dataRow2('Referred By', e(visit.referredBy || 'Self'))
+                + sectionRow('Contact Details')
+                + dataRow2('Phone No.', e(patient ? (patient.phone || patient.mobile || '-') : '-'))
+                + dataRow2('CNIC', e(patient ? (patient.cnic || patient.nationalId || '-') : '-'))
+                + dataRow2('Age', e(patient ? (patient.age ? patient.age + ' Years' : '-') : '-'))
+                + dataRow2('Gender', e(patient ? (patient.gender || '-') : '-'))
+                + '</table>';
 
-            // ── Vitals bar ──
+            // -- Vitals table --
             var vitalItems = [];
             if (lv) {
-                if (lv.temperature) vitalItems.push(['Temp', lv.temperature + ' °F']);
-                if (lv.systolic)    vitalItems.push(['BP', lv.systolic + '/' + (lv.diastolic||'—') + ' mmHg']);
-                if (lv.heartRate)   vitalItems.push(['Pulse', lv.heartRate + ' bpm']);
-                if (lv.spO2)        vitalItems.push(['SpO2', lv.spO2 + '%']);
-                if (lv.weight)      vitalItems.push(['Weight', lv.weight + ' kg']);
-                if (lv.height)      vitalItems.push(['Height', lv.height + ' cm']);
-                if (lv.respiratoryRate) vitalItems.push(['RR', lv.respiratoryRate + ' /min']);
+                if (lv.temperature)     vitalItems.push(['Temperature',      lv.temperature + ' °F']);
+                if (lv.systolic)        vitalItems.push(['Blood Pressure',   lv.systolic + '/' + (lv.diastolic || '-') + ' mmHg']);
+                if (lv.heartRate)       vitalItems.push(['Pulse',            lv.heartRate + ' bpm']);
+                if (lv.spO2)            vitalItems.push(['SpO2',             lv.spO2 + '%']);
+                if (lv.weight)          vitalItems.push(['Weight',           lv.weight + ' kg']);
+                if (lv.height)          vitalItems.push(['Height',           lv.height + ' cm']);
+                if (lv.respiratoryRate) vitalItems.push(['Respiratory Rate', lv.respiratoryRate + ' /min']);
             }
-            var vitalsHtml = sectionLabel('Vitals');
+            var vitalsHtml = '<table style="width:100%;border-collapse:collapse;border:1px solid #888;margin-bottom:10px">'
+                + sectionRow('Vitals');
             if (vitalItems.length > 0) {
-                vitalsHtml += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">';
-                vitalItems.forEach(function(vi) {
-                    vitalsHtml += '<div style="padding:7px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;border-top:2px solid ' + color + '">'
-                        + '<div style="font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:3px">' + vi[0] + '</div>'
-                        + '<div style="font-size:11px;font-weight:700;color:#0f172a">' + vi[1] + '</div>'
-                        + '</div>';
-                });
-                vitalsHtml += '</div>';
+                vitalItems.forEach(function(vi) { vitalsHtml += dataRow2(vi[0], vi[1]); });
             } else {
-                vitalsHtml += '<div style="font-size:10px;color:#94a3b8;font-style:italic;margin-bottom:16px">No vitals recorded</div>';
+                vitalsHtml += '<tr><td colspan="10" style="padding:6px 10px;font-size:10px;color:#666;font-style:italic;border:1px solid #aaa">No vitals recorded</td></tr>';
             }
+            vitalsHtml += '</table>';
 
-            // ── Final Diagnosis ──
-            var diagHtml = sectionLabel('Final Diagnosis');
+            // -- Final Diagnosis --
             var diag = existing.finalDiagnosis || existing.provisionalDiagnosis || '';
-            diagHtml += '<div style="padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:16px;font-size:11px;font-weight:600;color:#0f172a;min-height:32px">'
-                + (diag ? e(diag) : '<span style="color:#94a3b8;font-weight:400;font-style:italic">Not recorded</span>')
-                + '</div>';
+            var diagHtml = '<table style="width:100%;border-collapse:collapse;border:1px solid #888;margin-bottom:10px">'
+                + sectionRow('Final Diagnosis')
+                + '<tr><td style="padding:8px 10px;font-size:11px;border:1px solid #aaa;min-height:32px">'
+                + (diag ? e(diag) : '<span style="color:#999;font-style:italic">Not recorded</span>')
+                + '</td></tr></table>';
 
-            // ── Prescription table ──
-            var rxHtml = sectionLabel('Prescription');
+            // -- Prescription table --
+            var rxHtml = '<table style="width:100%;border-collapse:collapse;border:1px solid #888;margin-bottom:10px">'
+                + sectionRow('Prescription');
             if (existing.prescriptions && existing.prescriptions.length > 0) {
-                rxHtml += '<div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:16px">'
-                    + '<table style="width:100%;table-layout:fixed;border-collapse:collapse">'
-                    + '<thead><tr style="background:' + color + '">'
-                    + ['#','MEDICINE','DOSE','ROUTE','FREQUENCY','DURATION'].map(function(h, i) {
-                        var w = ['36px','','80px','80px','110px','80px'][i];
-                        return '<th style="padding:8px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#fff;text-align:left' + (w ? ';width:'+w : '') + '">' + h + '</th>';
-                      }).join('')
-                    + '</tr></thead><tbody>';
+                rxHtml += '<tr style="background:#c8c8c8">'
+                    + ['S.#', 'Medicine', 'Dose', 'Route', 'Frequency', 'Duration'].map(function(h) {
+                        return '<th style="padding:5px 8px;font-size:10px;font-weight:700;text-align:left;border:1px solid #aaa">' + h + '</th>';
+                    }).join('') + '</tr>';
                 existing.prescriptions.forEach(function(rx, i) {
-                    var bg = i % 2 === 1 ? '#f8fafc' : '#fff';
-                    rxHtml += '<tr style="background:' + bg + ';border-top:1px solid #f1f5f9">'
-                        + '<td style="padding:8px 10px;font-size:10px;color:#64748b">' + (i+1) + '</td>'
-                        + '<td style="padding:8px 10px;font-size:10px;font-weight:600;color:#0f172a">' + e(rx.medicine) + '</td>'
-                        + '<td style="padding:8px 10px;font-size:10px;color:#334155">' + e(rx.dose) + ' ' + e(rx.unit||'') + '</td>'
-                        + '<td style="padding:8px 10px;font-size:10px;color:#334155">' + e(rx.route) + '</td>'
-                        + '<td style="padding:8px 10px;font-size:10px;color:#334155">' + e(rx.frequency) + '</td>'
-                        + '<td style="padding:8px 10px;font-size:10px;color:#334155">' + e(rx.duration) + '</td>'
+                    var bg = i % 2 === 1 ? '#f5f5f5' : '#fff';
+                    rxHtml += '<tr style="background:' + bg + '">'
+                        + '<td style="padding:5px 8px;font-size:10px;border:1px solid #aaa">' + (i + 1) + '</td>'
+                        + '<td style="padding:5px 8px;font-size:10px;font-weight:600;border:1px solid #aaa">' + e(rx.medicine) + '</td>'
+                        + '<td style="padding:5px 8px;font-size:10px;border:1px solid #aaa">' + e(rx.dose) + ' ' + e(rx.unit || '') + '</td>'
+                        + '<td style="padding:5px 8px;font-size:10px;border:1px solid #aaa">' + e(rx.route) + '</td>'
+                        + '<td style="padding:5px 8px;font-size:10px;border:1px solid #aaa">' + e(rx.frequency) + '</td>'
+                        + '<td style="padding:5px 8px;font-size:10px;border:1px solid #aaa">' + e(rx.duration) + '</td>'
                         + '</tr>';
                 });
-                rxHtml += '</tbody></table></div>';
             } else {
-                rxHtml += '<div style="font-size:10px;color:#94a3b8;font-style:italic;margin-bottom:16px">No prescription recorded</div>';
+                rxHtml += '<tr><td colspan="10" style="padding:6px 10px;font-size:10px;color:#666;font-style:italic;border:1px solid #aaa">No prescription recorded</td></tr>';
             }
+            rxHtml += '</table>';
 
-            // ── Investigation Orders ──
-            var invHtml = sectionLabel('Investigation Orders');
+            // -- Investigation Orders --
+            var invHtml = '<table style="width:100%;border-collapse:collapse;border:1px solid #888;margin-bottom:10px">'
+                + sectionRow('Investigation Orders');
             if (existing.investigationOrders && existing.investigationOrders.length > 0) {
-                invHtml += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">';
-                existing.investigationOrders.forEach(function(inv) {
-                    invHtml += '<span style="display:inline-block;padding:4px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:20px;font-size:10px;font-weight:600;color:#1e40af">' + e(inv) + '</span>';
+                invHtml += '<tr style="background:#c8c8c8">'
+                    + '<th style="padding:5px 8px;font-size:10px;font-weight:700;text-align:left;border:1px solid #aaa;width:30%">Type</th>'
+                    + '<th style="padding:5px 8px;font-size:10px;font-weight:700;text-align:left;border:1px solid #aaa">Test</th>'
+                    + '<th style="padding:5px 8px;font-size:10px;font-weight:700;text-align:left;border:1px solid #aaa;width:90px">Priority</th>'
+                    + '</tr>';
+                existing.investigationOrders.forEach(function(inv, i) {
+                    var bg = i % 2 === 1 ? '#f5f5f5' : '#fff';
+                    var invType = (typeof inv === 'object' && inv !== null) ? (inv.type || '') : '';
+                    var invTest = (typeof inv === 'object' && inv !== null) ? (inv.test || '') : e(inv);
+                    var invPri  = (typeof inv === 'object' && inv !== null) ? (inv.priority || '') : '';
+                    invHtml += '<tr style="background:' + bg + '">'
+                        + '<td style="padding:5px 8px;font-size:10px;border:1px solid #aaa">' + e(invType) + '</td>'
+                        + '<td style="padding:5px 8px;font-size:10px;border:1px solid #aaa">' + e(invTest) + '</td>'
+                        + '<td style="padding:5px 8px;font-size:10px;border:1px solid #aaa">' + e(invPri) + '</td>'
+                        + '</tr>';
                 });
-                invHtml += '</div>';
             } else {
-                invHtml += '<div style="font-size:10px;color:#94a3b8;font-style:italic;margin-bottom:16px">No investigation orders</div>';
+                invHtml += '<tr><td colspan="10" style="padding:6px 10px;font-size:10px;color:#666;font-style:italic;border:1px solid #aaa">No investigation orders</td></tr>';
             }
+            invHtml += '</table>';
 
-            // ── Full HTML ──
+            // -- Full HTML --
             var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
-                + '<title>Doctor Prescription \u2014 ' + e(visit.patientName) + '</title>'
+                + '<title>Doctor Prescription — ' + e(visit.patientName) + '</title>'
                 + '<style>'
                 + '* { margin:0; padding:0; box-sizing:border-box; }'
-                + 'body { font-family:"SF Pro Text","Segoe UI",Arial,sans-serif; background:#fff; color:#1e293b; }'
+                + 'body { font-family:\'Segoe UI\',Arial,sans-serif; background:#fff; color:#000; font-size:11px; }'
                 + '@page { size:A4; margin:12mm 12mm 10mm 12mm; }'
                 + '@media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }'
                 + 'table { border-collapse:collapse; }'
                 + '</style></head><body>'
                 + '<div style="max-width:740px;margin:0 auto;background:#fff">'
 
-                // Top accent bar
-                + '<div style="height:4px;background:' + color + '"></div>'
-
-                // Letterhead
-                + '<div style="padding:24px 32px 16px">'
-                + '<div style="display:flex;align-items:flex-start;gap:20px">'
+                // Letterhead box
+                + '<div style="border:2px solid #000;padding:14px 20px 12px;margin-bottom:8px">'
+                + '<div style="display:flex;align-items:center;gap:16px">'
                 + logoHtml
-                + '<div style="flex:1;min-width:0">'
-                + (hospName ? '<div style="font-size:17px;font-weight:800;color:#1e293b;letter-spacing:-0.3px;line-height:1.1">' + e(hospName) + '</div>' : '')
-                + (tagline  ? '<div style="font-size:11px;color:#64748b;margin-top:4px;font-style:italic">' + e(tagline) + '</div>' : '')
-                + (addrParts.length ? '<div style="font-size:10px;color:#475569;margin-top:5px">' + e(addrParts.join(', ')) + '</div>' : '')
-                + (contactParts.length ? '<div style="font-size:10px;color:#475569;margin-top:4px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">' + contactParts.map(function(p){return '<span style="display:inline-flex;align-items:center;gap:2px">'+p+'</span>';}).join('') + '</div>' : '')
+                + '<div style="flex:1;text-align:center">'
+                + (hospName ? '<div style="font-size:18px;font-weight:800;color:#000;font-family:\'Segoe UI\',Arial,sans-serif">' + e(hospName) + '</div>' : '')
+                + (tagline  ? '<div style="font-size:11px;color:#333;margin-top:2px">' + e(tagline) + '</div>' : '')
+                + (addrParts.length ? '<div style="font-size:10px;color:#333;margin-top:4px">' + e(addrParts.join(', ')) + '</div>' : '')
+                + (contactParts.length ? '<div style="font-size:10px;color:#333;margin-top:3px">' + contactParts.join('  |  ') + '</div>' : '')
                 + '</div></div>'
-                + '<div style="margin-top:16px;height:1.5px;background:linear-gradient(to right,' + color + ',rgba(0,0,0,0.05));border-radius:2px"></div>'
                 + '</div>'
 
-                // Title strip
-                + '<div style="padding:9px 32px;background:' + color + ';display:flex;align-items:center;justify-content:space-between">'
-                + '<span style="color:#fff;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase">Doctor Prescription</span>'
-                + '<span style="background:rgba(255,255,255,0.15);color:#fff;font-size:9px;font-weight:600;padding:2px 9px;border-radius:20px;letter-spacing:0.5px">ORIGINAL</span>'
+                // Single outer bordered container (provides right border fix)
+                + '<div style="border:2px solid #000;margin-bottom:10px">'
+
+                  // Title bar
+                  + '<table style="width:100%;border-collapse:collapse">'
+                  + '<tr>'
+                  + '<td style="background:#000;color:#fff;font-weight:700;font-size:13px;padding:8px 12px;letter-spacing:1.5px;text-transform:uppercase">DOCTOR PRESCRIPTION</td>'
+                  + '<td style="background:#000;color:#fff;font-weight:700;font-size:11px;padding:8px 12px;text-align:right;width:100px;letter-spacing:1px">ORIGINAL</td>'
+                  + '</tr></table>'
+
+                  // One big content table
+                  + '<table style="width:100%;border-collapse:collapse">'
+
+                    // Patient info
+                    + '<tr><td colspan="2" style="background:#000;color:#fff;font-weight:700;font-size:11px;padding:6px 10px">Application Information</td></tr>'
+                    + dataRow2('Visit ID', e(visit.visitId))
+                    + dataRow2('Patient Name', e(visit.patientName))
+                    + dataRow2('MRN', e(visit.mrn))
+                    + dataRow2('Date', consultDate)
+
+                    // Doctor info
+                    + '<tr><td colspan="2" style="background:#000;color:#fff;font-weight:700;font-size:11px;padding:6px 10px">Doctor / Visit Information</td></tr>'
+                    + dataRow2('Doctor', e(consultDoctor))
+                    + dataRow2('Department', e(consultDept))
+                    + dataRow2('Visit Type', e(visit.visitType || 'OPD'))
+                    + dataRow2('Referred By', e(visit.referredBy || 'Self'))
+
+                    // Contact
+                    + '<tr><td colspan="2" style="background:#000;color:#fff;font-weight:700;font-size:11px;padding:6px 10px">Contact Details</td></tr>'
+                    + dataRow2('Phone No.', e(patient ? (patient.phone || patient.mobile || '-') : '-'))
+                    + dataRow2('CNIC', e(patient ? (patient.cnic || patient.nationalId || '-') : '-'))
+                    + dataRow2('Age', e(patient ? (patient.age ? patient.age + ' Years' : '-') : '-'))
+                    + dataRow2('Gender', e(patient ? (patient.gender || '-') : '-'))
+
+                    // Vitals
+                    + '<tr><td colspan="2" style="background:#000;color:#fff;font-weight:700;font-size:11px;padding:6px 10px">Vitals</td></tr>'
+                    + (vitalItems.length > 0
+                        ? vitalItems.map(function(vi) { return dataRow2(vi[0], vi[1]); }).join('')
+                        : '<tr><td colspan="2" style="padding:6px 10px;font-size:10px;color:#666;font-style:italic;border-bottom:1px solid #ccc">No vitals recorded</td></tr>')
+
+                    // Diagnosis
+                    + '<tr><td colspan="2" style="background:#000;color:#fff;font-weight:700;font-size:11px;padding:6px 10px">Final Diagnosis</td></tr>'
+                    + '<tr><td colspan="2" style="padding:8px 10px;font-size:11px;min-height:32px;border-bottom:1px solid #ccc">'
+                    + (diag ? e(diag) : '<span style="color:#999;font-style:italic">Not recorded</span>')
+                    + '</td></tr>'
+
+                    // Prescription
+                    + '<tr><td colspan="2" style="background:#000;color:#fff;font-weight:700;font-size:11px;padding:6px 10px">Prescription</td></tr>'
+                    + '<tr><td colspan="2" style="padding:0">'
+                    + (existing.prescriptions && existing.prescriptions.length > 0
+                        ? '<table style="width:100%;border-collapse:collapse">'
+                          + '<tr style="background:#c8c8c8">'
+                          + ['S.#','Medicine','Dose','Route','Frequency','Duration'].map(function(h) {
+                              return '<th style="padding:5px 8px;font-size:10px;font-weight:700;text-align:left;border:1px solid #bbb">' + h + '</th>';
+                            }).join('') + '</tr>'
+                          + existing.prescriptions.map(function(rx, i) {
+                              var bg = i % 2 === 1 ? '#f5f5f5' : '#fff';
+                              return '<tr style="background:' + bg + '">'
+                                + '<td style="padding:5px 8px;font-size:10px;border:1px solid #ccc">' + (i + 1) + '</td>'
+                                + '<td style="padding:5px 8px;font-size:10px;font-weight:600;border:1px solid #ccc">' + e(rx.medicine) + '</td>'
+                                + '<td style="padding:5px 8px;font-size:10px;border:1px solid #ccc">' + e(rx.dose) + ' ' + e(rx.unit || '') + '</td>'
+                                + '<td style="padding:5px 8px;font-size:10px;border:1px solid #ccc">' + e(rx.route) + '</td>'
+                                + '<td style="padding:5px 8px;font-size:10px;border:1px solid #ccc">' + e(rx.frequency) + '</td>'
+                                + '<td style="padding:5px 8px;font-size:10px;border:1px solid #ccc">' + e(rx.duration) + '</td>'
+                                + '</tr>';
+                            }).join('')
+                          + '</table>'
+                        : '<div style="padding:6px 10px;font-size:10px;color:#666;font-style:italic">No prescription recorded</div>')
+                    + '</td></tr>'
+
+                    // Investigation Orders
+                    + '<tr><td colspan="2" style="background:#000;color:#fff;font-weight:700;font-size:11px;padding:6px 10px">Investigation Orders</td></tr>'
+                    + '<tr><td colspan="2" style="padding:0">'
+                    + (existing.investigationOrders && existing.investigationOrders.length > 0
+                        ? '<table style="width:100%;border-collapse:collapse">'
+                          + '<tr style="background:#c8c8c8">'
+                          + '<th style="padding:5px 8px;font-size:10px;font-weight:700;text-align:left;border:1px solid #bbb;width:30%">Type</th>'
+                          + '<th style="padding:5px 8px;font-size:10px;font-weight:700;text-align:left;border:1px solid #bbb">Test</th>'
+                          + '<th style="padding:5px 8px;font-size:10px;font-weight:700;text-align:left;border:1px solid #bbb;width:90px">Priority</th>'
+                          + '</tr>'
+                          + existing.investigationOrders.map(function(inv, i) {
+                              var bg = i % 2 === 1 ? '#f5f5f5' : '#fff';
+                              var invType = (typeof inv === 'object' && inv !== null) ? (inv.type || '') : '';
+                              var invTest = (typeof inv === 'object' && inv !== null) ? (inv.test || '') : e(inv);
+                              var invPri  = (typeof inv === 'object' && inv !== null) ? (inv.priority || '') : '';
+                              return '<tr style="background:' + bg + '">'
+                                + '<td style="padding:5px 8px;font-size:10px;border:1px solid #ccc">' + e(invType) + '</td>'
+                                + '<td style="padding:5px 8px;font-size:10px;border:1px solid #ccc">' + e(invTest) + '</td>'
+                                + '<td style="padding:5px 8px;font-size:10px;border:1px solid #ccc">' + e(invPri) + '</td>'
+                                + '</tr>';
+                            }).join('')
+                          + '</table>'
+                        : '<div style="padding:6px 10px;font-size:10px;color:#666;font-style:italic">No investigation orders</div>')
+                    + '</td></tr>'
+
+                  + '</table>'
+
+                  // Signature inside outer border
+                  + '<div style="display:flex;justify-content:flex-end;padding:24px 20px 16px">'
+                  + '<div style="text-align:center;min-width:200px">'
+                  + '<div style="font-size:12px;font-weight:700;color:#000;margin-bottom:8px">' + e(consultDoctor ? 'Dr. ' + consultDoctor : '') + '</div>'
+                  + '<div style="border-bottom:1px solid #000;margin-bottom:6px"></div>'
+                  + '<div style="font-size:10px;color:#333;text-transform:uppercase;letter-spacing:0.4px;font-weight:600">' + e(consultDept || 'Consulting Doctor') + '</div>'
+                  + '</div></div>'
+
                 + '</div>'
-
-                // Content
-                + '<div style="padding:16px 32px">'
-                + ptGridHtml
-                + vitalsHtml
-                + diagHtml
-                + rxHtml
-                + invHtml
-
-                // Signature — doctor who saved the consultation (right-aligned)
-                + '<div style="display:flex;justify-content:flex-end;margin-top:28px">'
-                + '<div style="width:220px;text-align:center">'
-                + '<div style="font-size:11px;font-weight:700;color:#0f172a;margin-bottom:6px">' + e(consultDoctor ? 'Dr. ' + consultDoctor : '') + '</div>'
-                + '<div style="border-bottom:1px solid #cbd5e1;margin-bottom:6px"></div>'
-                + '<div style="font-size:9px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.4px">' + e(consultDept || 'Consulting Doctor') + '</div>'
-                + '</div></div>'
-                + '</div>' // end content
 
                 // Footer
-                + '<div style="margin:0 32px;height:1.5px;background:linear-gradient(to right,' + color + ',rgba(0,0,0,0.05));border-radius:2px"></div>'
-                + '<div style="padding:12px 32px;display:flex;justify-content:space-between;align-items:flex-start">'
-                + '<div style="font-size:9px;color:#64748b;line-height:1.6">' + footerLines.map(function(l){return '<div>'+e(l)+'</div>';}).join('') + '</div>'
-                + '<div style="font-size:9px;color:#64748b;text-align:right;line-height:1.6">' + metaParts.map(function(p){return '<div>'+e(p)+'</div>';}).join('') + '</div>'
-                + '</div>'
-                + '<div style="height:3px;background:' + color + '"></div>'
-                + '</div>' // end wrapper
+                + (footerLines.length || metaParts.length
+                    ? '<div style="border-top:1px solid #ccc;padding-top:6px;display:flex;justify-content:space-between;font-size:9px;color:#555">'
+                    + '<div>' + footerLines.map(function(l) { return e(l); }).join('<br>') + '</div>'
+                    + '<div style="text-align:right">' + metaParts.join('<br>') + '</div>'
+                    + '</div>' : '')
 
+                + '</div>'
                 + '<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<\/script>'
                 + '</body></html>';
 

@@ -17,6 +17,10 @@ $(document).ready(function() {
     var regularPatientName = '';
     var allVisits = [];
     var allMrns = [];
+    var hospitalInfo = null;
+    var lastSaleData = null;
+
+    $.get('/api/hospital-info/settings/basic', function(res) { hospitalInfo = res.settings || {}; });
 
     function loadMedicines() {
         $.get('/api/inventory/medicines', function(data) {
@@ -717,6 +721,20 @@ $(document).ready(function() {
         var orderIdVal = regularVisitId || null;
 
         function showReceiptModal(txnId) {
+            lastSaleData = {
+                txnId: txnId,
+                cart: cart.slice(),
+                subtotal: subtotal,
+                discountPercent: discountPercent,
+                discountAmount: discountAmount,
+                total: total,
+                paymentMethod: paymentMethod,
+                customerInfo: customerInfo,
+                date: new Date()
+            };
+            cart = [];
+            renderCart();
+            updateBill();
             var receiptWithId = receiptHtml.replace('Sale Complete!',
                 'Sale Complete!' + (txnId ? '<br><span style="font-size:13px;font-weight:400;color:#94a3b8">' + txnId + '</span>' : ''));
             $('#modalMedName').text('Sale Complete');
@@ -772,7 +790,106 @@ $(document).ready(function() {
     };
 
     window.printReceipt = function() {
-        HMS.toast('Receipt printing would be triggered here.', 'info');
+        if (!lastSaleData) return;
+
+        var h = hospitalInfo || {};
+        var d = lastSaleData;
+
+        var hospitalName = h.basic_name || 'Hospital';
+        var addressParts = [h.address_street, h.address_city, h.address_state, h.address_country].filter(Boolean);
+        var addressLine = addressParts.join(', ');
+        var telLine = h.contact_phone ? 'Tel: ' + h.contact_phone : '';
+        var emailLine = h.contact_email || '';
+
+        var now = d.date;
+        var dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                    + ' ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+        var payLabel = d.paymentMethod.charAt(0).toUpperCase() + d.paymentMethod.slice(1);
+
+        var LINE = '------------------------------------------------';
+
+        var itemRows = '';
+        d.cart.forEach(function(item) {
+            var name = item.name || '';
+            var qty  = item.quantity;
+            var price = parseFloat(item.unitPrice).toFixed(2);
+            var total = parseFloat(item.totalPrice).toFixed(2);
+            itemRows +=
+                '<tr>' +
+                '<td style="padding:4px 0;word-break:break-word">' + esc(name) + '</td>' +
+                '<td style="text-align:center;padding:4px 8px;white-space:nowrap">' + qty + '</td>' +
+                '<td style="text-align:right;padding:4px 0;white-space:nowrap">' + price + '</td>' +
+                '<td style="text-align:right;padding:4px 0;padding-left:12px;white-space:nowrap">' + total + '</td>' +
+                '</tr>';
+        });
+
+        var discountRow = d.discountAmount > 0
+            ? '<tr><td colspan="3" style="text-align:right;padding:2px 0">Discount (' + d.discountPercent + '%)</td><td style="text-align:right;padding:2px 0;padding-left:12px">-' + parseFloat(d.discountAmount).toFixed(2) + '</td></tr>'
+            : '';
+
+        var html =
+            '<!DOCTYPE html><html><head>' +
+            '<meta charset="UTF-8">' +
+            '<title>Receipt</title>' +
+            '<style>' +
+            '* { margin:0; padding:0; box-sizing:border-box; }' +
+            'body { font-family: "Courier New", Courier, monospace; font-size: 13px; color: #000; background: #fff; width: 320px; margin: 0 auto; padding: 16px 12px; }' +
+            'h1 { font-family: "Segoe UI", Calibri, "Trebuchet MS", Arial, sans-serif; font-size: 16px; font-weight: 700; text-align: center; margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase; }' +
+            '.center { text-align: center; }' +
+            '.meta-row { display: flex; justify-content: space-between; margin-bottom: 2px; }' +
+            '.meta-label { color: #000; }' +
+            'table { width: 100%; border-collapse: collapse; margin: 4px 0; }' +
+            'th { font-weight: bold; text-align: left; padding: 4px 0; border-bottom: 1px dashed #000; }' +
+            'th.r, td.r { text-align: right; }' +
+            '.divider { border: none; border-top: 1px dashed #000; margin: 6px 0; }' +
+            '.total-row td { font-weight: bold; font-size: 14px; padding-top: 6px; }' +
+            '.footer { text-align: center; margin-top: 10px; font-size: 12px; color: #555; }' +
+            '@media print { body { margin: 0; padding: 8px; } button { display: none; } }' +
+            '</style></head><body>' +
+
+            '<h1>' + esc(hospitalName) + '</h1>' +
+            (addressLine ? '<p class="center" style="font-size:12px;margin-bottom:2px">' + esc(addressLine) + '</p>' : '') +
+            (telLine     ? '<p class="center" style="font-size:12px;margin-bottom:2px">' + esc(telLine) + '</p>' : '') +
+            (emailLine   ? '<p class="center" style="font-size:12px;margin-bottom:6px">' + esc(emailLine) + '</p>' : '') +
+
+            '<hr class="divider">' +
+
+            '<div class="meta-row"><span class="meta-label">Invoice:</span><span>' + esc(d.txnId || '—') + '</span></div>' +
+            '<div class="meta-row"><span class="meta-label">Date:</span><span>' + dateStr + '</span></div>' +
+            '<div class="meta-row"><span class="meta-label">Customer:</span><span>' + esc(d.customerInfo) + '</span></div>' +
+            '<div class="meta-row"><span class="meta-label">Payment:</span><span>' + esc(payLabel) + '</span></div>' +
+
+            '<hr class="divider">' +
+
+            '<table>' +
+            '<thead><tr>' +
+            '<th>PRODUCT</th>' +
+            '<th style="text-align:center">QTY</th>' +
+            '<th style="text-align:right">PRICE</th>' +
+            '<th style="text-align:right;padding-left:12px">TOTAL</th>' +
+            '</tr></thead>' +
+            '<tbody>' + itemRows + '</tbody>' +
+            '</table>' +
+
+            '<hr class="divider">' +
+
+            '<table>' +
+            '<tbody>' +
+            (d.discountAmount > 0 ? '<tr><td colspan="3" style="text-align:right;padding:2px 0">Subtotal</td><td style="text-align:right;padding:2px 0;padding-left:12px">' + parseFloat(d.subtotal).toFixed(2) + '</td></tr>' : '') +
+            discountRow +
+            '<tr class="total-row"><td colspan="3" style="text-align:right;padding-top:4px">TOTAL</td><td style="text-align:right;padding-left:12px;padding-top:4px">Rs. ' + parseFloat(d.total).toFixed(2) + '</td></tr>' +
+            '</tbody>' +
+            '</table>' +
+
+            '<hr class="divider">' +
+            '<p class="footer">Thank you for your purchase!</p>' +
+
+            '<script>window.onload = function(){ window.print(); window.onafterprint = function(){ window.close(); }; };<\/script>' +
+            '</body></html>';
+
+        var win = window.open('', '_blank', 'width=400,height=600,toolbar=0,menubar=0,scrollbars=1');
+        if (win) { win.document.write(html); win.document.close(); }
     };
 
     loadMedicines();

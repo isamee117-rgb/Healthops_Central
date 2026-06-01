@@ -8,6 +8,7 @@ use App\Models\MedicationOrder;
 use App\Models\PanelClaim;
 use App\Models\CashReconciliation;
 use App\Models\Medicine;
+use App\Models\StockTransaction;
 use App\Traits\HmsHelpers;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -155,28 +156,61 @@ class PharmacyBillingController extends Controller
 
             $txnId = $this->generateYearId(PharmacyTransaction::class, 'transaction_id', 'TXN');
 
-            $txn = PharmacyTransaction::create([
-                'transaction_id'        => $txnId,
-                'transaction_date'      => Carbon::now(),
-                'patient_name'          => $patientName,
-                'mrn'                   => $mrn,
-                'department'            => $dept,
-                'order_id'              => $orderId ?? $txnId,
-                'subtotal'              => round($subtotal, 2),
-                'discount'              => round($discount, 2),
-                'tax'                   => 0,
-                'total_amount'          => round($total, 2),
-                'payment_mode'          => $payMode,
-                'payment_status'        => $isPaid ? 'Paid' : 'Pending',
-                'billed_to'             => 'Patient',
-                'charge_posted'         => true,
-                'reconciliation_status' => 'Pending',
-                'receipt_number'        => str_replace('TXN', 'RCP', $txnId),
-                'billing_reference'     => $orderId ?? $txnId,
-                'ordered_by'            => $orderedBy,
-                'received_by'           => 'POS Cashier',
-                'items'                 => $items,
-            ]);
+            DB::transaction(function () use (
+                $txnId, $patientName, $mrn, $dept, $orderId, $subtotal, $discount,
+                $total, $payMode, $isPaid, $orderedBy, $items
+            ) {
+                PharmacyTransaction::create([
+                    'transaction_id'        => $txnId,
+                    'transaction_date'      => Carbon::now(),
+                    'patient_name'          => $patientName,
+                    'mrn'                   => $mrn,
+                    'department'            => $dept,
+                    'order_id'              => $orderId ?? $txnId,
+                    'subtotal'              => round($subtotal, 2),
+                    'discount'              => round($discount, 2),
+                    'tax'                   => 0,
+                    'total_amount'          => round($total, 2),
+                    'payment_mode'          => $payMode,
+                    'payment_status'        => $isPaid ? 'Paid' : 'Pending',
+                    'billed_to'             => 'Patient',
+                    'charge_posted'         => true,
+                    'reconciliation_status' => 'Pending',
+                    'receipt_number'        => str_replace('TXN', 'RCP', $txnId),
+                    'billing_reference'     => $orderId ?? $txnId,
+                    'ordered_by'            => $orderedBy,
+                    'received_by'           => 'POS Cashier',
+                    'items'                 => $items,
+                ]);
+
+                foreach ($items as $item) {
+                    $medicineId = $item['medicineId'] ?? null;
+                    $qty        = (int) ($item['qty'] ?? 0);
+                    if (!$medicineId || $qty <= 0) continue;
+
+                    $medicine = Medicine::where('medicine_id', $medicineId)
+                        ->where('current_stock', '>=', $qty)
+                        ->first();
+                    if (!$medicine) continue;
+
+                    $stockBefore = $medicine->current_stock;
+                    $stockAfter  = $stockBefore - $qty;
+                    $medicine->update(['current_stock' => $stockAfter]);
+
+                    StockTransaction::create([
+                        'transaction_id' => $this->nextId(StockTransaction::class, 'transaction_id', 'STX-'),
+                        'medicine_id'    => $medicineId,
+                        'type'           => 'Sale',
+                        'quantity'       => -$qty,
+                        'stock_before'   => $stockBefore,
+                        'stock_after'    => $stockAfter,
+                        'reason'         => 'POS Sale',
+                        'reference'      => $txnId,
+                        'notes'          => $item['name'] ?? '',
+                        'performed_by'   => 'POS Cashier',
+                    ]);
+                }
+            });
 
             return response()->json(['success' => true, 'transactionId' => $txnId], 201);
         } catch (\Exception $e) {

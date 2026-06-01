@@ -1,6 +1,10 @@
 $(document).ready(function() {
     var hospitalInfo = { currency: 'PKR' };
     var currentTxnId = null;
+    var currentTxnData = null;
+    var billingHospitalInfo = null;
+
+    $.get('/api/hospital-info/settings/basic', function(res) { billingHospitalInfo = res.settings || {}; });
 
     var allTxns = [];
     var filteredTxns = [];
@@ -361,6 +365,7 @@ $(document).ready(function() {
     function openTxnDetail(txnId) {
         currentTxnId = txnId;
         $.get('/api/pharmacy-billing/transactions/' + txnId, function(txn) {
+            currentTxnData = txn;
             $('#txnDetailId').text('Transaction ID: ' + txn.transactionId);
 
             var dateStr = '';
@@ -406,12 +411,7 @@ $(document).ready(function() {
                         '<div><span style="color:var(--color-muted-foreground)">Received By:</span> <strong>' + esc(txn.receivedBy) + '</strong></div>' +
                     '</div>' +
                 '</div>' +
-                '<div style="padding:16px;border-radius:10px;border:2px solid ' + reconColor + ';background:' + reconColor + '10">' +
-                    '<div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--color-muted-foreground);margin-bottom:8px;letter-spacing:0.05em">Reconciliation</div>' +
-                    '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Pharmacy Record:</span><span style="font-family:monospace;font-weight:600">' + fmt(txn.totalAmount) + '</span></div>' +
-                    '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span>Billing Record:</span><span style="font-family:monospace;font-weight:600">' + fmt(txn.totalAmount) + '</span></div>' +
-                    '<div style="text-align:center;font-size:15px;font-weight:700;color:' + reconColor + '">' + reconIcon + ' ' + esc(txn.reconciliationStatus).toUpperCase() + '</div>' +
-                '</div>';
+                '';
 
             $('#txnDetailBody').html(html);
             var offcanvas = new bootstrap.Offcanvas(document.getElementById('txnDetailSheet'));
@@ -535,6 +535,94 @@ $(document).ready(function() {
             lucide.createIcons();
         }).fail(function() { HMS.toast('Could not load ER order details.', 'error'); });
     }
+
+    $(document).on('click', '.btn-print-receipt', function() {
+        if (!currentTxnData) return;
+        var txn = currentTxnData;
+        var h   = billingHospitalInfo || {};
+
+        var hospitalName = h.basic_name || 'Hospital';
+        var addressParts = [h.address_street, h.address_city, h.address_state, h.address_country].filter(Boolean);
+        var addressLine  = addressParts.join(', ');
+        var telLine      = h.contact_phone ? 'Tel: ' + h.contact_phone : '';
+        var emailLine    = h.contact_email || '';
+
+        var now     = txn.transactionDate ? new Date(txn.transactionDate) : new Date();
+        var dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                    + ' ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+        var payLabel = txn.paymentMode || '';
+        var customerInfo = (txn.patientName || 'Walk-in Customer') + (txn.mrn ? ' (' + txn.mrn + ')' : '');
+
+        var itemRows = '';
+        (txn.items || []).forEach(function(item) {
+            itemRows +=
+                '<tr>' +
+                '<td style="padding:4px 0;word-break:break-word">' + esc(item.name) + '</td>' +
+                '<td style="text-align:center;padding:4px 8px;white-space:nowrap">' + item.qty + '</td>' +
+                '<td style="text-align:right;padding:4px 0;white-space:nowrap">' + parseFloat(item.unitPrice || 0).toFixed(2) + '</td>' +
+                '<td style="text-align:right;padding:4px 0;padding-left:12px;white-space:nowrap">' + parseFloat(item.total || 0).toFixed(2) + '</td>' +
+                '</tr>';
+        });
+
+        var discountRow = parseFloat(txn.discount || 0) > 0
+            ? '<tr><td colspan="3" style="text-align:right;padding:2px 0">Discount</td><td style="text-align:right;padding:2px 0;padding-left:12px">-' + parseFloat(txn.discount).toFixed(2) + '</td></tr>'
+            : '';
+
+        var html =
+            '<!DOCTYPE html><html><head>' +
+            '<meta charset="UTF-8"><title>Receipt</title>' +
+            '<style>' +
+            '* { margin:0; padding:0; box-sizing:border-box; }' +
+            'body { font-family: "Courier New", Courier, monospace; font-size: 13px; color: #000; background: #fff; width: 320px; margin: 0 auto; padding: 16px 12px; }' +
+            'h1 { font-family: "Segoe UI", Calibri, "Trebuchet MS", Arial, sans-serif; font-size: 16px; font-weight: 700; text-align: center; margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase; }' +
+            '.center { text-align: center; }' +
+            '.meta-row { display: flex; justify-content: space-between; margin-bottom: 2px; }' +
+            'table { width: 100%; border-collapse: collapse; margin: 4px 0; }' +
+            'th { font-weight: bold; text-align: left; padding: 4px 0; border-bottom: 1px dashed #000; }' +
+            '.divider { border: none; border-top: 1px dashed #000; margin: 6px 0; }' +
+            '.total-row td { font-weight: bold; font-size: 14px; padding-top: 6px; }' +
+            '.footer { text-align: center; margin-top: 10px; font-size: 12px; color: #555; }' +
+            '@media print { body { margin: 0; padding: 8px; } }' +
+            '</style></head><body>' +
+
+            '<h1>' + esc(hospitalName) + '</h1>' +
+            (addressLine ? '<p class="center" style="font-size:12px;margin-bottom:2px">' + esc(addressLine) + '</p>' : '') +
+            (telLine     ? '<p class="center" style="font-size:12px;margin-bottom:2px">' + esc(telLine) + '</p>' : '') +
+            (emailLine   ? '<p class="center" style="font-size:12px;margin-bottom:6px">' + esc(emailLine) + '</p>' : '') +
+
+            '<hr class="divider">' +
+            '<div class="meta-row"><span>Invoice:</span><span>' + esc(txn.transactionId || '—') + '</span></div>' +
+            '<div class="meta-row"><span>Date:</span><span>' + dateStr + '</span></div>' +
+            '<div class="meta-row"><span>Customer:</span><span>' + esc(customerInfo) + '</span></div>' +
+            '<div class="meta-row"><span>Payment:</span><span>' + esc(payLabel) + '</span></div>' +
+            '<hr class="divider">' +
+
+            '<table>' +
+            '<thead><tr>' +
+            '<th>PRODUCT</th>' +
+            '<th style="text-align:center">QTY</th>' +
+            '<th style="text-align:right">PRICE</th>' +
+            '<th style="text-align:right;padding-left:12px">TOTAL</th>' +
+            '</tr></thead>' +
+            '<tbody>' + itemRows + '</tbody>' +
+            '</table>' +
+            '<hr class="divider">' +
+
+            '<table><tbody>' +
+            (parseFloat(txn.discount || 0) > 0 ? '<tr><td colspan="3" style="text-align:right;padding:2px 0">Subtotal</td><td style="text-align:right;padding:2px 0;padding-left:12px">' + parseFloat(txn.subtotal || 0).toFixed(2) + '</td></tr>' : '') +
+            discountRow +
+            '<tr class="total-row"><td colspan="3" style="text-align:right;padding-top:4px">TOTAL</td><td style="text-align:right;padding-left:12px;padding-top:4px">Rs. ' + parseFloat(txn.totalAmount || 0).toFixed(2) + '</td></tr>' +
+            '</tbody></table>' +
+            '<hr class="divider">' +
+            '<p class="footer">Thank you for your purchase!</p>' +
+
+            '<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<\/script>' +
+            '</body></html>';
+
+        var win = window.open('', '_blank', 'width=400,height=600,toolbar=0,menubar=0,scrollbars=1');
+        if (win) { win.document.write(html); win.document.close(); }
+    });
 
     $(document).on('click', '.btn-void-txn', function() {
         if (!currentTxnId) return;

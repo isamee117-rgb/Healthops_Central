@@ -404,8 +404,6 @@
         <div id="txnDetailBody"></div>
         <div style="display:flex;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--color-border)">
             <button class="btn-print-receipt" style="padding:8px 16px;background:var(--color-background);border:1px solid var(--color-border);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer"><i data-lucide="printer" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"></i> Print Receipt</button>
-            <button class="btn-reconcile-txn" style="padding:8px 16px;background:var(--aquamint);border:none;border-radius:8px;font-size:12px;font-weight:600;color:var(--midnight-blue);cursor:pointer"><i data-lucide="check-circle" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"></i> Reconcile</button>
-            <button class="btn-void-txn" style="padding:8px 16px;background:#ef4444;border:none;border-radius:8px;font-size:12px;font-weight:600;color:#fff;cursor:pointer"><i data-lucide="x-circle" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"></i> Void</button>
         </div>
     </div>
 </div>

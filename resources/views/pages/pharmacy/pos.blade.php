@@ -7,11 +7,18 @@
         gap: 0 !important;
         overflow: hidden;
     }
+    body:has(.pharmacy-container) { overflow-x: hidden; }
     .pharmacy-container {
         display: flex;
+        width: calc(100vw - var(--sidebar-width));
+        max-width: calc(100vw - var(--sidebar-width));
         height: calc(100vh - 110px);
         overflow: hidden;
         background: #f8f9fa;
+    }
+    .sidebar.collapsed ~ .main-content .pharmacy-container {
+        width: calc(100vw - var(--sidebar-collapsed-width));
+        max-width: calc(100vw - var(--sidebar-collapsed-width));
     }
     .pharmacy-left {
         flex: 70;
@@ -118,12 +125,17 @@
     }
     .category-scroll {
         display: flex;
+        flex-wrap: nowrap;
         gap: 8px;
         overflow-x: auto;
-        padding: 12px 0 4px;
-        scrollbar-width: none;
+        padding: 12px 0 8px;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 transparent;
     }
-    .category-scroll::-webkit-scrollbar { display: none; }
+    .category-scroll::-webkit-scrollbar { height: 4px; }
+    .category-scroll::-webkit-scrollbar-track { background: transparent; }
+    .category-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .category-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     .category-btn {
         display: inline-flex;
         align-items: center;
